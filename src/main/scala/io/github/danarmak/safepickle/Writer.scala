@@ -21,7 +21,6 @@ trait Writer[Repr] {
   def writeString(string: String): Unit
   def writeBoolean(boolean: Boolean): Unit
   def writeNull(): Unit
-  def writeBinary(binary: Array[Byte]): Unit
 
   /** After writing an attribute name, write its value using one of the other writeXxx methods */
   def writeAttributeName(name: String): Unit

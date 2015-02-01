@@ -24,8 +24,7 @@ trait Reader {
   def isString: Boolean
   def isBoolean: Boolean
   def isNull: Boolean
-  def isBinary: Boolean
-  
+
   def isAttributeName: Boolean
   
   def isArrayStart: Boolean
@@ -38,7 +37,6 @@ trait Reader {
   def long: Long
   def string: String
   def boolean: Boolean
-  def binary: Array[Byte]
   def attributeName: String
 }
 

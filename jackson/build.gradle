@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':')
+    
+    compile 'com.fasterxml.jackson.core:jackson-core:2.5.0'
+}

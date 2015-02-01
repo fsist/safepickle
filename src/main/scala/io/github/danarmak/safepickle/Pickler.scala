@@ -40,10 +40,4 @@ object DefaultPicklers {
 
     override def unpickle(reader: Reader): Null = if (reader.isNull) null else throw new IllegalStateException("Expected: null")
   }
-
-  implicit object Binary extends Pickler[Array[Byte]] {
-    override def pickle(binary: Array[Byte], writer: Writer[_]): Unit = writer.writeBinary(binary)
-
-    override def unpickle(reader: Reader): Array[Byte] = reader.binary
-  }
 }
