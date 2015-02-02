@@ -2,10 +2,9 @@ package io.github.danarmak.safepickle
 
 import scala.collection.generic.CanBuildFrom
 
-/** Implicit pickler definitions for all standard collection-like types. */
 object CollectionPicklers {
-  // Don't remove this import - it prevents implicit resolution from using e.g. iterablePickler for an Array[Byte]
-  import DefaultPicklers._
+  // Don't remove this import - I think it prevents implicit resolution from using e.g. iterablePickler for an Array[Byte]
+  import PrimitivePicklers._
 
   implicit def iterablePickler[T, Coll <: Iterable[T]](implicit tpickler: Pickler[T],
                                                        cbf: CanBuildFrom[Nothing, T, Coll]): Pickler[Coll] = new Pickler[Coll] {
@@ -17,11 +16,11 @@ object CollectionPicklers {
     }
 
     override def unpickle(reader: Reader): Coll = {
-      if (! reader.isArrayStart) throw new IllegalStateException("Expected: array start")
+      if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
       if (! reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
       
       val builder = cbf()
-      while (! reader.isArrayEnd) {
+      while (reader.tokenType != TokenType.ArrayEnd) {
         builder += tpickler.unpickle(reader)
         if (! reader.next()) throw new IllegalStateException("Unexpected EOF inside array")
       }
@@ -45,11 +44,11 @@ object CollectionPicklers {
     }
 
     override def unpickle(reader: Reader): Coll = {
-      if (! reader.isObjectStart) throw new IllegalStateException("Expected: object start")
+      if (reader.tokenType != TokenType.ObjectStart) throw new IllegalStateException("Expected: object start")
       if (! reader.next()) throw new IllegalStateException("Unexpected EOF after object start")
 
       val builder = cbf()
-      while (! reader.isObjectEnd) {
+      while (reader.tokenType != TokenType.ObjectEnd) {
         val name = reader.attributeName
         reader.next()
         val value = tpickler.unpickle(reader)

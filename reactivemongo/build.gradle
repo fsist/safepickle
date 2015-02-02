@@ -1,0 +1,12 @@
+repositories {
+  maven {
+    // For e.g. play-iteratees (as a dep of reactivemongo)
+    url 'https://repo.typesafe.com/typesafe/releases/'
+  }
+}
+
+dependencies {
+  compile project(':')
+
+  compile 'org.reactivemongo:reactivemongo_2.11:0.10.5.0.akka23'
+}

@@ -7,7 +7,7 @@ package io.github.danarmak.safepickle
   * on the trait. Typical usage looks like this:
   * 
   * while (reader.next) {
-  *   if (reader.isInt) ... else ...
+  *   reader.tokenTYpe match ...
   * }
   * 
   * The methods `int`, `string` etc. throw an IllegalStateException if there current token is not of the right type,
@@ -17,35 +17,14 @@ trait Reader {
   /** Advances to the next token. Returns false on EOF. */
   def next(): Boolean
   
-  def hasToken(): Boolean
+  /** Begins returning `true` after the first time `next` returns false. */
+  def atEof: Boolean
   
-  def isInt: Boolean
-  def isLong: Boolean
-  def isString: Boolean
-  def isBoolean: Boolean
-  def isNull: Boolean
-
-  def isAttributeName: Boolean
-  
-  def isArrayStart: Boolean
-  def isArrayEnd: Boolean
-  
-  def isObjectStart: Boolean
-  def isObjectEnd: Boolean
+  def tokenType: TokenType
   
   def int: Int
   def long: Long
   def string: String
   def boolean: Boolean
   def attributeName: String
-}
-
-/** A way of reading the type T which has a direct representation in some, but not all, Reader implementations.
-  * 
-  * A Reader could support the type directly (i.e. it would be a `Reader with OptionalReader[T]`; otherwise, a fallback
-  * implementation would be required that could use any standard Reader.
-  */
-trait OptionalReader[T] {
-  def isT: Boolean
-  def t: T
 }

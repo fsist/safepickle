@@ -9,8 +9,8 @@ trait Pickler[T] {
 }
 
 /** Implicit definitions of picklers for standard types. */
-object DefaultPicklers {
-
+object PrimitivePicklers {
+  
   implicit object Int extends Pickler[Int] {
     override def pickle(int: Int, writer: Writer[_]): Unit = writer.writeInt(int)
 
@@ -38,6 +38,6 @@ object DefaultPicklers {
   implicit object Null extends Pickler[Null] {
     override def pickle(Null: Null, writer: Writer[_]): Unit = writer.writeNull()
 
-    override def unpickle(reader: Reader): Null = if (reader.isNull) null else throw new IllegalStateException("Expected: null")
+    override def unpickle(reader: Reader): Null = if (reader.tokenType == TokenType.Null) null else throw new IllegalStateException("Expected: null")
   }
 }

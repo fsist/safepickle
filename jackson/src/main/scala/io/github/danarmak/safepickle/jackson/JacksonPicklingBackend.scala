@@ -2,6 +2,7 @@ package io.github.danarmak.safepickle.jackson
 
 import java.io.{StringWriter, ByteArrayOutputStream, IOException}
 
+import com.fasterxml.jackson.core.JsonParser.NumberType
 import io.github.danarmak.safepickle._
 
 import com.fasterxml.jackson.core._
@@ -36,6 +37,7 @@ object JacksonPicklingBackend {
       new JacksonWriter(factory.createGenerator(buf), buf.toString)
     }
   }
+
 }
 
 class JacksonReader(parser: JsonParser) extends Reader {
@@ -49,33 +51,27 @@ class JacksonReader(parser: JsonParser) extends Reader {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def hasToken(): Boolean = {
+  override def atEof(): Boolean = {
     val id = parser.getCurrentTokenId
     id != ID_NO_TOKEN && id != ID_NOT_AVAILABLE
   }
 
-  override def isInt: Boolean = parser.getCurrentTokenId == ID_NUMBER_INT
-
-  override def isBoolean: Boolean = {
-    val id = parser.getCurrentTokenId
-    id == ID_TRUE || id == ID_FALSE
+  override def tokenType: TokenType = parser.getCurrentTokenId match {
+    case ID_NUMBER_INT => parser.getNumberType match {
+      case NumberType.INT => TokenType.Int
+      case NumberType.LONG => TokenType.Long
+      case other => TokenType.String
+    }
+    case ID_STRING => TokenType.String
+    case ID_TRUE | ID_FALSE => TokenType.Boolean
+    case ID_NULL => TokenType.Null
+    case ID_START_ARRAY => TokenType.ArrayStart
+    case ID_END_ARRAY => TokenType.ArrayEnd
+    case ID_START_OBJECT => TokenType.ObjectStart
+    case ID_END_OBJECT => TokenType.ObjectEnd
+    case ID_FIELD_NAME => TokenType.AttributeName
+    case other => TokenType.String // Everything else will be rendered as a string, which may not be parsed but is at least supported
   }
-
-  override def isString: Boolean = parser.getCurrentTokenId == ID_STRING
-
-  override def isLong: Boolean = parser.getCurrentTokenId == ID_NUMBER_INT
-
-  override def isNull: Boolean = parser.getCurrentTokenId == ID_NULL
-
-  override def isArrayStart: Boolean = parser.getCurrentTokenId == ID_START_ARRAY
-
-  override def isArrayEnd: Boolean = parser.getCurrentTokenId == ID_END_ARRAY
-
-  override def isObjectStart: Boolean = parser.getCurrentTokenId == ID_START_OBJECT
-
-  override def isObjectEnd: Boolean = parser.getCurrentTokenId == ID_END_OBJECT
-
-  override def isAttributeName: Boolean = parser.getCurrentTokenId == ID_FIELD_NAME
 
   override def boolean: Boolean = try {
     parser.getBooleanValue
@@ -98,19 +94,13 @@ class JacksonReader(parser: JsonParser) extends Reader {
   }
 
   override def string: String = try {
-    if (parser.getCurrentTokenId == ID_STRING) {
-      parser.getText
-    }
-    else throw new IllegalStateException(s"Expected string but found ${parser.getCurrentToken} at ${parser.getCurrentLocation}")
+    parser.getText
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
   override def attributeName: String = try {
-    if (parser.getCurrentTokenId == ID_FIELD_NAME) {
-      parser.getText
-    }
-    else throw new IllegalStateException(s"Expected attribute name but found ${parser.getCurrentToken} at ${parser.getCurrentLocation}")
+    parser.getText
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }

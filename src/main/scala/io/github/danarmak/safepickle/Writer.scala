@@ -9,6 +9,7 @@ package io.github.danarmak.safepickle
   * (e.g. writeAttributeName twice in a row).
   */
 trait Writer[Repr] {
+
   /** Returns everything written so far.
     * 
     * May optionally fail with an IllegalStateException if the data written is not valid, e.g. an open Object or Array
@@ -30,13 +31,4 @@ trait Writer[Repr] {
   
   def writeObjectStart(): Unit
   def writeObjectEnd(): Unit
-}
-
-/** A way of writing the type T which has a direct representation in some, but not all, Writer implementations.
-  *
-  * A Writer could support the type directly (i.e. it would be a `Writer with OptionalWriter[T]`; otherwise, a fallback
-  * implementation would be required that could use any standard Writer.
-  */
-trait OptionalWriter[T] {
-  def writeT(t: T): Unit
 }
