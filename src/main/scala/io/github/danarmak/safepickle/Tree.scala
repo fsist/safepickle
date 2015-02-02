@@ -9,6 +9,10 @@ object TreeNodeType {
 
   case object Long extends TreeNodeType
 
+  case object Float extends TreeNodeType
+
+  case object Double extends TreeNodeType
+
   case object Boolean extends TreeNodeType
 
   case object String extends TreeNodeType
@@ -29,6 +33,8 @@ trait TreeParser[Node] {
 
   def int(node: Node): Int
   def long(node: Node): Long
+  def float(node: Node): Float
+  def double(node: Node): Double
   def string(node: Node): String
   def boolean(node: Node): Boolean
   def array(node: Node): Iterator[Node]
@@ -58,9 +64,9 @@ class TreeReader[Node](parser: TreeParser[Node], root: Node) extends Reader {
   private def enterObject(node: Node): Unit = {
     stack.push(new ObjectState(parser.obj(node)))
   }
-  
+
   /** Called whenever we encounter a new node, which should at this point be stored in the `node` field.
-    * 
+    *
     * Updates the currTokenType field and, if the new node is an array or object, enters it.
     */
   private def processNewNode(): Unit = {
@@ -74,13 +80,15 @@ class TreeReader[Node](parser: TreeParser[Node], root: Node) extends Reader {
       case TreeNodeType.Boolean => TokenType.Boolean
       case TreeNodeType.Int => TokenType.Int
       case TreeNodeType.Long => TokenType.Long
+      case TreeNodeType.Float => TokenType.Float
+      case TreeNodeType.Double => TokenType.Double
       case TreeNodeType.Null => TokenType.Null
       case TreeNodeType.String => TokenType.String
     }
   }
 
   override def next(): Boolean = {
-    
+
     /** Advances to the next member of the array, updating `node` and `currTokenType`.
       * If the next encountered node is an array or object, enters it.
       */
@@ -115,8 +123,8 @@ class TreeReader[Node](parser: TreeParser[Node], root: Node) extends Reader {
         ended = true
       }
       else stack.top match {
-        case array @ ArrayState(iter) => nextInArray(array)
-        case obj @ ObjectState(iter) => nextInObject(obj)
+        case array@ArrayState(iter) => nextInArray(array)
+        case obj@ObjectState(iter) => nextInObject(obj)
       }
     }
 
@@ -166,6 +174,8 @@ class TreeReader[Node](parser: TreeParser[Node], root: Node) extends Reader {
 
   def int: Int = parser.int(node)
   def long: Long = parser.long(node)
+  def float: Float = parser.float(node)
+  def double: Double = parser.double(node)
   def string: String = parser.string(node)
   def boolean: Boolean = parser.boolean(node)
   def attributeName: String = nodeAttributeName.get

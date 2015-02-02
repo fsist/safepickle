@@ -6,6 +6,8 @@ sealed trait TokenType
 object TokenType {
   case object Int extends TokenType
   case object Long extends TokenType
+  case object Float extends TokenType
+  case object Double extends TokenType
   case object Boolean extends TokenType
   case object String extends TokenType
   case object Null extends TokenType

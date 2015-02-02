@@ -24,6 +24,8 @@ trait Reader {
   
   def int: Int
   def long: Long
+  def float: Float
+  def double: Double
   def string: String
   def boolean: Boolean
   def attributeName: String

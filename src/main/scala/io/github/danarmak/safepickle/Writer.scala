@@ -19,6 +19,8 @@ trait Writer[Repr] {
   
   def writeInt(int: Int): Unit
   def writeLong(long: Long): Unit
+  def writeFloat(float: Float): Unit
+  def writeDouble(double: Double): Unit
   def writeString(string: String): Unit
   def writeBoolean(boolean: Boolean): Unit
   def writeNull(): Unit

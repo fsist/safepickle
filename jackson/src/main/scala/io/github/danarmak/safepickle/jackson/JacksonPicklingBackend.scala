@@ -62,6 +62,11 @@ class JacksonReader(parser: JsonParser) extends Reader {
       case NumberType.LONG => TokenType.Long
       case other => TokenType.String
     }
+    case ID_NUMBER_FLOAT => parser.getNumberType match {
+      case NumberType.FLOAT => TokenType.Float
+      case NumberType.DOUBLE => TokenType.Double
+      case other => TokenType.String
+    }
     case ID_STRING => TokenType.String
     case ID_TRUE | ID_FALSE => TokenType.Boolean
     case ID_NULL => TokenType.Null
@@ -93,6 +98,18 @@ class JacksonReader(parser: JsonParser) extends Reader {
     case e: IOException => throw new IllegalStateException(e)
   }
 
+  override def float: Float = try {
+    parser.getFloatValue
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+  
+  override def double: Double = try {
+    parser.getDoubleValue
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
   override def string: String = try {
     parser.getText
   } catch {
@@ -115,6 +132,49 @@ class JacksonWriter[Repr](generator: JsonGenerator, makeResult: => Repr) extends
     case e: IOException => throw new IllegalStateException(e)
   }
 
+  override def writeInt(int: Int): Unit = try {
+    generator.writeNumber(int)
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
+  override def writeLong(long: Long): Unit = try {
+    generator.writeNumber(long)
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
+  override def writeFloat(float: Float): Unit = try {
+    generator.writeNumber(float)
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+  
+  override def writeDouble(double: Double): Unit = try {
+    generator.writeNumber(double)
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
+  override def writeBoolean(boolean: Boolean): Unit = try {
+    generator.writeBoolean(boolean)
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
+  override def writeNull(): Unit = try {
+    generator.writeNull()
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
+  override def writeArrayStart(): Unit = try {
+    generator.writeStartArray()
+
+  } catch {
+    case e: IOException => throw new IllegalStateException(e)
+  }
+
   override def writeObjectStart(): Unit = try {
     generator.writeStartObject()
   } catch {
@@ -127,39 +187,8 @@ class JacksonWriter[Repr](generator: JsonGenerator, makeResult: => Repr) extends
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeInt(int: Int): Unit = try {
-    generator.writeNumber(int)
-  } catch {
-    case e: IOException => throw new IllegalStateException(e)
-  }
-
-  override def writeArrayStart(): Unit = try {
-    generator.writeStartArray()
-
-  } catch {
-    case e: IOException => throw new IllegalStateException(e)
-  }
-
-  override def writeBoolean(boolean: Boolean): Unit = try {
-    generator.writeBoolean(boolean)
-  } catch {
-    case e: IOException => throw new IllegalStateException(e)
-  }
-
   override def writeObjectEnd(): Unit = try {
     generator.writeEndObject()
-  } catch {
-    case e: IOException => throw new IllegalStateException(e)
-  }
-
-  override def writeLong(long: Long): Unit = try {
-    generator.writeNumber(long)
-  } catch {
-    case e: IOException => throw new IllegalStateException(e)
-  }
-
-  override def writeNull(): Unit = try {
-    generator.writeNull()
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
