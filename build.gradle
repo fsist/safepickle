@@ -35,10 +35,6 @@ allprojects {
 
 version = '0.1'
 
-dependencies {
-  compile project(':macros')
-}
-
 /* Tests for each project, separately */
 
 task testJar(type: Jar, dependsOn: compileTestScala) {
