@@ -2,6 +2,7 @@ package io.github.danarmak.safepickle
 
 /** A way to pickle or unpickle a type. */
 trait Pickler[T] {
+  /** Should call whatever Writer methods are necessary to write the value `t`. */
   def pickle(t: T, writer: Writer[_]): Unit
   
   /** Should read and parse the reader's current token without advancing it. */
