@@ -10,10 +10,10 @@ package io.github.danarmak.safepickle
   *   reader.tokenTYpe match ...
   * }
   * 
-  * The methods `int`, `string` etc. throw an IllegalStateException if there current token is not of the right type,
+  * The methods `int`, `string` etc. throw an IllegalStateException if the current token is not of the right type,
   * or if there is no current token.
   */
-trait Reader {
+trait Reader[Backend <: PicklingBackend] {
   /** Advances to the next token. Returns false on EOF. */
   def next(): Boolean
   
@@ -29,4 +29,8 @@ trait Reader {
   def string: String
   def boolean: Boolean
   def attributeName: String
+}
+
+object Reader {
+  type Generic = Reader[PicklingBackend]
 }

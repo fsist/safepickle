@@ -3,7 +3,7 @@ package io.github.danarmak.safepickle
 /** A way to analyze a reified tree of nodes, with a base concrete type of `Node`,
   * representing serialized primitive values.
   */
-trait TreeParser[Node] {
+trait TreeParser[Node, Backend <: PicklingBackend] {
   def nodeType(node: Node): TreeNodeType
 
   def int(node: Node): Int
@@ -17,7 +17,7 @@ trait TreeParser[Node] {
 }
 
 /** A Reader implementation for a reified tree of nodes representing serialized primitive values. */
-class TreeReader[Node](parser: TreeParser[Node], root: Node) extends Reader {
+class TreeReader[Node, Backend <: PicklingBackend](parser: TreeParser[Node, Backend], root: Node) extends Reader[Backend] {
 
   import TreeReader._
 

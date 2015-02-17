@@ -3,12 +3,17 @@ package io.github.danarmak.safepickle.reactivemongo
 import io.github.danarmak.safepickle._
 import _root_.reactivemongo.bson._
 
-object ReactiveMongoPicklingBackend extends PicklingBackend[BSONValue] {
-  override def reader(repr: BSONValue): Reader = new TreeReader(ReactiveMongoTreeParser, repr)
-  override def writer(): Writer[BSONValue] = new TreeWriter(ReactiveMongoTreeBuilder)
+object ReactiveMongoPicklingBackend extends PicklingBackend {
+  type Repr = BSONValue
+  
+  override def reader(repr: BSONValue): Reader[ReactiveMongoPicklingBackend.type] = 
+    new TreeReader(ReactiveMongoTreeParser, repr)
+  
+  override def writer(): Writer[BSONValue, ReactiveMongoPicklingBackend.type] = 
+    new TreeWriter(ReactiveMongoTreeBuilder)
 }
 
-object ReactiveMongoTreeParser extends TreeParser[BSONValue] {
+object ReactiveMongoTreeParser extends TreeParser[BSONValue, ReactiveMongoPicklingBackend.type] {
 
   override def nodeType(node: BSONValue): TreeNodeType = node.code match {
     case 1 => TreeNodeType.Double
@@ -50,7 +55,7 @@ object ReactiveMongoTreeParser extends TreeParser[BSONValue] {
   override def obj(node: BSONValue): Iterator[(String, BSONValue)] = node.asInstanceOf[BSONDocument].elements.iterator
 }
 
-object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue] {
+object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue, ReactiveMongoPicklingBackend.type] {
   override def int(int: Int): BSONValue = BSONInteger(int)
   override def boolean(boolean: Boolean): BSONValue = BSONBoolean(boolean)
   override def float(float: Float): BSONValue = BSONDouble(float)
@@ -61,3 +66,4 @@ object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue] {
   override def array(array: Iterable[BSONValue]): BSONValue = BSONArray(array)
   override def obj(obj: Map[String, BSONValue]): BSONValue = BSONDocument(obj)
 }
+

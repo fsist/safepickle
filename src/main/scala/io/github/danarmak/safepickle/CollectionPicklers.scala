@@ -6,16 +6,16 @@ object CollectionPicklers {
   // Don't remove this import - I think it prevents implicit resolution from using e.g. iterablePickler for an Array[Byte]
   import PrimitivePicklers._
 
-  implicit def iterablePickler[T, Coll <: Iterable[T]](implicit tpickler: Pickler[T],
-                                                       cbf: CanBuildFrom[Nothing, T, Coll]): Pickler[Coll] = new Pickler[Coll] {
-    override def pickle(coll: Coll, writer: Writer[_]): Unit = {
+  implicit def iterablePickler[T, Coll <: Iterable[T]](implicit tpickler: Pickler.Generic[T],
+                                                       cbf: CanBuildFrom[Nothing, T, Coll]): Pickler.Generic[Coll] = new Pickler.Generic[Coll] {
+    override def pickle(coll: Coll, writer: Writer.Generic[_]): Unit = {
       writer.writeArrayStart()
       val iter = coll.iterator
       while (iter.hasNext) tpickler.pickle(iter.next, writer)
       writer.writeArrayEnd()
     }
 
-    override def unpickle(reader: Reader): Coll = {
+    override def unpickle(reader: Reader.Generic): Coll = {
       if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
       if (! reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
       
@@ -30,9 +30,9 @@ object CollectionPicklers {
     }
   }
   
-  implicit def stringMapPickler[T, Coll <: Map[String, T]](implicit tpickler: Pickler[T],
-                                                       cbf: CanBuildFrom[Nothing, (String, T), Coll]): Pickler[Coll] = new Pickler[Coll] {
-    override def pickle(coll: Coll, writer: Writer[_]): Unit = {
+  implicit def stringMapPickler[T, Coll <: Map[String, T]](implicit tpickler: Pickler.Generic[T],
+                                                       cbf: CanBuildFrom[Nothing, (String, T), Coll]): Pickler.Generic[Coll] = new Pickler.Generic[Coll] {
+    override def pickle(coll: Coll, writer: Writer.Generic[_]): Unit = {
       writer.writeObjectStart()
       val iter = coll.iterator
       while (iter.hasNext) {
@@ -43,7 +43,7 @@ object CollectionPicklers {
       writer.writeObjectEnd()
     }
 
-    override def unpickle(reader: Reader): Coll = {
+    override def unpickle(reader: Reader.Generic): Coll = {
       if (reader.tokenType != TokenType.ObjectStart) throw new IllegalStateException("Expected: object start")
       if (! reader.next()) throw new IllegalStateException("Unexpected EOF after object start")
 

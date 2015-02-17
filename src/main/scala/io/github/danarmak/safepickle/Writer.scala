@@ -8,7 +8,7 @@ package io.github.danarmak.safepickle
   * Methods may, but are not required to, fail with an IllegalStateException if called in an illegal sequence
   * (e.g. writeAttributeName twice in a row).
   */
-trait Writer[Repr] {
+trait Writer[Repr, Backend <: PicklingBackend] {
 
   /** Returns everything written so far.
     * 
@@ -33,4 +33,8 @@ trait Writer[Repr] {
   
   def writeObjectStart(): Unit
   def writeObjectEnd(): Unit
+}
+
+object Writer {
+  type Generic[Repr] = Writer[Repr, PicklingBackend]
 }
