@@ -5,7 +5,7 @@ package io.github.danarmak.safepickle
   * @tparam Backend allows the pickler to be specific to a backend, allowing different picklers to produce different
   *                 representations of the same value for different backends.
   */
-trait Pickler[T, Backend <: PicklingBackend] {
+trait Pickler[T, -Backend <: PicklingBackend] {
   /** Should call whatever Writer methods are necessary to write the value `t`. */
   def pickle(t: T, writer: Backend#PickleWriter): Unit
   
