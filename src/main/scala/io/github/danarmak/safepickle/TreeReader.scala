@@ -31,6 +31,8 @@ class TreeReader[Node, Backend <: PicklingBackend](parser: TreeParser[Node, Back
   private var nodeAttributeName: Option[String] = None
 
   processNewNode()
+  
+  def currentNode: Node = node
 
   private def enterArray(node: Node): Unit = {
     stack.push(new ArrayState(parser.array(node)))

@@ -32,6 +32,12 @@ class TreeWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Ba
   stack.push(scalarWriter)
 
   override def result(): Base = stack.top.result
+  
+  /** If currently expecting a scalar (top level or as an attribute value), writes this value.
+    * If currently in an array context, appends this value. 
+    * Otherwise fails with an IllegalStateException.
+    */
+  def write(value: Base): Unit = stack.top.append(value)
 
   override def writeString(string: String): Unit = stack.top.append(builder.string(string))
   override def writeFloat(float: Float): Unit = stack.top.append(builder.float(float))

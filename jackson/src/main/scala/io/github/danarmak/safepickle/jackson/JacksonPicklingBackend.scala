@@ -20,10 +20,12 @@ object JacksonPicklingBackend {
 
   object Array extends PicklingBackend {
     type Repr = Array[Byte]
+    type PickleReader = JacksonReader[this.type]
+    type PickleWriter = JacksonWriter[Repr, this.type]
     
-    override def reader(repr: Array[Byte]): Reader[this.type] = new JacksonReader(factory.createParser(repr))
+    override def reader(repr: Array[Byte]): PickleReader = new JacksonReader(factory.createParser(repr))
 
-    override def writer(): Writer[Array[Byte], this.type] = {
+    override def writer(): PickleWriter = {
       val bos = new ByteArrayOutputStream()
       new JacksonWriter(factory.createGenerator(bos), bos.toByteArray)
     }
@@ -31,10 +33,12 @@ object JacksonPicklingBackend {
 
   object String extends PicklingBackend {
     type Repr = String
+    type PickleReader = JacksonReader[this.type]
+    type PickleWriter = JacksonWriter[Repr, this.type]
 
-    override def reader(repr: String): Reader[this.type] = new JacksonReader(factory.createParser(repr))
+    override def reader(repr: String): PickleReader = new JacksonReader(factory.createParser(repr))
 
-    override def writer(): Writer[String, this.type] = {
+    override def writer(): PickleWriter = {
       val buf = new StringWriter()
       new JacksonWriter(factory.createGenerator(buf), buf.toString)
     }

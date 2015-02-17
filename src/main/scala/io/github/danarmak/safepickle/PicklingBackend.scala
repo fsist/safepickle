@@ -10,9 +10,12 @@ trait PicklingBackend {
   /** The type of the serialized form used by this backend. */
   type Repr
   
-  /** Creates a new Reader that will read produce the values encoded in `repr` */
-  def reader(repr: Repr): Reader[this.type]
+  type PickleReader <: Reader[this.type]
+  type PickleWriter <: Writer[Repr, this.type]
   
-  def writer(): Writer[Repr, this.type]
+  /** Creates a new Reader that will read produce the values encoded in `repr` */
+  def reader(repr: Repr): PickleReader
+  
+  def writer(): PickleWriter
 }
 

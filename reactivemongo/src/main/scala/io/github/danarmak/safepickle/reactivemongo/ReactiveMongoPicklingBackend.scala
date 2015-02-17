@@ -5,12 +5,12 @@ import _root_.reactivemongo.bson._
 
 object ReactiveMongoPicklingBackend extends PicklingBackend {
   type Repr = BSONValue
+  type PickleReader = BSONTreeReader
+  type PickleWriter = BSONTreeWriter
   
-  override def reader(repr: BSONValue): Reader[ReactiveMongoPicklingBackend.type] = 
-    new TreeReader(ReactiveMongoTreeParser, repr)
+  override def reader(repr: BSONValue): PickleReader = new BSONTreeReader(repr)
   
-  override def writer(): Writer[BSONValue, ReactiveMongoPicklingBackend.type] = 
-    new TreeWriter(ReactiveMongoTreeBuilder)
+  override def writer(): PickleWriter = new BSONTreeWriter
 }
 
 object ReactiveMongoTreeParser extends TreeParser[BSONValue, ReactiveMongoPicklingBackend.type] {
@@ -55,6 +55,18 @@ object ReactiveMongoTreeParser extends TreeParser[BSONValue, ReactiveMongoPickli
   override def obj(node: BSONValue): Iterator[(String, BSONValue)] = node.asInstanceOf[BSONDocument].elements.iterator
 }
 
+/** A TreeReader for the ReactiveMongo backend with support for the extra BSOn native types. */
+class BSONTreeReader(root: BSONValue) extends TreeReader[BSONValue, ReactiveMongoPicklingBackend.type](ReactiveMongoTreeParser, root) {
+  def binary: Array[Byte] = {
+    val bin = currentNode.asInstanceOf[BSONBinary].value
+    bin.readArray(bin.size)
+  }
+  
+  def objectId: BSONObjectID = currentNode.asInstanceOf[BSONObjectID]
+  
+  def dateTime: Long = currentNode.asInstanceOf[BSONDateTime].value
+}
+
 object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue, ReactiveMongoPicklingBackend.type] {
   override def int(int: Int): BSONValue = BSONInteger(int)
   override def boolean(boolean: Boolean): BSONValue = BSONBoolean(boolean)
@@ -65,5 +77,12 @@ object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue, ReactiveMongoPick
   override def long(long: Long): BSONValue = BSONLong(long)
   override def array(array: Iterable[BSONValue]): BSONValue = BSONArray(array)
   override def obj(obj: Map[String, BSONValue]): BSONValue = BSONDocument(obj)
+}
+
+/** A TreeWriter for the ReactiveMongo backend with support for the extra BSON native types. */
+class BSONTreeWriter extends TreeWriter[BSONValue, ReactiveMongoPicklingBackend.type](ReactiveMongoTreeBuilder) {
+  def writeBinary(bytes: Array[Byte]): Unit = write(BSONBinary(bytes, Subtype.GenericBinarySubtype))
+  def writeObjectId(id: BSONObjectID): Unit = write(id)
+  def writeDateTime(timestamp: Long): Unit = write(BSONDateTime(timestamp))
 }
 
