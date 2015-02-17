@@ -13,7 +13,7 @@ trait Writer[Repr] {
   /** Returns everything written so far.
     * 
     * May optionally fail with an IllegalStateException if the data written is not valid, e.g. an open Object or Array
-    * has not been closed.
+    * has not been closed. However, implementations are not required to validate the produced result.
     */
   def result(): Repr
   
