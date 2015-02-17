@@ -27,7 +27,11 @@ object JacksonPicklingBackend {
 
     override def writer(): PickleWriter = {
       val bos = new ByteArrayOutputStream()
-      new JacksonWriter(factory.createGenerator(bos), bos.toByteArray)
+      val gen = factory.createGenerator(bos)
+      new JacksonWriter(gen, {
+        gen.flush()
+        bos.toByteArray
+      })
     }
   }
 
@@ -40,7 +44,11 @@ object JacksonPicklingBackend {
 
     override def writer(): PickleWriter = {
       val buf = new StringWriter()
-      new JacksonWriter(factory.createGenerator(buf), buf.toString)
+      val gen = factory.createGenerator(buf)
+      new JacksonWriter(gen, {
+        gen.flush()
+        buf.toString
+      })
     }
   }
 
