@@ -1,6 +1,10 @@
 package io.github.danarmak.safepickle
 
-/** The type of a value represented directly in the serialized form. */
+/** The type of a lexer-level token that can be read and written directly to a Reader/Writer.
+  * 
+  * Token types might more naturally be represented as a series of traits implemented by the actual tokens,
+  * but that would require instantiating wrapper objects for the tokens, which would hurt performance.
+  */
 sealed trait TokenType
 
 object TokenType {
@@ -16,4 +20,7 @@ object TokenType {
   case object ArrayEnd extends TokenType
   case object ObjectStart extends TokenType
   case object ObjectEnd extends TokenType
+  
+  /** Any other type, supported by this serialization format but not required to be supported by other formats. */
+  case object Other extends TokenType
 }
