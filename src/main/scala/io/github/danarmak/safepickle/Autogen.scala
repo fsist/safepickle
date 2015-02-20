@@ -63,12 +63,12 @@ class Autogen(val c: Context) {
 
     // Serialize 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
-      c.Expr(q"new SingletonPickler[$ttype, $btype]($clazzName, $ctor)")
+      c.Expr(q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz)")
     }
     else {
       val params = ctor.paramLists.head
       if (params.isEmpty) {
-        c.Expr(q"new SingletonPickler[$ttype, $btype]($clazzName, $ctor())")
+        c.Expr(q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz())")
       }
       else {
         case class ParamInfo(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, writeParam: Tree,
