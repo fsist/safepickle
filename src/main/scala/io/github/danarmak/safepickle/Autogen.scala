@@ -301,7 +301,7 @@ class Autogen(val c: Context) {
           }
          """
 
-    c.info(c.enclosingPosition, s"Generated: $ret", false)
+//    c.info(c.enclosingPosition, s"Generated: $ret", false)
 
     c.Expr(ret)
   }
