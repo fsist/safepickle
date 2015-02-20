@@ -264,7 +264,7 @@ class Autogen(val c: Context) {
                   if (reader.tokenType != TokenType.AttributeName) {
                     throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType+ s"), found token type $${reader.tokenType}")
                   }
-                  if (reader.atributeName != $tokenType) {
+                  if (reader.attributeName != $tokenType) {
                     throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType + s"), found $${reader.attributeName}")
                   }
                   
