@@ -2,8 +2,6 @@ package io.github.danarmak.safepickle
 
 import scala.language.experimental.macros
 
-import io.github.danarmak.safepickle.autogen.Autogen
-
 /** A way to pickle or unpickle a type.
   *
   * @tparam Backend allows the pickler to be specific to a backend, allowing different picklers to produce different

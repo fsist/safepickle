@@ -1,10 +1,7 @@
-package io.github.danarmak.safepickle.autogen
+package io.github.danarmak.safepickle
 
-import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
-
-import io.github.danarmak.safepickle.{Pickler, PicklingBackend}
 
 /** Entrypoint for the Pickler autogeneration macro. See the documentation in the project's README.md. */
 class Autogen(val c: Context) {
