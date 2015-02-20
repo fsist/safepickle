@@ -62,7 +62,7 @@ class AutogenTest extends FunSuite {
   }
   
   test("Case class with zero parameters") {
-    case class C()
+    case class C() 
 
     roundtrip(
       C(),
@@ -75,10 +75,30 @@ class AutogenTest extends FunSuite {
       override def equals(other: Any): Boolean = other.isInstanceOf[C]
       override def hashCode(): Int = 0
     }
-
+    
     roundtrip(
       new C,
       StringWrapper("C")
+    )
+  }
+  
+  test("Sealed trait") {
+    sealed trait T
+    case class C(s: String) extends T
+    case class D(i: Int) extends T
+    case object O extends T
+    
+    roundtrip[T](
+      C("foo"),
+      ObjectWrapper(Map(
+        "$type" -> StringWrapper("C"),
+        "s" -> StringWrapper("foo")
+      ))
+    )
+
+    roundtrip[T](
+      O,
+      StringWrapper("O")
     )
   }
 }

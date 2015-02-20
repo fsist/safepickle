@@ -5,6 +5,7 @@ import scala.reflect.macros.blackbox.Context
 
 /** Entrypoint for the Pickler autogeneration macro. See the documentation in the project's README.md. */
 class Autogen(val c: Context) {
+
   import c.universe._
 
   def generate[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag]: Expr[Pickler[T, Backend]] = {
@@ -54,7 +55,7 @@ class Autogen(val c: Context) {
     val ctor = clazz.primaryConstructor.asMethod
     if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, "Generic types are not supported")
 
-    if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes whose multiple parameter lists are not supported")
+    if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported")
 
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
     val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
@@ -90,7 +91,7 @@ class Autogen(val c: Context) {
             case Some(value) => q"var $name: $tpe = $value"
             case None => q"var $name: $tpe = null.asInstanceOf[$tpe]"
           }
-          
+
           val argInit = TermName(name.toString + "$initialized")
           val argInitDecl = q"var $argInit: Boolean = false"
 
@@ -162,7 +163,7 @@ class Autogen(val c: Context) {
           }
          """
 
-//                c.info(c.enclosingPosition, s"Generated: $ret", false)
+        //                c.info(c.enclosingPosition, s"Generated: $ret", false)
 
         c.Expr(ret)
       }
@@ -204,20 +205,34 @@ class Autogen(val c: Context) {
 
       val paramPicklerName = TermName(c.freshName(s"paramPickler_$name"))
       val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
-      
-      val picklerMatchClause = 
+
+      // Analyze the subtype's primary ctor to determine if it has any parameters; if not, it will be written as a
+      // single string
+
+      val ctor = subclass.primaryConstructor.asMethod
+      if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Generic types are not supported (in subtype $name of $traitName)")
+      if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported (in subtype $name of $traitName)")
+
+      val hasParams = ctor.paramLists.nonEmpty && ctor.paramLists.head.nonEmpty
+
+      val picklerMatchClause = if (hasParams) {
         cq"""value: $tpe => 
            writer.writeObjectStart()
            writer.writeAttributeName("$$type")
            writer.writeString(${name.toString})
            
            $paramPicklerName.pickle(value, writer, false)"""
-      
+      }
+      else {
+        cq"""value: $tpe =>
+          writer.writeString(${name.toString})"""
+      }
+
       val unpicklerMatchClause = cq"${name.toString} => $paramPicklerName.unpickle(reader, false)"
 
       Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause)
     }
-    
+
     for (subtype <- subtypes;
          otherSubtype <- subtypes if subtype.tpe.erasure =:= otherSubtype.tpe.erasure && subtype.name != otherSubtype.name) {
       throw new IllegalArgumentException(
@@ -229,7 +244,7 @@ class Autogen(val c: Context) {
     val implicitSubPicklers = q"..${subtypes.map(_.picklerDecl)}"
     val picklerMatchClauses = q"..${subtypes.map(_.picklerMatchClause)}"
     val unpicklerMatchClauses = q"..${subtypes.map(_.unpicklerMatchClause)}"
-    
+
     val tokenType = "$type"
 
     val ret = q"""
@@ -255,26 +270,26 @@ class Autogen(val c: Context) {
                     case ..$unpicklerMatchClauses
                     case other => throw new IllegalArgumentException(s"Unexpected (primitive) type tag $$other as descendant of sealed trait " + $traitName)
                   }
-                
+
                 case TokenType.ObjectStart =>
                   // First attribute should be the type tag
                   reader.next()
-    
+
                   if (reader.tokenType != TokenType.AttributeName) {
                     throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType+ s"), found token type $${reader.tokenType}")
                   }
                   if (reader.attributeName != $tokenType) {
                     throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType + s"), found $${reader.attributeName}")
                   }
-                  
+
                   reader.next()
                   if (reader.tokenType != TokenType.String) {
                     throw new IllegalArgumentException(s"Type tag attribute should have a string value, but found $${reader.tokenType}")
                   }
-    
+
                   val typeTag = reader.string
                   reader.next()
-                  
+
                   typeTag match {
                     case ..$unpicklerMatchClauses
                     case other => throw new IllegalArgumentException(s"Unexpected (explicit) type tag $$other as descendant of sealed trait " + $traitName)
@@ -286,7 +301,7 @@ class Autogen(val c: Context) {
           }
          """
 
-            c.info(c.enclosingPosition, s"Generated: $ret", false)
+    c.info(c.enclosingPosition, s"Generated: $ret", false)
 
     c.Expr(ret)
   }
