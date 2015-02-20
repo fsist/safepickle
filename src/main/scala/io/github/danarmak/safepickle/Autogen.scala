@@ -200,7 +200,7 @@ class Autogen(val c: Context) {
     val subtypes = for (subtype <- traitSym.knownDirectSubclasses) yield {
       val subclass = subtype.asClass
       val name = subclass.name.decodedName.toTermName
-      val tpe = subclass.typeSignature
+      val tpe = subclass.toType
 
       val paramPicklerName = TermName(c.freshName(s"paramPickler_$name"))
       val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
@@ -287,7 +287,7 @@ class Autogen(val c: Context) {
           }
          """
 
-    //        c.info(c.enclosingPosition, s"Generated: $ret", false)
+            c.info(c.enclosingPosition, s"Generated: $ret", false)
 
     c.Expr(ret)
   }
