@@ -17,22 +17,24 @@ trait Writer[Repr, Backend <: PicklingBackend] {
     */
   def result(): Repr
   
-  def writeInt(int: Int): Unit
-  def writeLong(long: Long): Unit
-  def writeFloat(float: Float): Unit
-  def writeDouble(double: Double): Unit
-  def writeString(string: String): Unit
-  def writeBoolean(boolean: Boolean): Unit
-  def writeNull(): Unit
+  // All writeXxx methods return the Writer
+  
+  def writeInt(int: Int): this.type
+  def writeLong(long: Long): this.type
+  def writeFloat(float: Float): this.type
+  def writeDouble(double: Double): this.type
+  def writeString(string: String): this.type
+  def writeBoolean(boolean: Boolean): this.type
+  def writeNull(): this.type
 
   /** After writing an attribute name, write its value using one of the other writeXxx methods */
-  def writeAttributeName(name: String): Unit
+  def writeAttributeName(name: String): this.type
   
-  def writeArrayStart(): Unit
-  def writeArrayEnd(): Unit
+  def writeArrayStart(): this.type
+  def writeArrayEnd(): this.type
   
-  def writeObjectStart(): Unit
-  def writeObjectEnd(): Unit
+  def writeObjectStart(): this.type
+  def writeObjectEnd(): this.type
 }
 
 object Writer {

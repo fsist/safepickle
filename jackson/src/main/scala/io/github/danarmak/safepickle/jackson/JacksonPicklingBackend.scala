@@ -141,75 +141,86 @@ class JacksonReader[Backend <: PicklingBackend](parser: JsonParser) extends Read
 class JacksonWriter[Repr, Backend <: PicklingBackend](generator: JsonGenerator, makeResult: => Repr) extends Writer[Repr, Backend] {
   override def result(): Repr = makeResult
 
-  override def writeString(string: String): Unit = try {
+  override def writeString(string: String): this.type = try {
     generator.writeString(string)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeInt(int: Int): Unit = try {
+  override def writeInt(int: Int): this.type = try {
     generator.writeNumber(int)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeLong(long: Long): Unit = try {
+  override def writeLong(long: Long): this.type = try {
     generator.writeNumber(long)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeFloat(float: Float): Unit = try {
+  override def writeFloat(float: Float): this.type = try {
     generator.writeNumber(float)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
   
-  override def writeDouble(double: Double): Unit = try {
+  override def writeDouble(double: Double): this.type = try {
     generator.writeNumber(double)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeBoolean(boolean: Boolean): Unit = try {
+  override def writeBoolean(boolean: Boolean): this.type = try {
     generator.writeBoolean(boolean)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeNull(): Unit = try {
+  override def writeNull(): this.type = try {
     generator.writeNull()
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeArrayStart(): Unit = try {
+  override def writeArrayStart(): this.type = try {
     generator.writeStartArray()
-
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeObjectStart(): Unit = try {
+  override def writeObjectStart(): this.type = try {
     generator.writeStartObject()
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeArrayEnd(): Unit = try {
+  override def writeArrayEnd(): this.type = try {
     generator.writeEndArray()
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeObjectEnd(): Unit = try {
+  override def writeObjectEnd(): this.type = try {
     generator.writeEndObject()
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }
 
-  override def writeAttributeName(name: String): Unit = try {
+  override def writeAttributeName(name: String): this.type = try {
     generator.writeFieldName(name)
+    this
   } catch {
     case e: IOException => throw new IllegalStateException(e)
   }

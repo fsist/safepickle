@@ -81,8 +81,19 @@ object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue, ReactiveMongoPick
 
 /** A TreeWriter for the ReactiveMongo backend with support for the extra BSON native types. */
 class BSONTreeWriter extends TreeWriter[BSONValue, ReactiveMongoPicklingBackend.type](ReactiveMongoTreeBuilder) {
-  def writeBinary(bytes: Array[Byte]): Unit = write(BSONBinary(bytes, Subtype.GenericBinarySubtype))
-  def writeObjectId(id: BSONObjectID): Unit = write(id)
-  def writeDateTime(timestamp: Long): Unit = write(BSONDateTime(timestamp))
+  def writeBinary(bytes: Array[Byte]): this.type = {
+    write(BSONBinary(bytes, Subtype.GenericBinarySubtype))
+    this
+  }
+  
+  def writeObjectId(id: BSONObjectID): this.type = {
+    write(id)
+    this
+  }
+  
+  def writeDateTime(timestamp: Long): this.type = {
+    write(BSONDateTime(timestamp))
+    this
+  }
 }
 

@@ -37,36 +37,78 @@ class TreeWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Ba
     * If currently in an array context, appends this value. 
     * Otherwise fails with an IllegalStateException.
     */
-  def write(value: Base): Unit = stack.top.append(value)
+  def write(value: Base): this.type = {
+    stack.top.append(value)
+    this
+  }
 
-  override def writeString(string: String): Unit = stack.top.append(builder.string(string))
-  override def writeFloat(float: Float): Unit = stack.top.append(builder.float(float))
-  override def writeDouble(double: Double): Unit = stack.top.append(builder.double(double))
-  override def writeNull(): Unit = stack.top.append(builder.nul)
-  override def writeInt(int: Int): Unit = stack.top.append(builder.int(int))
-  override def writeBoolean(boolean: Boolean): Unit = stack.top.append(builder.boolean(boolean))
-  override def writeLong(long: Long): Unit = stack.top.append(builder.long(long))
-
-  override def writeArrayStart(): Unit = stack.push(new ArrayWriter(builder))
-  override def writeObjectStart(): Unit = stack.push(new ObjectWriter(builder))
+  override def writeString(string: String): this.type = {
+    stack.top.append(builder.string(string))
+    this
+  }
   
-  override def writeArrayEnd(): Unit = stack.top match {
+  override def writeFloat(float: Float): this.type = {
+    stack.top.append(builder.float(float))
+    this
+  }
+  
+  override def writeDouble(double: Double): this.type = {
+    stack.top.append(builder.double(double))
+    this
+  }
+  
+  override def writeNull(): this.type = {
+    stack.top.append(builder.nul)
+    this
+  }
+  
+  override def writeInt(int: Int): this.type = {
+    stack.top.append(builder.int(int))
+    this
+  }
+  
+  override def writeBoolean(boolean: Boolean): this.type = {
+    stack.top.append(builder.boolean(boolean))
+    this
+  }
+  
+  override def writeLong(long: Long): this.type = {
+    stack.top.append(builder.long(long))
+    this
+  }
+
+  override def writeArrayStart(): this.type = {
+    stack.push(new ArrayWriter(builder))
+    this
+  }
+  
+  override def writeObjectStart(): this.type = {
+    stack.push(new ObjectWriter(builder))
+    this
+  }
+  
+  override def writeArrayEnd(): this.type = stack.top match {
     case array: ArrayWriter[Base, Backend] =>
       stack.pop()
       stack.top.append(array.result)
+      
+      this
     case other => throw new IllegalStateException("Not in an array")
   }
   
-  override def writeObjectEnd(): Unit = stack.top match {
+  override def writeObjectEnd(): this.type = stack.top match {
     case obj: ObjectWriter[Base, Backend] =>
       stack.pop()
       stack.top.append(obj.result)
+      
+      this
     case other => throw new IllegalStateException("Not in an object")
   }
   
-  override def writeAttributeName(name: String): Unit = stack.top match {
+  override def writeAttributeName(name: String): this.type = stack.top match {
     case obj: ObjectWriter[Base, Backend] =>
       obj.writeAttributeName(name)
+      this
     case other => throw new IllegalStateException("Not in an object")
   }
 }
