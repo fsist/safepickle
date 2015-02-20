@@ -3,7 +3,7 @@ package io.github.danarmak.safepickle
 import org.scalatest.FunSuite
 
 class AutogenTest extends FunSuite {
-  def roundtrip[T](value: T, expectedWrapper: Wrapper)(implicit pickler: Pickler[T, WrapperBackend.type]): Unit = {
+  def roundtrip[T](value: T, expectedWrapper: Wrapper)(implicit pickler: Pickler[T, PicklingBackend]): Unit = {
     val writer = WrapperBackend.writer()
     pickler.pickle(value, writer)
     val wrapper = writer.result()

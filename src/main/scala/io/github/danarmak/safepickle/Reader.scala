@@ -30,7 +30,7 @@ trait Reader[Backend <: PicklingBackend] {
   def boolean: Boolean
   def attributeName: String
   
-  def unpickle[T](implicit unpickler: Pickler[T, _ >: Backend]): T = unpickler.unpickle(this.asInstanceOf[Backend#PickleReader])
+  def unpickle[T](implicit unpickler: Pickler[T, Backend]): T = unpickler.unpickle(this.asInstanceOf[Backend#PickleReader])
 }
 
 object Reader {

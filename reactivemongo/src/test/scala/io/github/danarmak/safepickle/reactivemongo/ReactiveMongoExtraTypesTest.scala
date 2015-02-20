@@ -1,14 +1,15 @@
 package io.github.danarmak.safepickle.reactivemongo
 
-import io.github.danarmak.safepickle.{StringWrapper, WrapperBackend}
+import io.github.danarmak.safepickle.{PrimitivePicklers, StringWrapper, WrapperBackend}
+import org.apache.commons.codec.binary.Base64
 import org.scalatest.FunSuite
-import reactivemongo.bson.BSONObjectID
+import reactivemongo.bson.{BSONBinary, BSONObjectID}
 
 class ReactiveMongoExtraTypesTest extends FunSuite {
-  import ReactiveMongoExtraTypes._
-  
+  import ReactiveMongoPicklingBackend._
+
   test("Write ObjectId to different backends") {
-    val oid = BSONObjectID.generate 
+    val oid = BSONObjectID.generate
     
     {
       val writer = ReactiveMongoPicklingBackend.writer()
@@ -20,6 +21,25 @@ class ReactiveMongoExtraTypesTest extends FunSuite {
       val writer = WrapperBackend.writer()
       writer.pickle(oid)
       assert(writer.result() == StringWrapper(oid.stringify))
+    }
+  }
+  
+  test("Write byte array to different backends") {
+    val arr = Array[Byte](1,2,3,4,5)
+
+    {
+      val writer = ReactiveMongoPicklingBackend.writer()
+      writer.pickle(arr)
+      // BSONBinary.equals doesn't compare contents of arrays and so always returns false
+      val result = writer.result().asInstanceOf[BSONBinary]
+      assert(result.value.readArray(result.value.size).toIndexedSeq == arr.toIndexedSeq)
+    }
+
+    {
+      import PrimitivePicklers._
+      val writer = WrapperBackend.writer()
+      writer.pickle(arr)
+      assert(writer.result() == StringWrapper(Base64.encodeBase64String(arr)))
     }
   }
 }

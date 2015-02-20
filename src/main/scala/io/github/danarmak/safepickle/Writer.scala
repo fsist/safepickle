@@ -36,7 +36,7 @@ trait Writer[Repr, Backend <: PicklingBackend] {
   def writeObjectStart(): this.type
   def writeObjectEnd(): this.type
   
-  def pickle[T](t: T)(implicit pickler: Pickler[T, _ >: Backend]): this.type = {
+  def pickle[T](t: T)(implicit pickler: Pickler[T, Backend]): this.type = {
     pickler.pickle(t, this.asInstanceOf[Backend#PickleWriter])
     this
   }

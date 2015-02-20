@@ -3,10 +3,6 @@ package io.github.danarmak.safepickle
 import scala.collection.generic.CanBuildFrom
 
 object CollectionPicklers {
-  // Don't remove this import - I think it prevents implicit resolution from using e.g. iterablePickler for an Array[Byte]
-
-  import PrimitivePicklers._
-
   implicit def iterablePickler[T, Coll <: Iterable[T], Backend <: PicklingBackend](implicit tpickler: Pickler[T, Backend],
                                                                                    cbf: CanBuildFrom[Nothing, T, Coll]): Pickler[Coll, Backend] = new Pickler[Coll, Backend] {
     override def pickle(coll: Coll, writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit = {

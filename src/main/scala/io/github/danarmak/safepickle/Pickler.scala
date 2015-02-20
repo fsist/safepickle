@@ -1,5 +1,7 @@
 package io.github.danarmak.safepickle
 
+import org.apache.commons.codec.binary.Base64
+
 import scala.language.experimental.macros
 
 /** A way to pickle or unpickle a type.
@@ -94,4 +96,14 @@ object PrimitivePicklers {
       if (reader.tokenType == TokenType.Null) null else throw new IllegalStateException("Expected: null")
   }
 
+  /** Byte array pickler that writes the base64 value of the array as a string. */
+  implicit object ByteArrayPickler extends Pickler[Array[Byte], PicklingBackend] {
+    override def pickle(t: Array[Byte], writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean): Unit = {
+      writer.writeString(Base64.encodeBase64String(t))
+    }
+
+    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean): Array[Byte] = {
+      Base64.decodeBase64(reader.string)
+    }
+  }
 }

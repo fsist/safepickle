@@ -27,7 +27,8 @@ allprojects {
     compile 'org.scala-lang:scala-compiler:2.11.4'
 
     compile 'com.typesafe.scala-logging:scala-logging_2.11:3.1.0'
-
+    compile 'commons-codec:commons-codec:1.10' // For base64
+    
     testCompile 'ch.qos.logback:logback-classic:1.1.2'
     testCompile 'org.scalatest:scalatest_2.11:2.2.1'
   }
