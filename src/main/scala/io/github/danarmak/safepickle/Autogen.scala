@@ -244,7 +244,6 @@ class Autogen(val c: Context) {
               tvalue match {
                 case ..$picklerMatchClauses
                 case null => throw new IllegalArgumentException("Refusing to serialize null value of type " + $traitName)
-                case other => throw new IllegalArgumentException("Unexpected concrete type of " + $traitName + s": $${other.getClass}")
               }
             }
 
