@@ -20,7 +20,7 @@ class Autogen(val c: Context) {
         else c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed trait $cls")
       }
       else if (cls.isModuleClass) {
-        val module = cls.companion.asModule
+        val module = cls.module.asModule
         generateModulePickler(module)
       }
       else if (cls.isAbstract) {
@@ -45,7 +45,9 @@ class Autogen(val c: Context) {
     // A module is serialized by writing its non-qualified name as a string.
 
     val name = symbol.name.decodedName.toString
-    c.Expr(q"new SingletonPickler[T, Backend]($name, $symbol)")
+    val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
+    val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
+    c.Expr(q"new SingletonPickler[$ttype, $btype]($name, $symbol)")
   }
 
   private def generateClassPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](clazz: ClassSymbol): Expr[Pickler[T, Backend]] = {
