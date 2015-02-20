@@ -117,6 +117,7 @@ class Autogen(val c: Context) {
 
                   case other => // Discard argument with unexpected name (or type tag)
                 }
+                reader.next()
               }"""
 
         val ret = q"""
