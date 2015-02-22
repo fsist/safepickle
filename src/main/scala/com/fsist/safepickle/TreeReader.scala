@@ -1,7 +1,7 @@
 package com.fsist.safepickle
 
 /** A way to analyze a reified tree of nodes, with a base concrete type of `Node`,
-  * representing serialized primitive values.
+  * representing pickled primitive values.
   */
 trait TreeParser[Node, Backend <: PicklingBackend] {
   def nodeType(node: Node): TreeNodeType
@@ -16,7 +16,7 @@ trait TreeParser[Node, Backend <: PicklingBackend] {
   def obj(node: Node): Iterator[(String, Node)]
 }
 
-/** A Reader implementation for a reified tree of nodes representing serialized primitive values. */
+/** A Reader implementation for a reified tree of nodes representing pickled primitive values. */
 class TreeReader[Node, Backend <: PicklingBackend](parser: TreeParser[Node, Backend], root: Node) extends Reader[Backend] {
 
   import TreeReader._

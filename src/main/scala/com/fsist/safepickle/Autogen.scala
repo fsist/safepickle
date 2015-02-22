@@ -54,7 +54,7 @@ class Autogen(val c: Context) {
   }
 
   private def generateModulePickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](symbol: ModuleSymbol): Expr[Pickler[T, Backend]] = {
-    // A module is serialized by writing its non-qualified name as a string.
+    // A module is pickled by writing its non-qualified name as a string.
 
     val name = symbol.name.decodedName.toString
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
@@ -75,7 +75,7 @@ class Autogen(val c: Context) {
 
     val clazzName = clazz.name.decodedName.toString
 
-    // Serialize 0-parameter classes the same way as modules
+    // Pickle 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
       val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz)"
 //      info(s"Generated for class without param lists: $ret")
@@ -288,7 +288,7 @@ class Autogen(val c: Context) {
          otherSubtype <- subtypes if subtype.tpe.erasure =:= otherSubtype.tpe.erasure && subtype.name != otherSubtype.name) {
       throw new IllegalArgumentException(
         s"Two concrete subtypes of sealed trait $traitName have the same erasure, so we can't generate a pickler that would " +
-          s"produce the correct serialized type tag at runtime. The subtypes ${subtype.name} and ${otherSubtype.name} " +
+          s"produce the correct pickled type tag at runtime. The subtypes ${subtype.name} and ${otherSubtype.name} " +
           s"both have erased type ${subtype.tpe.erasure}.")
     }
 
@@ -307,7 +307,7 @@ class Autogen(val c: Context) {
             override def pickle(tvalue: $ttype, writer: $btype#PickleWriter, emitObjectStart: Boolean = true): Unit = {
               tvalue match {
                 case ..$picklerMatchClauses
-                case null => throw new IllegalArgumentException("Refusing to serialize null value of type " + $traitName)
+                case null => throw new IllegalArgumentException("Refusing to pickle null value of type " + $traitName)
               }
             }
 
@@ -356,7 +356,7 @@ class Autogen(val c: Context) {
   }
 }
 
-/** A pickler for a value T that serializes it to the fixed string `name`. */
+/** A pickler for a value T that pickles it to the fixed string `name`. */
 class SingletonPickler[T, Backend <: PicklingBackend](name: String, value: T) extends Pickler[T, Backend] {
   override def pickle(t: T, writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit = {
     writer.writeString(name)

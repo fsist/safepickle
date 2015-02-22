@@ -6,7 +6,7 @@ class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
   import AutogenCompatibleChangesTest._
   import WrapperBackend.picklers._
 
-  def assertEqualSerialization[A, B](a: A, b: B)(implicit apickler: Pickler[A, PicklingBackend], bpickler: Pickler[B, PicklingBackend]): Unit = {
+  def assertEqualPickle[A, B](a: A, b: B)(implicit apickler: Pickler[A, PicklingBackend], bpickler: Pickler[B, PicklingBackend]): Unit = {
     val awriter = WrapperBackend.writer()
     apickler.pickle(a, awriter)
     val awrapper = awriter.result()
@@ -28,19 +28,19 @@ class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
     assert(b == expected)
   }
 
-  test("The class name doesn't matter when not serializing a sealed trait") {
-    assertEqualSerialization(Scope7.C1(123), Scope7.C2(123))
+  test("The class name doesn't matter when not pickling a sealed trait") {
+    assertEqualPickle(Scope7.C1(123), Scope7.C2(123))
   }
 
   test("Classes without parameters are compatible with objects") {
-    assertEqualSerialization(new Scope1.C, new Scope2.C)
-    assertEqualSerialization(new Scope1.C, Scope3.C)
+    assertEqualPickle(new Scope1.C, new Scope2.C)
+    assertEqualPickle(new Scope1.C, Scope3.C)
   }
 
   test("Case and non-case objects and classes are compatible") {
-    assertEqualSerialization(Scope4.C1(123), new Scope4.C2(123))
-    assertEqualSerialization(Scope4.C1(123), new Scope4.C3(123))
-    assertEqualSerialization(Scope4.O, Scope5.O)
+    assertEqualPickle(Scope4.C1(123), new Scope4.C2(123))
+    assertEqualPickle(Scope4.C1(123), new Scope4.C3(123))
+    assertEqualPickle(Scope4.O, Scope5.O)
   }
 
   test("Add param with default value, at any position") {

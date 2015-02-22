@@ -11,7 +11,7 @@ import scala.language.experimental.macros
   * instances returned.
   */
 trait PicklingBackend {
-  /** The type of the serialized form used by this backend. */
+  /** The type of the pickled form used by this backend. */
   type Repr
   
   type PickleReader <: Reader[this.type]

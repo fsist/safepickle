@@ -21,6 +21,6 @@ object TokenType {
   case object ObjectStart extends TokenType
   case object ObjectEnd extends TokenType
   
-  /** Any other type, supported by this serialization format but not required to be supported by other formats. */
+  /** Any other type, supported by this pickling format but not required to be supported by other formats. */
   case object Other extends TokenType
 }

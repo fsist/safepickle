@@ -2,7 +2,7 @@ package com.fsist.safepickle
 
 import org.scalatest.FunSuiteLike
 
-/** Serializes to ordinary Scala objects. Used for testing. */
+/** Pickles to ordinary Scala objects. Used for testing. */
 object WrapperBackend extends PicklingBackend {
   override type Repr = Wrapper
   override type PickleWriter = TreeWriter[Wrapper, this.type]
