@@ -47,6 +47,8 @@ An `Array[Byte]` is serialized as a base64 string, but some backends override th
 
 Values of type `Iterable[T]`, where T is any supported type, are serialized as Arrays. This includes all kinds of `Iterable`s, including `Set`s, as well as `Array[T]`, which isn't natively an `Iterable[T]`.
 
+Tuples of supported types.
+
 `Map`s are serialized as arrays, where each key-value pair is serialized as an array of size 2. However, as a special case, `Map`s with String keys are serialized as Objects.
 
 Objects are serialized as strings whose value is the object's (non fully qualified) name.
@@ -108,3 +110,4 @@ Extra TODOs (will be moved to tickets):
 - Test autogen of sealed trait extended by sealed trait extended by class
 - Document backend.picklers cake and add usage examples to readme
 - Replace the word 'serialization' with 'pickling' everywhere
+- Support tuples of all sizes
