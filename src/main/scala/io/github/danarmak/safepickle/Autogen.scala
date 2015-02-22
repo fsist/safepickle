@@ -14,6 +14,15 @@ class Autogen(val c: Context) {
     val tag = implicitly[WeakTypeTag[T]]
     val symbol = tag.tpe.typeSymbol.asType
 
+    {
+      var owner = symbol.owner
+      while (owner != c.universe.NoSymbol) {
+        if (owner.isClass && ! owner.isModuleClass)
+          c.abort(c.enclosingPosition, s"Cannot generate pickler for $symbol because it is owned by class $owner")
+        owner = owner.owner
+      }
+    }
+
     if (symbol.isClass) {
       val cls = symbol.asClass
       if (cls.isTrait) {
@@ -201,7 +210,7 @@ class Autogen(val c: Context) {
           }
          """
 
-        //                        info(s"Generated for class: $ret")
+//                                info(s"Generated for class: $ret")
 
         c.Expr(ret)
       }
