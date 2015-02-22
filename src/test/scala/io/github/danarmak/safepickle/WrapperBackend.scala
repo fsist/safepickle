@@ -1,5 +1,7 @@
 package io.github.danarmak.safepickle
 
+import org.scalatest.FunSuiteLike
+
 /** Serializes to ordinary Scala objects. Used for testing. */
 object WrapperBackend extends PicklingBackend {
   override type Repr = Wrapper
@@ -56,3 +58,16 @@ object WrapperParser extends TreeParser[Wrapper, WrapperBackend.type] {
   override def array(node: Wrapper): Iterator[Wrapper] = node.asInstanceOf[ArrayWrapper].values.iterator
   override def obj(node: Wrapper): Iterator[(String, Wrapper)] = node.asInstanceOf[ObjectWrapper].attributes.iterator
 }
+
+trait WrapperTester { self: FunSuiteLike =>
+  def roundtrip[T](value: T, expectedWrapper: Wrapper)(implicit pickler: Pickler[T, PicklingBackend]): Unit = {
+    val writer = WrapperBackend.writer()
+    pickler.pickle(value, writer)
+    val wrapper = writer.result()
+    assert(wrapper == expectedWrapper)
+    val reader = WrapperBackend.reader(wrapper)
+    val read = pickler.unpickle(reader)
+    assert(read == value)
+  }
+}
+
