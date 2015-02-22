@@ -45,7 +45,7 @@ The primitive values corresponding to the above list (Boolean, String, Int, Long
 
 An `Array[Byte]` is serialized as a base64 string, but some backends override this with, e.g. BSON-based backends have a dedicated Binary type.
 
-Values of type `Iterable[T]`, where T is any supported type, are serialized as Arrays. This includes all kinds of `Iterable`s, including `Set`s.
+Values of type `Iterable[T]`, where T is any supported type, are serialized as Arrays. This includes all kinds of `Iterable`s, including `Set`s, as well as `Array[T]`, which isn't natively an `Iterable[T]`.
 
 `Map`s are serialized as arrays, where each key-value pair is serialized as an array of size 2. However, as a special case, `Map`s with String keys are serialized as Objects.
 
