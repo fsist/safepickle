@@ -96,8 +96,7 @@ Because the compatibility is bidirectional, each of these cases implies the reve
  4. The order of parameters can be changed freely.
  5. Any sequence type (`Iterable[T]` or a subtype of it) can be replaced with any other sequence type with the same member type. E.g., `List[Int]`  can be replaced with `Vector[Int]`. This includes `Set`s and `Map`s, but not `Map`s whose key type is String, because those are serialized as Objects and not as Arrays. (If a non-Set sequence type is replaced with a Set, when unpickling, duplicate values will be discarded.)
  6. Only in a class parameter type, `T` can be replaced with `Option[T]`, as long as the non-optional `T` has always had a default value. (Recall that, for class parameters, `Option[T]` is written as a `T` or omitted entirely if the value was `None`.)
- 7. Numeric types can be replaced with wider ones: Int with Long, and Float with Double. If code with a narrow type declared reads data with a wide value that doesn't fit, it will be truncated (Long -> Int) or rounded (Double -> Float).
- 8. A sequence member type, or a map key or value type, can be replaced with another type, if the two types are compatible according to these rules. For instance, `List[List[Int]]` can be replaced with `Vector[Set[Long]]`.
+ 7. A sequence member type, or a map key or value type, can be replaced with another type, if the two types are compatible according to these rules. For instance, `List[List[Int]]` can be replaced with `Vector[Set[Long]]`.
 
 Extra TODOs (will be moved to tickets):
 - Check the return value of Reader.read() in (most? all?) calls
