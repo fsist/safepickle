@@ -292,6 +292,13 @@ class Autogen(val c: Context) {
           s"both have erased type ${subtype.tpe.erasure}.")
     }
 
+    for (subtype <- subtypes;
+         otherSubtype <- subtypes if subtype.name.decodedName.toString == otherSubtype.name.decodedName.toString) {
+      throw new IllegalArgumentException(
+        s"Two concrete subtypes of sealed trait $traitName have the same local name ${subtype.name.decodedName}, " +
+          s"so we can't distinguish between them with a type tag. Such a naming convention is usually bad practice.")
+    }
+
     val implicitSubPicklers = q"..${subtypes.map(_.picklerDecl)}"
     val picklerMatchClauses = q"..${subtypes.map(_.picklerMatchClause)}"
     val unpicklerMatchClauses = q"..${subtypes.map(_.unpicklerMatchClause)}"
