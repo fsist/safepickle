@@ -3,6 +3,7 @@ package io.github.danarmak.safepickle
 import scala.language.higherKinds
 
 import scala.collection.generic.CanBuildFrom
+import scala.reflect.ClassTag
 
 trait CollectionPicklers {
   implicit def iterablePickler[T, Coll[T] <: Iterable[T], Backend <: PicklingBackend](implicit tpickler: Pickler[T, Backend],
@@ -15,6 +16,32 @@ trait CollectionPicklers {
     }
 
     override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): Coll[T] = {
+      if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
+      if (!reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
+
+      val builder = cbf()
+      while (reader.tokenType != TokenType.ArrayEnd) {
+        builder += tpickler.unpickle(reader)
+        if (!reader.next()) throw new IllegalStateException("Unexpected EOF inside array")
+      }
+
+      // Leave the array end token as the current token
+      builder.result()
+    }
+  }
+
+  /** An array is not natively an Iterable, and isn't picked up by `iterablePickler` above */
+  implicit def arrayPickler[T, Backend <: PicklingBackend](implicit tpickler: Pickler[T, Backend], tag: ClassTag[T]): Pickler[Array[T], Backend] = new Pickler[Array[T], Backend] {
+    val cbf = Array.canBuildFrom[T]
+
+    override def pickle(Array: Array[T], writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit = {
+      writer.writeArrayStart()
+      val iter = Array.iterator
+      while (iter.hasNext) tpickler.pickle(iter.next, writer)
+      writer.writeArrayEnd()
+    }
+
+    override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): Array[T] = {
       if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
       if (!reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
 

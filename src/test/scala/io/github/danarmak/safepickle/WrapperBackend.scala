@@ -60,7 +60,8 @@ object WrapperParser extends TreeParser[Wrapper, WrapperBackend.type] {
 }
 
 trait WrapperTester { self: FunSuiteLike =>
-  def roundtrip[T](value: T, expectedWrapper: Wrapper)(implicit pickler: Pickler[T, PicklingBackend]): Unit = {
+  def roundtrip[T](value: T, expectedWrapper: Wrapper, equalityTest: Option[(T, T) => Boolean] = None)
+                  (implicit pickler: Pickler[T, PicklingBackend]): Unit = {
     import WrapperBackend.picklers._
 
     val writer = WrapperBackend.writer()
@@ -69,7 +70,11 @@ trait WrapperTester { self: FunSuiteLike =>
     assert(wrapper == expectedWrapper)
     val reader = WrapperBackend.reader(wrapper)
     val read = pickler.unpickle(reader)
-    assert(read == value)
+
+    equalityTest match {
+      case Some(test) => assert(test(read, value))
+      case None => assert(read == value)
+    }
   }
 }
 
