@@ -61,6 +61,8 @@ object WrapperParser extends TreeParser[Wrapper, WrapperBackend.type] {
 
 trait WrapperTester { self: FunSuiteLike =>
   def roundtrip[T](value: T, expectedWrapper: Wrapper)(implicit pickler: Pickler[T, PicklingBackend]): Unit = {
+    import WrapperBackend.picklers._
+
     val writer = WrapperBackend.writer()
     pickler.pickle(value, writer)
     val wrapper = writer.result()

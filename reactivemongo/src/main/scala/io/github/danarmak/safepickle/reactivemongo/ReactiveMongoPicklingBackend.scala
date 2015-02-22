@@ -1,5 +1,6 @@
 package io.github.danarmak.safepickle.reactivemongo
 
+import io.github.danarmak.safepickle.PicklingBackend.DefaultPicklers
 import io.github.danarmak.safepickle._
 import _root_.reactivemongo.bson._
 
@@ -12,7 +13,10 @@ object ReactiveMongoPicklingBackend extends PicklingBackend {
   
   override def writer(): PickleWriter = new BSONTreeWriter
 
+  override val picklers : ReactiveMongoPicklers = new ReactiveMongoPicklers {}
+}
 
+trait ReactiveMongoPicklers extends DefaultPicklers {
   implicit object Binary extends Pickler[Array[Byte], ReactiveMongoPicklingBackend.type] {
     override def pickle(t: Array[Byte], writer: ReactiveMongoPicklingBackend.PickleWriter, emitObjectStart: Boolean = true): Unit =
       writer.writeBinary(t)
@@ -21,9 +25,9 @@ object ReactiveMongoPicklingBackend extends PicklingBackend {
   }
 
   implicit object ObjectId extends Pickler[BSONObjectID, ReactiveMongoPicklingBackend.type] {
-    override def pickle(t: BSONObjectID, writer: PickleWriter, emitObjectStart: Boolean = true): Unit =
+    override def pickle(t: BSONObjectID, writer: ReactiveMongoPicklingBackend.type#PickleWriter, emitObjectStart: Boolean = true): Unit =
       writer.writeObjectId(t)
-    override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): BSONObjectID =
+    override def unpickle(reader: ReactiveMongoPicklingBackend.type#PickleReader, expectObjectStart: Boolean = true): BSONObjectID =
       reader.objectId
   }
 

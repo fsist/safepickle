@@ -3,8 +3,8 @@ package io.github.danarmak.safepickle
 import org.scalatest.FunSuite
 
 class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
-
   import AutogenCompatibleChangesTest._
+  import WrapperBackend.picklers._
 
   def assertEqualSerialization[A, B](a: A, b: B)(implicit apickler: Pickler[A, PicklingBackend], bpickler: Pickler[B, PicklingBackend]): Unit = {
     val awriter = WrapperBackend.writer()

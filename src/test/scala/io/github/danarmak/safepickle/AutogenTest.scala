@@ -37,6 +37,7 @@ object AutogenTest {
 
 class AutogenTest extends FunSuite with WrapperTester {
   import AutogenTest._
+  import WrapperBackend.picklers._
 
   test("Case class") {
     roundtrip(
@@ -113,3 +114,4 @@ class AutogenTest extends FunSuite with WrapperTester {
     )
   }
 }
+

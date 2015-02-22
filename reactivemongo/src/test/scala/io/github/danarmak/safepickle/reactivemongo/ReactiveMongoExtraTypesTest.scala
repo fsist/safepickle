@@ -6,7 +6,7 @@ import org.scalatest.FunSuite
 import reactivemongo.bson.{BSONBinary, BSONObjectID}
 
 class ReactiveMongoExtraTypesTest extends FunSuite {
-  import ReactiveMongoPicklingBackend._
+  import ReactiveMongoPicklingBackend.picklers._
 
   test("Write ObjectId to different backends") {
     val oid = BSONObjectID.generate
@@ -36,7 +36,6 @@ class ReactiveMongoExtraTypesTest extends FunSuite {
     }
 
     {
-      import PrimitivePicklers._
       val writer = WrapperBackend.writer()
       writer.pickle(arr)
       assert(writer.result() == StringWrapper(Base64.encodeBase64String(arr)))

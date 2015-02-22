@@ -29,17 +29,17 @@ class Autogen(val c: Context) {
         if (cls.isSealed) {
           generateTraitPickler(cls)
         }
-        else c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed trait $cls")
+        else c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed $cls")
       }
       else if (cls.isModuleClass) {
         val module = cls.module.asModule
         generateModulePickler(module)
       }
       else if (cls.isAbstract) {
-        c.abort(c.enclosingPosition, s"Cannot generate pickler for abstract class $cls")
+        c.abort(c.enclosingPosition, s"Cannot generate pickler for abstract $cls")
       }
       else if (cls.isPackageClass) {
-        c.abort(c.enclosingPosition, s"Cannot generate pickler for package class $cls")
+        c.abort(c.enclosingPosition, s"Cannot generate pickler for package $cls")
       }
       else {
         generateClassPickler(cls)
@@ -173,8 +173,6 @@ class Autogen(val c: Context) {
         val ret = q"""
           new Pickler[$ttype, $btype] {
             import io.github.danarmak.safepickle._
-            import PrimitivePicklers._
-            import CollectionPicklers._
 
             ..$implicitSubPicklers
 
@@ -303,8 +301,6 @@ class Autogen(val c: Context) {
     val ret = q"""
           new Pickler[$ttype, $btype] {
             import io.github.danarmak.safepickle._
-            import PrimitivePicklers._
-            import CollectionPicklers._
 
             ..$implicitSubPicklers
 
