@@ -78,27 +78,56 @@ class Autogen(val c: Context) {
         val defaultValues = paramDefaultValues(clazz, ctor)
         val paramInfos: List[ParamInfo] = for ((param, defaultValue) <- params.zip(defaultValues)) yield {
           val name = param.name.decodedName.toTermName
-          val tpe = param.typeSignature
 
-          val paramPicklerName = TermName(c.freshName(s"paramPickler_$name"))
-          val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
+          val isOption = param.typeSignature <:< c.typeOf[Option[Any]]
 
-          val writeParam =
-            q"""writer.writeAttributeName(${name.toString})
-               $paramPicklerName.pickle(tvalue.$name, writer)"""
-
-          val argDecl = defaultValue match {
-            case Some(value) => q"var $name: $tpe = $value"
-            case None => q"var $name: $tpe = null.asInstanceOf[$tpe]"
+          val tpe = if (! isOption) param.typeSignature else {
+            param.typeSignature.typeArgs.head
           }
 
-          val argInit = TermName(name.toString + "$initialized")
-          val argInitDecl = q"var $argInit: Boolean = false"
+          val paramPicklerName = TermName(name + "$paramPickler")
+          val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
 
-          val argNameMatchClause = cq"${name.toString} => $name = $paramPicklerName.unpickle(reader) ; $argInit = true"
+          val writeParam = if (! isOption) {
+            q"""writer.writeAttributeName(${name.toString})
+               $paramPicklerName.pickle(tvalue.$name, writer)
+              """
+          }
+          else {
+            q"""tvalue.$name match {
+                  case Some(inner) =>
+                    writer.writeAttributeName(${name.toString})
+                    $paramPicklerName.pickle(inner, writer)
+                  case None =>
+                }
+               """
+          }
+
+          val argDecl = defaultValue match {
+            case Some(value) =>
+              if (isOption) q"var $name: Option[$tpe] = $value"
+              else q"var $name: $tpe = $value"
+            case None =>
+              if (isOption) q"var $name: Option[$tpe] = None"
+              else q"var $name: $tpe = null.asInstanceOf[$tpe]"
+          }
+
+          val argInit = TermName(name + "$initialized")
+          val argInitDecl = q"var $argInit: Boolean = ${defaultValue.isDefined || isOption}"
+
+          val argNameMatchClause = if (isOption) {
+            cq"${name.toString} => $name = Some($paramPicklerName.unpickle(reader)) ; $argInit = true"
+          } else {
+            cq"${name.toString} => $name = $paramPicklerName.unpickle(reader) ; $argInit = true"
+          }
 
           val paramFullName = s"$clazzName.$name"
-          val getArgValue = q"""if ($argInit) $name else throw new IllegalArgumentException("No value found for " + $paramFullName)"""
+          val getArgValue = if (isOption) {
+            q"$name"
+          }
+          else {
+            q"""if ($argInit) $name else throw new IllegalArgumentException("No value found for " + $paramFullName)"""
+          }
 
           ParamInfo(name, tpe, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit, argInitDecl, argNameMatchClause, getArgValue)
         }
@@ -163,7 +192,7 @@ class Autogen(val c: Context) {
           }
          """
 
-        //                c.info(c.enclosingPosition, s"Generated: $ret", false)
+//                        c.info(c.enclosingPosition, s"Generated: $ret", false)
 
         c.Expr(ret)
       }

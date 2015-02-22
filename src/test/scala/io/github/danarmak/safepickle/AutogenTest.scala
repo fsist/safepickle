@@ -15,7 +15,7 @@ class AutogenTest extends FunSuite {
   
   test("Case class") {
     case class C(s: String, i: Int)
-    
+
     roundtrip(
       C("foo", 123),
       ObjectWrapper(Map(
@@ -28,7 +28,7 @@ class AutogenTest extends FunSuite {
   test("Non-case class") {
     class C(val s: String, val i: Int) {
       override def equals(other: Any): Boolean = other.isInstanceOf[C] && {
-        val otherc = other.asInstanceOf[C]        
+        val otherc = other.asInstanceOf[C]
         otherc.s == s && otherc.i == i
       }
       override def hashCode(): Int = s.hashCode * i
@@ -42,7 +42,7 @@ class AutogenTest extends FunSuite {
       ))
     )
   }
-  
+
   test("Case object") {
     case object O
 
@@ -60,9 +60,9 @@ class AutogenTest extends FunSuite {
       StringWrapper("O")
     )
   }
-  
+
   test("Case class with zero parameters") {
-    case class C() 
+    case class C()
 
     roundtrip(
       C(),
@@ -75,19 +75,19 @@ class AutogenTest extends FunSuite {
       override def equals(other: Any): Boolean = other.isInstanceOf[C]
       override def hashCode(): Int = 0
     }
-    
+
     roundtrip(
       new C,
       StringWrapper("C")
     )
   }
-  
+
   test("Sealed trait") {
     sealed trait T
     case class C(s: String) extends T
     case class D(i: Int) extends T
     case object O extends T
-    
+
     roundtrip[T](
       C("foo"),
       ObjectWrapper(Map(
@@ -101,4 +101,19 @@ class AutogenTest extends FunSuite {
       StringWrapper("O")
     )
   }
+
+  test("Class parameter of type Option[T]"){
+    case class C(opt: Option[Int])
+
+    roundtrip(
+      C(Some(1)),
+      ObjectWrapper(Map("opt" -> IntWrapper(1)))
+    )
+
+    roundtrip(
+      C(None),
+      ObjectWrapper(Map())
+    )
+  }
+
 }
