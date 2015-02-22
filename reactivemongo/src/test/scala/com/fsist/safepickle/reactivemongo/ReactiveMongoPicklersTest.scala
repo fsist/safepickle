@@ -1,11 +1,13 @@
 package com.fsist.safepickle.reactivemongo
 
-import com.fsist.safepickle.{StringWrapper, WrapperBackend}
+import com.fsist.safepickle.joda.JodaTimePicklers
+import com.fsist.safepickle.{LongWrapper, StringWrapper, WrapperBackend}
 import org.apache.commons.codec.binary.Base64
+import org.joda.time.Instant
 import org.scalatest.FunSuite
-import reactivemongo.bson.{BSONBinary, BSONObjectID}
+import reactivemongo.bson.{BSONDateTime, BSONBinary, BSONObjectID}
 
-class ReactiveMongoExtraTypesTest extends FunSuite {
+class ReactiveMongoPicklersTest extends FunSuite {
   import ReactiveMongoPicklingBackend.picklers._
 
   test("Write ObjectId to different backends") {
@@ -39,6 +41,24 @@ class ReactiveMongoExtraTypesTest extends FunSuite {
       val writer = WrapperBackend.writer()
       writer.pickle(arr)
       assert(writer.result() == StringWrapper(Base64.encodeBase64String(arr)))
+    }
+  }
+
+  test("Write Instant to different backends") {
+    val ts = new Instant(12345)
+
+    {
+      val writer = ReactiveMongoPicklingBackend.writer()
+      writer.pickle(ts)
+      val result = writer.result().asInstanceOf[BSONDateTime]
+      assert(result.value == ts.getMillis)
+    }
+
+    {
+      import JodaTimePicklers._
+      val writer = WrapperBackend.writer()
+      writer.pickle(ts)
+      assert(writer.result() == LongWrapper(12345))
     }
   }
 }

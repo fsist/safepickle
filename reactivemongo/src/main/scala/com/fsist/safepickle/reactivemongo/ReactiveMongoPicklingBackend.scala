@@ -1,5 +1,9 @@
 package com.fsist.safepickle.reactivemongo
 
+import java.util.Date
+
+import com.fsist.safepickle.reactivemongo.ReactiveMongoPicklingBackend.{PickleWriter, PickleReader}
+import org.joda.time.{DateTime, Instant}
 import reactivemongo.bson._
 import com.fsist.safepickle._
 import PicklingBackend.DefaultPicklers
@@ -37,6 +41,23 @@ trait ReactiveMongoPicklers extends DefaultPicklers {
       writer.writeString(t.stringify)
     override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): BSONObjectID =
       BSONObjectID(reader.string)
+  }
+
+  // Types which can be pickled as BSONDateTime
+
+  implicit object InstantPickler extends Pickler[Instant, ReactiveMongoPicklingBackend.type] {
+    override def pickle(t: Instant, writer: PickleWriter, emitObjectStart: Boolean): Unit = writer.writeDateTime(t.getMillis)
+    override def unpickle(reader: PickleReader, expectObjectStart: Boolean): Instant = new Instant(reader.dateTime)
+  }
+
+  implicit object JodaDateTimePickler extends Pickler[DateTime, ReactiveMongoPicklingBackend.type] {
+    override def pickle(t: DateTime, writer: PickleWriter, emitObjectStart: Boolean): Unit = writer.writeDateTime(t.getMillis)
+    override def unpickle(reader: PickleReader, expectObjectStart: Boolean): DateTime = new DateTime(reader.dateTime)
+  }
+
+  implicit object JavaDatePickler extends Pickler[Date, ReactiveMongoPicklingBackend.type] {
+    override def pickle(t: Date, writer: PickleWriter, emitObjectStart: Boolean): Unit = writer.writeDateTime(t.getTime)
+    override def unpickle(reader: PickleReader, expectObjectStart: Boolean): Date = new Date(reader.dateTime)
   }
 }
 
