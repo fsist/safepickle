@@ -66,9 +66,9 @@ class Autogen(val c: Context) {
 
   private def generateClassPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](clazz: ClassSymbol): Expr[Pickler[T, Backend]] = {
     val ctor = clazz.primaryConstructor.asMethod
-    if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, "Generic types are not supported")
+    if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Cannot generate pickler for generic type $clazz")
 
-    if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported")
+    if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, s"Cannot generate pickler for class with multiple parameter lists $clazz")
 
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
     val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
@@ -245,6 +245,12 @@ class Autogen(val c: Context) {
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
                        unpicklerMatchClause: Tree)
 
+    if (traitSym.knownDirectSubclasses.isEmpty) {
+      c.abort(c.enclosingPosition, s"Cannot generate pickler for sealed trait $traitSym, no subtypes found. " +
+        s"If the trait has subtypes, this can happen if you invoke the macro in the same file where the trait is defined. " +
+        s"In this case, the macro invocation must come after all of the trait subtype definitions.")
+    }
+
     val subtypes = for (subtype <- traitSym.knownDirectSubclasses) yield {
       val subclass = subtype.asClass
       val name = subclass.name.decodedName.toTermName
@@ -263,7 +269,7 @@ class Autogen(val c: Context) {
       val hasParams = ctor.paramLists.nonEmpty && ctor.paramLists.head.nonEmpty
 
       val picklerMatchClause = if (hasParams) {
-        cq"""value: $tpe => 
+        cq"""value: ${tpe} =>
            writer.writeObjectStart()
            writer.writeAttributeName("$$type")
            writer.writeString(${name.toString})
@@ -348,7 +354,7 @@ class Autogen(val c: Context) {
           }
          """
 
-    //    info(s"Generated for trait: $ret")
+//        info(s"Generated for trait: $ret")
 
     c.Expr(ret)
   }
