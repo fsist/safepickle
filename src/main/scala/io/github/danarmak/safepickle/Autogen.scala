@@ -8,6 +8,8 @@ class Autogen(val c: Context) {
 
   import c.universe._
 
+  private def info(msg: String): Unit = c.info(c.enclosingPosition, msg, false)
+
   def generate[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag]: Expr[Pickler[T, Backend]] = {
     val tag = implicitly[WeakTypeTag[T]]
     val symbol = tag.tpe.typeSymbol.asType
@@ -48,7 +50,9 @@ class Autogen(val c: Context) {
     val name = symbol.name.decodedName.toString
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
     val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
-    c.Expr(q"new SingletonPickler[$ttype, $btype]($name, $symbol)")
+    val ret = q"new SingletonPickler[$ttype, $btype]($name, $symbol)"
+//    info(s"Generated for module: $ret")
+    c.Expr(ret)
   }
 
   private def generateClassPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](clazz: ClassSymbol): Expr[Pickler[T, Backend]] = {
@@ -64,12 +68,16 @@ class Autogen(val c: Context) {
 
     // Serialize 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
-      c.Expr(q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz)")
+      val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz)"
+//      info(s"Generated for class without param lists: $ret")
+      c.Expr(ret)
     }
     else {
       val params = ctor.paramLists.head
       if (params.isEmpty) {
-        c.Expr(q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz())")
+        val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz())"
+//        info(s"Generated for class with empty param list: $ret")
+        c.Expr(ret)
       }
       else {
         case class ParamInfo(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, writeParam: Tree,
@@ -81,14 +89,15 @@ class Autogen(val c: Context) {
 
           val isOption = param.typeSignature <:< c.typeOf[Option[Any]]
 
-          val tpe = if (! isOption) param.typeSignature else {
+          val tpe = if (!isOption) param.typeSignature
+          else {
             param.typeSignature.typeArgs.head
           }
 
           val paramPicklerName = TermName(name + "$paramPickler")
           val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
 
-          val writeParam = if (! isOption) {
+          val writeParam = if (!isOption) {
             q"""writer.writeAttributeName(${name.toString})
                $paramPicklerName.pickle(tvalue.$name, writer)
               """
@@ -192,7 +201,7 @@ class Autogen(val c: Context) {
           }
          """
 
-//                        c.info(c.enclosingPosition, s"Generated: $ret", false)
+        //                        info(s"Generated for class: $ret")
 
         c.Expr(ret)
       }
@@ -330,7 +339,7 @@ class Autogen(val c: Context) {
           }
          """
 
-//    c.info(c.enclosingPosition, s"Generated: $ret", false)
+    //    info(s"Generated for trait: $ret")
 
     c.Expr(ret)
   }
