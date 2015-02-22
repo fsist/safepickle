@@ -160,14 +160,14 @@ class Autogen(val c: Context) {
         val readAttributes =
           q"""while (reader.tokenType != TokenType.ObjectEnd) {
                 val argName = reader.attributeName
-                reader.next()
+                reader.nextInObject()
 
                 argName match {
                   case ..$argNameMatchClauses
 
                   case other => // Discard argument with unexpected name (or type tag)
                 }
-                reader.next()
+                reader.nextInObject()
               }"""
 
         val ret = q"""
@@ -192,7 +192,7 @@ class Autogen(val c: Context) {
                   // didn't have any params
 
                 case TokenType.ObjectStart if expectObjectStart =>
-                  reader.next()
+                  reader.nextInObject()
                   $readAttributes
 
                 case TokenType.AttributeName if ! expectObjectStart =>
@@ -322,7 +322,7 @@ class Autogen(val c: Context) {
 
                 case TokenType.ObjectStart =>
                   // First attribute should be the type tag
-                  reader.next()
+                  reader.nextInObject()
 
                   if (reader.tokenType != TokenType.AttributeName) {
                     throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType+ s"), found token type $${reader.tokenType}")
@@ -331,13 +331,13 @@ class Autogen(val c: Context) {
                     throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType + s"), found $${reader.attributeName}")
                   }
 
-                  reader.next()
+                  reader.nextInObject()
                   if (reader.tokenType != TokenType.String) {
                     throw new IllegalArgumentException(s"Type tag attribute should have a string value, but found $${reader.tokenType}")
                   }
 
                   val typeTag = reader.string
-                  reader.next()
+                  reader.nextInObject()
 
                   typeTag match {
                     case ..$unpicklerMatchClauses

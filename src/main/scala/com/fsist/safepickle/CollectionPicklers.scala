@@ -165,14 +165,14 @@ trait CollectionPicklers {
 
       override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean): Tuple3[T1, T2, T3] = {
         if (reader.tokenType != TokenType.ArrayStart) throw new IllegalArgumentException("Expected array start token")
-        reader.next()
+        reader.nextInArray()
 
         val t1 = tpickler1.unpickle(reader)
-        reader.next()
+        reader.nextInArray()
         val t2 = tpickler2.unpickle(reader)
-        reader.next()
+        reader.nextInArray()
         val t3 = tpickler3.unpickle(reader)
-        reader.next()
+        reader.nextInArray()
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new IllegalArgumentException("Expected array end token")
 
