@@ -65,9 +65,14 @@ class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
   test("Change iterable type") {
     val xs = Seq(1,2,3)
 
-//    roundtrip2(Scope10.C1(xs.toList), Scope10.C2(xs.toVector))
-//    roundtrip2(Scope10.C1(xs.toList), Scope10.C3(xs.toSet))
-//    roundtrip2(Scope10.C1(xs.toList), Scope10.C4(xs.toIterable))
+    roundtrip2(Scope10.C1(xs.toList), Scope10.C2(xs.toVector))
+    roundtrip2(Scope10.C1(xs.toList), Scope10.C3(xs.toSet))
+    roundtrip2(Scope10.C1(xs.toList), Scope10.C4(xs.toIterable))
+  }
+
+  test("Make param with default value optional") {
+    roundtrip2(Scope11.C1(5), Scope11.C2(Some(5)))
+    roundtrip2(Scope11.C2(None), Scope11.C1(8))
   }
 }
 
@@ -125,5 +130,10 @@ object AutogenCompatibleChangesTest {
     case class C2(ints: Vector[Int])
     case class C3(ints: Set[Int])
     case class C4(ints: Iterable[Int])
+  }
+
+  object Scope11 {
+    case class C1(i: Int = 8)
+    case class C2(i: Option[Int])
   }
 }
