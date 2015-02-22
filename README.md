@@ -107,3 +107,4 @@ Extra TODOs (will be moved to tickets):
 - Add conversions between Int-Long and Float-Double, as compatible changes
 - Test autogen of sealed trait extended by sealed trait extended by class
 - Document backend.picklers cake and add usage examples to readme
+- Replace the word 'serialization' with 'pickling' everywhere
