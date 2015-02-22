@@ -20,12 +20,12 @@ trait CollectionPicklers {
 
     override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): Coll[T] = {
       if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
-      if (!reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
+      reader.nextInArray()
 
       val builder = cbf()
       while (reader.tokenType != TokenType.ArrayEnd) {
         builder += tpickler.unpickle(reader)
-        if (!reader.next()) throw new IllegalStateException("Unexpected EOF inside array")
+        reader.nextInArray()
       }
 
       // Leave the array end token as the current token
@@ -46,12 +46,12 @@ trait CollectionPicklers {
 
     override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): Array[T] = {
       if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
-      if (!reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
+      reader.nextInArray()
 
       val builder = cbf()
       while (reader.tokenType != TokenType.ArrayEnd) {
         builder += tpickler.unpickle(reader)
-        if (!reader.next()) throw new IllegalStateException("Unexpected EOF inside array")
+        reader.nextInArray()
       }
 
       // Leave the array end token as the current token
@@ -77,16 +77,16 @@ trait CollectionPicklers {
       override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): Coll[String, T] = {
         if (expectObjectStart) {
           if (reader.tokenType != TokenType.ObjectStart) throw new IllegalStateException("Expected: object start")
-          if (!reader.next()) throw new IllegalStateException("Unexpected EOF after object start")
+          reader.nextInObject()
         }
 
         val builder = cbf()
         while (reader.tokenType != TokenType.ObjectEnd) {
           val name = reader.attributeName
-          reader.next()
+          reader.nextInObject()
           val value = tpickler.unpickle(reader)
           builder += ((name, value))
-          if (!reader.next()) throw new IllegalStateException("Unexpected EOF inside object")
+          reader.nextInObject()
         }
 
         // Leave the object end token as the current token
@@ -110,12 +110,12 @@ trait CollectionPicklers {
 
       override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): Coll[K, V] = {
         if (reader.tokenType != TokenType.ArrayStart) throw new IllegalStateException("Expected: array start")
-        if (!reader.next()) throw new IllegalStateException("Unexpected EOF after array start")
+        reader.nextInArray()
 
         val builder = cbf()
         while (reader.tokenType != TokenType.ArrayEnd) {
           builder += tpickler.unpickle(reader)
-          if (!reader.next()) throw new IllegalStateException("Unexpected EOF inside array")
+          reader.nextInArray()
         }
 
         // Leave the array end token as the current token
@@ -138,12 +138,12 @@ trait CollectionPicklers {
 
       override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean): Tuple2[T1, T2] = {
         if (reader.tokenType != TokenType.ArrayStart) throw new IllegalArgumentException("Expected array start token")
-        reader.next()
+        reader.nextInObject()
 
         val t1 = tpickler1.unpickle(reader)
-        reader.next()
+        reader.nextInObject()
         val t2 = tpickler2.unpickle(reader)
-        reader.next()
+        reader.nextInObject()
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new IllegalArgumentException("Expected array end token")
 

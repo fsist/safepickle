@@ -16,6 +16,12 @@ package com.fsist.safepickle
 trait Reader[Backend <: PicklingBackend] {
   /** Advances to the next token. Returns false on EOF. */
   def next(): Boolean
+
+  /** Like next(), but throws an IllegalStateException if EOF is encountered. */
+  def nextInArray(): Unit = if (! next()) throw new IllegalStateException(s"Unexpected EOF inside array")
+
+  /** Like next(), but throws an IllegalStateException if EOF is encountered. */
+  def nextInObject(): Unit = if (! next()) throw new IllegalStateException(s"Unexpected EOF inside object")
   
   /** Begins returning `true` after the first time `next` returns false. */
   def atEof: Boolean
