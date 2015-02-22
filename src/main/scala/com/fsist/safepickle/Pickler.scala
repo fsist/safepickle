@@ -35,7 +35,7 @@ object Pickler {
 /** Implicit definitions of picklers for standard types. */
 trait PrimitivePicklers {
 
-  implicit object Int extends Pickler.Generic[Int] {
+  implicit object IntPickler extends Pickler.Generic[Int] {
     override def pickle(int: Int, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
       writer.writeInt(int)
 
@@ -43,7 +43,7 @@ trait PrimitivePicklers {
       reader.int
   }
 
-  implicit object Long extends Pickler.Generic[Long] {
+  implicit object LongPickler extends Pickler.Generic[Long] {
     override def pickle(long: Long, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
       writer.writeLong(long)
 
@@ -51,7 +51,7 @@ trait PrimitivePicklers {
       reader.long
   }
 
-  implicit object Float extends Pickler.Generic[Float] {
+  implicit object FloatPickler extends Pickler.Generic[Float] {
     override def pickle(float: Float, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
       writer.writeFloat(float)
 
@@ -59,7 +59,7 @@ trait PrimitivePicklers {
       reader.float
   }
 
-  implicit object Double extends Pickler.Generic[Double] {
+  implicit object DoublePickler extends Pickler.Generic[Double] {
     override def pickle(double: Double, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
       writer.writeDouble(double)
 
@@ -67,7 +67,7 @@ trait PrimitivePicklers {
       reader.double
   }
 
-  implicit object Boolean extends Pickler.Generic[Boolean] {
+  implicit object BooleanPickler extends Pickler.Generic[Boolean] {
     override def pickle(boolean: Boolean, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
       writer.writeBoolean(boolean)
 
@@ -75,7 +75,7 @@ trait PrimitivePicklers {
       reader.boolean
   }
 
-  implicit object String extends Pickler.Generic[String] {
+  implicit object StringPickler extends Pickler.Generic[String] {
     override def pickle(string: String, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
       writer.writeString(string)
 
@@ -83,7 +83,7 @@ trait PrimitivePicklers {
       reader.string
   }
 
-  implicit object Null extends Pickler.Generic[Null] {
+  implicit object NullPickler extends Pickler.Generic[Null] {
     override def pickle(Null: Null, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit =
       writer.writeNull()
 
@@ -101,4 +101,18 @@ trait PrimitivePicklers {
       Base64.decodeBase64(reader.string)
     }
   }
+}
+
+/** Pickles values of type `T` by converting them to values of type `Other`, which has an `otherPickler` provided. */
+trait ConvertPickler[T, Other, Backend <: PicklingBackend] extends Pickler[T, Backend]{
+  implicit def otherPickler: Pickler[Other, Backend]
+
+  def convertTo(t: T): Other
+  def convertFrom(other: Other): T
+
+  def pickle(t: T, writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit =
+    otherPickler.pickle(convertTo(t), writer, emitObjectStart)
+
+  def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T =
+    convertFrom(otherPickler.unpickle(reader, expectObjectStart))
 }

@@ -1,4 +1,4 @@
 rootProject.name = 'safepickle'
 
-include 'jackson', 'reactivemongo'
+include 'jackson', 'reactivemongo', 'joda-time'
 
