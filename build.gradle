@@ -32,6 +32,7 @@ allprojects {
     
     testCompile 'ch.qos.logback:logback-classic:1.1.2'
     testCompile 'org.scalatest:scalatest_2.11:2.2.1'
+    testCompile 'org.pegdown:pegdown:1.4.2'
   }
 
   publishing {
@@ -62,18 +63,18 @@ task scalatest(type: JavaExec, dependsOn: [ compileTestScala, testJar] ) {
   main 'org.scalatest.tools.Runner'
   classpath compileTestScala.classpath
   classpath testJar.archivePath
-  args = [ '-o', '-w', 'io.github.danarmak.safepickle', '-h', 'test-output-html', '-R', testJar.archivePath ]
+  args = [ '-o', '-w', 'com.fsist.safepickle', '-h', 'test-output-html', '-R', testJar.archivePath ]
 }
 
 /* Tests for all projects, at once */
 
 // Merge all test classes in a single JAR, allowing the ScalaTest runner to discover them all in one run
-/*task scalatestallJar(type: Jar) {
+task scalatestallJar(type: Jar) {
   baseName 'scalatestall'
 
   destinationDir project.buildDir
 
-  for (prj in projects) {
+  for (prj in allprojects) {
     from prj.compileTestScala.destinationDir
     from "${prj.projectDir}/src/test/resources"
   }
@@ -82,7 +83,7 @@ task scalatest(type: JavaExec, dependsOn: [ compileTestScala, testJar] ) {
   exclude 'application.conf'
 }
 
-for (prj in projects) {
+for (prj in allprojects) {
   scalatestallJar.dependsOn(prj.compileTestScala)
 }
 
@@ -92,21 +93,18 @@ clean << {
 }
 
 task scalatestall(type: JavaExec, dependsOn: scalatestallJar) {
-  maxHeapSize '4096M'
+//  maxHeapSize '4096M'
   main 'org.scalatest.tools.Runner'
 
-  for (prj in subprojects) {
+  for (prj in allprojects) {
     classpath prj.compileScala.classpath
     classpath prj.compileTestScala.classpath // Which also includes the compileScala jar
     classpath prj.compileTestScala.destinationDir // For access to resource files without going through class loaders
   }
-  classpath 'build/scalatestall.jar'
+  classpath scalatestallJar.archivePath
 
-  args = [ '-o', '-w', 'io.github.danarmak.safepickle', '-u', 'test-output-xml', '-h', 'test-output-html', '-R', 'build/scalatestall.jar' ]
+  args = [ '-o', '-w', 'com.fsist.safepickle', '-u', 'test-output-xml', '-h', 'test-output-html', '-R', scalatestallJar.archivePath ]
 }
-
-*/
-
 
 // Declares an inter-project dependency that includes the compileTestScala configuration,
 // so test code in one project can depend on test code in another.

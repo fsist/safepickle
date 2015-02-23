@@ -1,5 +1,7 @@
 *.class
 *.log
+test-output-xml
+test-output-html
 
 # sbt specific
 .cache/
