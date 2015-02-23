@@ -104,4 +104,3 @@ Extra TODOs (will be moved to tickets):
 - Performance tests
 - Document backend.picklers cake and add usage examples to readme, including @Name
 - Support tuples of all sizes
-- Figure out when to use IllegalStateException and when to use IllegalArgumentException

@@ -172,7 +172,7 @@ class Autogen(val c: Context) {
             q"$name"
           }
           else {
-            q"""if ($argInit) $name else throw new IllegalArgumentException("No value found for " + $paramFullName)"""
+            q"""if ($argInit) $name else throw new UnpicklingException("No value found for " + $paramFullName)"""
           }
 
           ParamInfo(name, tpe, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit, argInitDecl,
@@ -334,7 +334,7 @@ class Autogen(val c: Context) {
 
     for (subtype <- subtypes;
          otherSubtype <- subtypes if subtype.tpe.erasure =:= otherSubtype.tpe.erasure && subtype.name != otherSubtype.name) {
-      throw new IllegalArgumentException(
+      c.abort(c.enclosingPosition,
         s"Two concrete subtypes of sealed trait $traitName have the same erasure, so we can't generate a pickler that would " +
           s"produce the correct pickled type tag at runtime. The subtypes ${subtype.name} and ${otherSubtype.name} " +
           s"both have erased type ${subtype.tpe.erasure}.")
@@ -342,7 +342,7 @@ class Autogen(val c: Context) {
 
     for (subtype <- subtypes;
          otherSubtype <- subtypes if otherSubtype != subtype && subtype.name.decodedName.toString == otherSubtype.name.decodedName.toString) {
-      throw new IllegalArgumentException(
+      c.abort(c.enclosingPosition,
         s"Two concrete subtypes of sealed trait $traitName have the same local name ${subtype.name.decodedName}, " +
           s"so we can't distinguish between them with a type tag. Such a naming convention is usually bad practice.")
     }
@@ -372,31 +372,26 @@ class Autogen(val c: Context) {
                   // String value indicates the type of a no-arg subtype, possibly using default arguments
                   reader.string match {
                     case ..$unpicklerMatchClauses
-                    case other => throw new IllegalArgumentException(s"Unexpected (primitive) type tag $$other as descendant of sealed trait " + $traitName)
+                    case other => throw new UnpicklingException(s"Unexpected (primitive) type tag $$other as descendant of sealed trait " + $traitName)
                   }
 
                 case TokenType.ObjectStart =>
                   // First attribute should be the type tag
                   reader.nextInObject()
 
-                  if (reader.tokenType != TokenType.AttributeName) {
-                    throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType+ s"), found token type $${reader.tokenType}")
-                  }
+                  reader.assertTokenType(TokenType.AttributeName)
                   if (reader.attributeName != $tokenType) {
-                    throw new IllegalArgumentException(s"Expected an attribute name (" + $tokenType + s"), found $${reader.attributeName}")
+                    throw new UnpicklingException(s"Expected an attribute name (" + $tokenType + s"), found $${reader.attributeName}")
                   }
 
                   reader.nextInObject()
-                  if (reader.tokenType != TokenType.String) {
-                    throw new IllegalArgumentException(s"Type tag attribute should have a string value, but found $${reader.tokenType}")
-                  }
-
+                  reader.assertTokenType(TokenType.String)
                   val typeTag = reader.string
                   reader.nextInObject()
 
                   typeTag match {
                     case ..$unpicklerMatchClauses
-                    case other => throw new IllegalArgumentException(s"Unexpected (explicit) type tag $$other as descendant of sealed trait " + $traitName)
+                    case other => throw new UnpicklingException(s"Unexpected (explicit) type tag $$other as descendant of sealed trait " + $traitName)
                   }
 
                 case other => throw new IllegalStateException("Unexpected next token type $$other")
@@ -418,6 +413,6 @@ class SingletonPickler[T, Backend <: PicklingBackend](name: String, value: T) ex
   }
   override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T = {
     val read = reader.string
-    if (read == name) value else throw new IllegalStateException(s"Expected to read $name but found $read")
+    if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
   }
 }

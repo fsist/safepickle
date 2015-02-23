@@ -24,6 +24,7 @@ trait Pickler[T, -Backend <: PicklingBackend] {
     * @param expectObjectStart if reading an object, and this argument is true, expect the current reader token to be
     *                          the object start. If it is false, expect the current token to be the first attribute name
     *                          inside the object. If not reading an object, ignore this argument.
+    * @throws UnpicklingException if the reader provides unexpected input
     */
   def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T
 }
@@ -31,6 +32,13 @@ trait Pickler[T, -Backend <: PicklingBackend] {
 object Pickler {
   type Generic[T] = Pickler[T, PicklingBackend]
 }
+
+class UnpicklingException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
+object UnpicklingException {
+  def apply(msg: String, cause: Throwable = null) = new UnpicklingException(msg, cause)
+}
+
+case class UnexpectedEofException(expected: String) extends UnpicklingException(s"Unexpected EOF (expected: $expected)")
 
 /** Implicit definitions of picklers for standard types. */
 trait PrimitivePicklers {
@@ -87,8 +95,10 @@ trait PrimitivePicklers {
     override def pickle(Null: Null, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit =
       writer.writeNull()
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Null = 
-      if (reader.tokenType == TokenType.Null) null else throw new IllegalStateException("Expected: null")
+    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Null = {
+      reader.assertTokenType(TokenType.Null)
+      null
+    }
   }
 
   /** Byte array pickler that writes the base64 value of the array as a string. */

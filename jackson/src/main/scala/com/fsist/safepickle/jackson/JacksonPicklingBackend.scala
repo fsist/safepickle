@@ -3,7 +3,7 @@ package com.fsist.safepickle.jackson
 import java.io.{StringWriter, ByteArrayOutputStream, IOException}
 
 import com.fasterxml.jackson.core.JsonParser.NumberType
-import com.fsist.safepickle.{Reader, Writer, TokenType, PicklingBackend}
+import com.fsist.safepickle._
 
 import com.fasterxml.jackson.core._
 
@@ -63,7 +63,7 @@ class JacksonReader[Backend <: PicklingBackend](parser: JsonParser) extends Read
     parser.nextToken() != null
   }
   catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def atEof(): Boolean = {
@@ -97,44 +97,43 @@ class JacksonReader[Backend <: PicklingBackend](parser: JsonParser) extends Read
     parser.getBooleanValue
   }
   catch {
-    case e: IOException =>
-      throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def int: Int = try {
     parser.getIntValue
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def long: Long = try {
     parser.getLongValue
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def float: Float = try {
     parser.getFloatValue
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
   
   override def double: Double = try {
     parser.getDoubleValue
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def string: String = try {
     parser.getText
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def attributeName: String = try {
     parser.getText
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 }
 
@@ -145,83 +144,83 @@ class JacksonWriter[Repr, Backend <: PicklingBackend](generator: JsonGenerator, 
     generator.writeString(string)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeInt(int: Int): this.type = try {
     generator.writeNumber(int)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeLong(long: Long): this.type = try {
     generator.writeNumber(long)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeFloat(float: Float): this.type = try {
     generator.writeNumber(float)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
   
   override def writeDouble(double: Double): this.type = try {
     generator.writeNumber(double)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeBoolean(boolean: Boolean): this.type = try {
     generator.writeBoolean(boolean)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeNull(): this.type = try {
     generator.writeNull()
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeArrayStart(): this.type = try {
     generator.writeStartArray()
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeObjectStart(): this.type = try {
     generator.writeStartObject()
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeArrayEnd(): this.type = try {
     generator.writeEndArray()
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeObjectEnd(): this.type = try {
     generator.writeEndObject()
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 
   override def writeAttributeName(name: String): this.type = try {
     generator.writeFieldName(name)
     this
   } catch {
-    case e: IOException => throw new IllegalStateException(e)
+    case e: IOException => throw new UnpicklingException(e.toString, e)
   }
 }

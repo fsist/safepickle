@@ -10,23 +10,26 @@ package com.fsist.safepickle
   *   reader.tokenType match ...
   * }
   * 
-  * The methods `int`, `string` etc. throw an IllegalStateException if the current token is not of the right type,
+  * The methods `int`, `string` etc. throw an UnpicklingException if the current token is not of the right type,
   * or if there is no current token.
   */
 trait Reader[Backend <: PicklingBackend] {
   /** Advances to the next token. Returns false on EOF. */
   def next(): Boolean
 
-  /** Like next(), but throws an IllegalStateException if EOF is encountered. */
-  def nextInArray(): Unit = if (! next()) throw new IllegalStateException(s"Unexpected EOF inside array")
+  /** Like next(), but throws an UnexpectedEofException if EOF is encountered. */
+  def nextInArray(): Unit = if (! next()) throw new UnexpectedEofException("next array element")
 
-  /** Like next(), but throws an IllegalStateException if EOF is encountered. */
-  def nextInObject(): Unit = if (! next()) throw new IllegalStateException(s"Unexpected EOF inside object")
+  /** Like next(), but throws an UnexpectedEofException if EOF is encountered. */
+  def nextInObject(): Unit = if (! next()) throw new UnexpectedEofException("next object member")
   
   /** Begins returning `true` after the first time `next` returns false. */
   def atEof: Boolean
   
   def tokenType: TokenType
+
+  /** Throws an UnpicklingException if the current tokenType isn't `tt`. */
+  def assertTokenType(tt: TokenType): Unit = if (tokenType != tt) throw new UnpicklingException(s"Expected $tt but found $tokenType")
   
   def int: Int
   def long: Long
