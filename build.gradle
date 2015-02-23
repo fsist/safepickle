@@ -4,6 +4,7 @@ task wrapper(type: Wrapper) {
 
 allprojects {
   apply plugin: 'scala'
+  apply plugin: 'maven-publish'
   
   defaultTasks 'compileScala', 'compileTestScala'
 
@@ -32,9 +33,22 @@ allprojects {
     testCompile 'ch.qos.logback:logback-classic:1.1.2'
     testCompile 'org.scalatest:scalatest_2.11:2.2.1'
   }
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+      }
+    }
+    repositories {
+      maven {
+        url "file:maven"
+      }
+    }
+  }
 }
 
-version = '0.1'
+version = '0.1.0'
 
 /* Tests for each project, separately */
 
@@ -92,3 +106,22 @@ task scalatestall(type: JavaExec, dependsOn: scalatestallJar) {
 }
 
 */
+
+
+// Declares an inter-project dependency that includes the compileTestScala configuration,
+// so test code in one project can depend on test code in another.
+def dependOnProject(srcproj, targetPath) {
+  srcproj.dependencies {
+    compile project(targetPath)
+    testCompile project(path: targetPath, configuration: 'testCompile')
+    testCompile files(project(targetPath).tasks.compileTestScala.destinationDir)
+
+    // IntelliJ doesn't seem to understand exported test deps, so we add the test deps of the target project explicitly:
+    testCompile project(targetPath).configurations.getByName('testCompile').allDependencies
+  }
+
+  srcproj.compileTestScala.dependsOn("$targetPath:compileTestScala")
+
+//  srcproj.distConfig.from targetproj.file('src/main/resources')
+}
+
