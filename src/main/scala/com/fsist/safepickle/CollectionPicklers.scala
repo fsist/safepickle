@@ -8,7 +8,7 @@ import scala.reflect.macros.whitebox
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
-trait CollectionPicklers {
+trait CollectionPicklers extends TuplePicklers {
   implicit def iterablePickler[T, Coll[T] <: Iterable[T], Backend <: PicklingBackend](implicit tpickler: Pickler[T, Backend],
                                                                                       cbf: CanBuildFrom[Nothing, T, Coll[T]]): Pickler[Coll[T], Backend] = new Pickler[Coll[T], Backend] {
     override def pickle(coll: Coll[T], writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit = {
@@ -123,60 +123,4 @@ trait CollectionPicklers {
       }
     }
   }
-
-  // TODO in future, will need (via whitebox macro? Shapeless Generic?) to support tuples of all sizes
-
-  implicit def tuple2[T1, T2, Backend <: PicklingBackend](implicit tpickler1: Pickler[T1, Backend],
-                                                          tpickler2: Pickler[T2, Backend]): Pickler[Tuple2[T1, T2], Backend] =
-    new Pickler[Tuple2[T1, T2], Backend] {
-      override def pickle(t: Tuple2[T1, T2], writer: Backend#PickleWriter, emitObjectStart: Boolean): Unit = {
-        writer.writeArrayStart()
-        tpickler1.pickle(t._1, writer)
-        tpickler2.pickle(t._2, writer)
-        writer.writeArrayEnd()
-      }
-
-      override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean): Tuple2[T1, T2] = {
-        if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
-        reader.nextInObject()
-
-        val t1 = tpickler1.unpickle(reader)
-        reader.nextInObject()
-        val t2 = tpickler2.unpickle(reader)
-        reader.nextInObject()
-
-        if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
-
-        (t1, t2)
-      }
-    }
-
-  implicit def tuple3[T1, T2, T3, Backend <: PicklingBackend](implicit tpickler1: Pickler[T1, Backend],
-                                                              tpickler2: Pickler[T2, Backend],
-                                                              tpickler3: Pickler[T3, Backend]): Pickler[Tuple3[T1, T2, T3], Backend] =
-    new Pickler[Tuple3[T1, T2, T3], Backend] {
-      override def pickle(t: Tuple3[T1, T2, T3], writer: Backend#PickleWriter, emitObjectStart: Boolean): Unit = {
-        writer.writeArrayStart()
-        tpickler1.pickle(t._1, writer)
-        tpickler2.pickle(t._2, writer)
-        tpickler3.pickle(t._3, writer)
-        writer.writeArrayEnd()
-      }
-
-      override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean): Tuple3[T1, T2, T3] = {
-        if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
-        reader.nextInArray()
-
-        val t1 = tpickler1.unpickle(reader)
-        reader.nextInArray()
-        val t2 = tpickler2.unpickle(reader)
-        reader.nextInArray()
-        val t3 = tpickler3.unpickle(reader)
-        reader.nextInArray()
-
-        if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
-
-        (t1, t2, t3)
-      }
-    }
 }
