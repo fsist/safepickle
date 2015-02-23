@@ -105,4 +105,3 @@ Extra TODOs (will be moved to tickets):
 - Document backend.picklers cake and add usage examples to readme
 - Support tuples of all sizes
 - Figure out when to use IllegalStateException and when to use IllegalArgumentException
-- Add annotation (or another method) for changing the serialized attribute name

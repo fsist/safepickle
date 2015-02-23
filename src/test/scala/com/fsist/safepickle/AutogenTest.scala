@@ -55,6 +55,8 @@ object AutogenTest {
   }
 
   case class C11(c10: C10)
+
+  case class C12(@Name("bar") foo: String)
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
@@ -188,6 +190,15 @@ class AutogenTest extends FunSuite with WrapperTester {
       C11(C10(123)),
       ObjectWrapper(Map(
         "c10" -> IntWrapper(123)
+      ))
+    )
+  }
+
+  test("Name annotation") {
+    roundtrip(
+      C12("x"),
+      ObjectWrapper(Map(
+        "bar" -> StringWrapper("x")
       ))
     )
   }

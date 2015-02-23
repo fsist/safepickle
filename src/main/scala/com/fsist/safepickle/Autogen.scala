@@ -110,15 +110,24 @@ class Autogen(val c: Context) {
           val defaultArgValueName = TermName(name + "$default")
           val defaultArgValueDecl = defaultValue map (tree => q"val $defaultArgValueName = $tree")
 
+          val pickledArgName = param.annotations.find { ann =>
+            ann.tree.tpe =:= typeOf[com.fsist.safepickle.Name]
+          }.map { ann =>
+            val nameTree = ann.tree.children.tail.head
+            if (! nameTree.isInstanceOf[LiteralApi])
+              c.abort(c.enclosingPosition, s"Argument to Name annotation must be a String literal (in $clazzName.$name)")
+            nameTree.asInstanceOf[LiteralApi].value.value.asInstanceOf[String]
+          }.getOrElse(name.toString)
+
           val doWriteParam = if (!isOption) {
-            q"""writer.writeAttributeName(${name.toString})
+            q"""writer.writeAttributeName($pickledArgName)
                $paramPicklerName.pickle(paramValue, writer)
               """
           }
           else {
             q"""paramValue match {
                   case Some(inner) =>
-                    writer.writeAttributeName(${name.toString})
+                    writer.writeAttributeName($pickledArgName)
                     $paramPicklerName.pickle(inner, writer)
                   case None =>
                 }
@@ -153,9 +162,9 @@ class Autogen(val c: Context) {
           val argInitDecl = q"var $argInit: Boolean = ${defaultValue.isDefined || isOption}"
 
           val argNameMatchClause = if (isOption) {
-            cq"${name.toString} => $name = Some($paramPicklerName.unpickle(reader)) ; $argInit = true"
+            cq"$pickledArgName => $name = Some($paramPicklerName.unpickle(reader)) ; $argInit = true"
           } else {
-            cq"${name.toString} => $name = $paramPicklerName.unpickle(reader) ; $argInit = true"
+            cq"$pickledArgName => $name = $paramPicklerName.unpickle(reader) ; $argInit = true"
           }
 
           val paramFullName = s"$clazzName.$name"
@@ -231,7 +240,7 @@ class Autogen(val c: Context) {
           }
          """
 
-        //                                info(s"Generated for class: $ret")
+//                                        info(s"Generated for class: $ret")
 
         c.Expr(ret)
       }
@@ -396,7 +405,7 @@ class Autogen(val c: Context) {
           }
          """
 
-            info(s"Generated for trait: $ret")
+//            info(s"Generated for trait: $ret")
 
     c.Expr(ret)
   }
