@@ -35,96 +35,131 @@ object AutogenTest {
   case class C5(opt: Option[Int])
 
   case class C6(i: Int = 5)
+
+  sealed trait T2
+  sealed trait T3 extends T2
+  case class C7(i: Int) extends T3
+
+  sealed abstract class C8(i: Int)
+  case class C9(i: Int) extends C8(i)
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
+
   import AutogenTest._
   import WrapperBackend.picklers._
 
-  test("Case class") {
-    roundtrip(
-      C1("foo", 123),
+    test("Case class") {
+      roundtrip(
+        C1("foo", 123),
+        ObjectWrapper(Map(
+          "s" -> StringWrapper("foo"),
+          "i" -> IntWrapper(123)
+        ))
+      )
+    }
+
+    test("Non-case class") {
+      roundtrip(
+        new C2("foo", 123),
+        ObjectWrapper(Map(
+          "s" -> StringWrapper("foo"),
+          "i" -> IntWrapper(123)
+        ))
+      )
+    }
+
+    test("Case object") {
+      roundtrip(
+        O1,
+        StringWrapper("O1")
+      )
+    }
+
+    test("Non-case object") {
+      roundtrip(
+        O2,
+        StringWrapper("O2")
+      )
+    }
+
+    test("Case class with zero parameters") {
+      roundtrip(
+        C3(),
+        StringWrapper("C3")
+      )
+    }
+
+    test("Class with zero argument lists") {
+      roundtrip(
+        new C4,
+        StringWrapper("C4")
+      )
+    }
+
+    test("Sealed trait") {
+      roundtrip[T1](
+        T1.C("foo"),
+        ObjectWrapper(Map(
+          "$type" -> StringWrapper("C"),
+          "s" -> StringWrapper("foo")
+        ))
+      )
+
+      roundtrip[T1](
+        T1.O,
+        StringWrapper("O")
+      )
+    }
+
+    test("Class parameter of type Option[T]"){
+      roundtrip(
+        C5(Some(1)),
+        ObjectWrapper(Map("opt" -> IntWrapper(1)))
+      )
+
+      roundtrip(
+        C5(None),
+        ObjectWrapper(Map())
+      )
+    }
+
+    test("Param with default value") {
+      roundtrip(
+        C6(6),
+        ObjectWrapper(Map("i" -> IntWrapper(6)))
+      )
+
+      roundtrip(
+        C6(),
+        ObjectWrapper(Map())
+      )
+    }
+
+  test("Sealed trait extending sealed trait") {
+    roundtrip[T2](
+      C7(123),
       ObjectWrapper(Map(
-        "s" -> StringWrapper("foo"),
+        "$type" -> StringWrapper("C7"),
         "i" -> IntWrapper(123)
       ))
     )
   }
 
-  test("Non-case class") {
-    roundtrip(
-      new C2("foo", 123),
+  test("Abstract sealed class") {
+    roundtrip[C8](
+      C9(123),
       ObjectWrapper(Map(
-        "s" -> StringWrapper("foo"),
+        "$type" -> StringWrapper("C9"),
         "i" -> IntWrapper(123)
       ))
     )
-  }
 
-  test("Case object") {
     roundtrip(
-      O1,
-      StringWrapper("O1")
-    )
-  }
-
-  test("Non-case object") {
-    roundtrip(
-      O2,
-      StringWrapper("O2")
-    )
-  }
-
-  test("Case class with zero parameters") {
-    roundtrip(
-      C3(),
-      StringWrapper("C3")
-    )
-  }
-
-  test("Class with zero argument lists") {
-    roundtrip(
-      new C4,
-      StringWrapper("C4")
-    )
-  }
-
-  test("Sealed trait") {
-    roundtrip[T1](
-      T1.C("foo"),
+      C9(123),
       ObjectWrapper(Map(
-        "$type" -> StringWrapper("C"),
-        "s" -> StringWrapper("foo")
+        "i" -> IntWrapper(123)
       ))
-    )
-
-    roundtrip[T1](
-      T1.O,
-      StringWrapper("O")
-    )
-  }
-
-  test("Class parameter of type Option[T]"){
-    roundtrip(
-      C5(Some(1)),
-      ObjectWrapper(Map("opt" -> IntWrapper(1)))
-    )
-
-    roundtrip(
-      C5(None),
-      ObjectWrapper(Map())
-    )
-  }
-
-  test("Param with default value") {
-    roundtrip(
-      C6(6),
-      ObjectWrapper(Map("i" -> IntWrapper(6)))
-    )
-
-    roundtrip(
-      C6(),
-      ObjectWrapper(Map())
     )
   }
 }

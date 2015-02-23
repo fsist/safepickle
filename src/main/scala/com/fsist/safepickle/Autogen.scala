@@ -25,9 +25,9 @@ class Autogen(val c: Context) {
 
     if (symbol.isClass) {
       val cls = symbol.asClass
-      if (cls.isTrait) {
+      if (cls.isTrait || cls.isAbstract) {
         if (cls.isSealed) {
-          generateTraitPickler(cls)
+          generateSealedPickler(cls)
         }
         else c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed $cls")
       }
@@ -257,22 +257,34 @@ class Autogen(val c: Context) {
     }
   }
 
-  private def generateTraitPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](traitSym: ClassSymbol): Expr[Pickler[T, Backend]] = {
+  private def generateSealedPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](sealedSym: ClassSymbol): Expr[Pickler[T, Backend]] = {
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
     val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
 
-    val traitName = traitSym.name.decodedName.toString
+    val traitName = sealedSym.name.decodedName.toString
 
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
                        unpicklerMatchClause: Tree)
 
-    if (traitSym.knownDirectSubclasses.isEmpty) {
-      c.abort(c.enclosingPosition, s"Cannot generate pickler for sealed trait $traitSym, no subtypes found. " +
-        s"If the trait has subtypes, this can happen if you invoke the macro in the same file where the trait is defined. " +
-        s"In this case, the macro invocation must come after all of the trait subtype definitions.")
+    def collectDescendantClasses(parent: ClassSymbol): Set[ClassSymbol] = {
+      if (parent.isTrait || parent.isAbstract) {
+        if (parent.isSealed) {
+          val direct = parent.knownDirectSubclasses
+          if (direct.isEmpty) {
+            c.abort(c.enclosingPosition, s"Cannot generate pickler for sealed trait or abstract class '$parent', no subtypes found. " +
+              s"If it has subtypes, this can happen if you invoke the macro in the same file where the trait or abstract class is defined. " +
+              s"In this case, the macro invocation must come after all of the subtype definitions.")
+          }
+          else direct.flatMap(sym => collectDescendantClasses(sym.asClass))
+        }
+        else {
+          c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed $parent")
+        }
+      }
+      else Set(parent)
     }
 
-    val subtypes = for (subtype <- traitSym.knownDirectSubclasses) yield {
+    val subtypes = for (subtype <- collectDescendantClasses(sealedSym)) yield {
       val subclass = subtype.asClass
       val name = subclass.name.decodedName.toTermName
       val tpe = subclass.toType
@@ -283,13 +295,17 @@ class Autogen(val c: Context) {
       // Analyze the subtype's primary ctor to determine if it has any parameters; if not, it will be written as a
       // single string
 
-      val ctor = subclass.primaryConstructor.asMethod
-      if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Generic types are not supported (in subtype $name of $traitName)")
-      if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported (in subtype $name of $traitName)")
+      val writtenAsObject = {
+        subclass.isTrait || { // Another sealed trait
+          val ctor = subclass.primaryConstructor.asMethod
+          if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Generic types are not supported (in subtype $name of $traitName)")
+          if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported (in subtype $name of $traitName)")
 
-      val hasParams = ctor.paramLists.nonEmpty && ctor.paramLists.head.nonEmpty
+          ctor.paramLists.nonEmpty && ctor.paramLists.head.nonEmpty
+        }
+      }
 
-      val picklerMatchClause = if (hasParams) {
+      val picklerMatchClause = if (writtenAsObject) {
         cq"""value: ${tpe} =>
            writer.writeObjectStart()
            writer.writeAttributeName("$$type")
@@ -380,7 +396,7 @@ class Autogen(val c: Context) {
           }
          """
 
-    //        info(s"Generated for trait: $ret")
+            info(s"Generated for trait: $ret")
 
     c.Expr(ret)
   }
