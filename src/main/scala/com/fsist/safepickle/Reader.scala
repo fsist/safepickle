@@ -7,7 +7,7 @@ package com.fsist.safepickle
   * on the trait. Typical usage looks like this:
   * 
   * while (reader.next) {
-  *   reader.tokenTYpe match ...
+  *   reader.tokenType match ...
   * }
   * 
   * The methods `int`, `string` etc. throw an IllegalStateException if the current token is not of the right type,
