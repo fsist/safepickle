@@ -33,6 +33,8 @@ object AutogenTest {
   }
 
   case class C5(opt: Option[Int])
+
+  case class C6(i: Int = 5)
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
@@ -110,6 +112,18 @@ class AutogenTest extends FunSuite with WrapperTester {
 
     roundtrip(
       C5(None),
+      ObjectWrapper(Map())
+    )
+  }
+
+  test("Param with default value") {
+    roundtrip(
+      C6(6),
+      ObjectWrapper(Map("i" -> IntWrapper(6)))
+    )
+
+    roundtrip(
+      C6(),
       ObjectWrapper(Map())
     )
   }

@@ -17,7 +17,7 @@ class Autogen(val c: Context) {
     {
       var owner = symbol.owner
       while (owner != c.universe.NoSymbol) {
-        if (owner.isClass && ! owner.isModuleClass)
+        if (owner.isClass && !owner.isModuleClass)
           c.abort(c.enclosingPosition, s"Cannot generate pickler for $symbol because it is owned by class $owner")
         owner = owner.owner
       }
@@ -60,7 +60,7 @@ class Autogen(val c: Context) {
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
     val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
     val ret = q"new SingletonPickler[$ttype, $btype]($name, $symbol)"
-//    info(s"Generated for module: $ret")
+    //    info(s"Generated for module: $ret")
     c.Expr(ret)
   }
 
@@ -78,19 +78,20 @@ class Autogen(val c: Context) {
     // Pickle 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
       val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz)"
-//      info(s"Generated for class without param lists: $ret")
+      //      info(s"Generated for class without param lists: $ret")
       c.Expr(ret)
     }
     else {
       val params = ctor.paramLists.head
       if (params.isEmpty) {
         val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz())"
-//        info(s"Generated for class with empty param list: $ret")
+        //        info(s"Generated for class with empty param list: $ret")
         c.Expr(ret)
       }
       else {
         case class ParamInfo(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, writeParam: Tree,
-                             argDecl: Tree, argInit: TermName, argInitDecl: Tree, argNameMatchClause: Tree, getArgValue: Tree)
+                             argDecl: Tree, argInit: TermName, argInitDecl: Tree, argNameMatchClause: Tree,
+                             getArgValue: Tree, defaultArgValueName: TermName, defaultArgValueDecl: Option[Tree])
 
         val defaultValues = paramDefaultValues(clazz, ctor)
         val paramInfos: List[ParamInfo] = for ((param, defaultValue) <- params.zip(defaultValues)) yield {
@@ -106,13 +107,16 @@ class Autogen(val c: Context) {
           val paramPicklerName = TermName(name + "$paramPickler")
           val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
 
-          val writeParam = if (!isOption) {
+          val defaultArgValueName = TermName(name + "$default")
+          val defaultArgValueDecl = defaultValue map (tree => q"val $defaultArgValueName = $tree")
+
+          val doWriteParam = if (!isOption) {
             q"""writer.writeAttributeName(${name.toString})
-               $paramPicklerName.pickle(tvalue.$name, writer)
+               $paramPicklerName.pickle(paramValue, writer)
               """
           }
           else {
-            q"""tvalue.$name match {
+            q"""paramValue match {
                   case Some(inner) =>
                     writer.writeAttributeName(${name.toString})
                     $paramPicklerName.pickle(inner, writer)
@@ -121,13 +125,28 @@ class Autogen(val c: Context) {
                """
           }
 
-          val argDecl = defaultValue match {
-            case Some(value) =>
-              if (isOption) q"var $name: Option[$tpe] = $value"
-              else q"var $name: $tpe = $value"
-            case None =>
-              if (isOption) q"var $name: Option[$tpe] = None"
-              else q"var $name: $tpe = null.asInstanceOf[$tpe]"
+          val writeParam = if (defaultValue.isDefined) {
+            q"""{
+                val paramValue = tvalue.$name
+                if (paramValue != $defaultArgValueName) $doWriteParam
+               }
+             """
+          }
+          else {
+            q"""{
+                val paramValue = tvalue.$name
+                $doWriteParam
+               }
+             """
+          }
+
+          val argDecl = if (defaultValue.isDefined) {
+            if (isOption) q"var $name: Option[$tpe] = $defaultArgValueName"
+            else q"var $name: $tpe = $defaultArgValueName"
+          }
+          else {
+            if (isOption) q"var $name: Option[$tpe] = None"
+            else q"var $name: $tpe = null.asInstanceOf[$tpe]"
           }
 
           val argInit = TermName(name + "$initialized")
@@ -147,7 +166,8 @@ class Autogen(val c: Context) {
             q"""if ($argInit) $name else throw new IllegalArgumentException("No value found for " + $paramFullName)"""
           }
 
-          ParamInfo(name, tpe, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit, argInitDecl, argNameMatchClause, getArgValue)
+          ParamInfo(name, tpe, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit, argInitDecl,
+            argNameMatchClause, getArgValue, defaultArgValueName, defaultArgValueDecl)
         }
 
         val implicitSubPicklers = q"..${paramInfos.map(_.picklerDecl)}"
@@ -156,6 +176,7 @@ class Autogen(val c: Context) {
         val argInitDecls = q"..${paramInfos.map(_.argInitDecl)}"
         val argNameMatchClauses = q"..${paramInfos.map(_.argNameMatchClause)}"
         val getArgValues = q"..${paramInfos.map(_.getArgValue)}"
+        val defaultArgValues = q"..${paramInfos.map(_.defaultArgValueDecl).filter(_.isDefined).map(_.get)}"
 
         val readAttributes =
           q"""while (reader.tokenType != TokenType.ObjectEnd) {
@@ -175,6 +196,8 @@ class Autogen(val c: Context) {
             import com.fsist.safepickle._
 
             ..$implicitSubPicklers
+
+            ..$defaultArgValues
 
             override def pickle(tvalue: $ttype, writer: $btype#PickleWriter, emitObjectStart: Boolean = true): Unit = {
               if (emitObjectStart) writer.writeObjectStart()
@@ -208,7 +231,7 @@ class Autogen(val c: Context) {
           }
          """
 
-//                                info(s"Generated for class: $ret")
+        //                                info(s"Generated for class: $ret")
 
         c.Expr(ret)
       }
@@ -293,7 +316,7 @@ class Autogen(val c: Context) {
     }
 
     for (subtype <- subtypes;
-         otherSubtype <- subtypes if subtype.name.decodedName.toString == otherSubtype.name.decodedName.toString) {
+         otherSubtype <- subtypes if otherSubtype != subtype && subtype.name.decodedName.toString == otherSubtype.name.decodedName.toString) {
       throw new IllegalArgumentException(
         s"Two concrete subtypes of sealed trait $traitName have the same local name ${subtype.name.decodedName}, " +
           s"so we can't distinguish between them with a type tag. Such a naming convention is usually bad practice.")
@@ -357,7 +380,7 @@ class Autogen(val c: Context) {
           }
          """
 
-//        info(s"Generated for trait: $ret")
+    //        info(s"Generated for trait: $ret")
 
     c.Expr(ret)
   }

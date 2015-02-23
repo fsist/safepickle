@@ -54,10 +54,6 @@ class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
     roundtrip2(Scope6.C3("foo", 123), Scope6.C2(123, "foo"))
   }
 
-  test("Change the declared default value of a parameter") {
-    roundtrip2(Scope8.C1(123), Scope8.C2(123))
-  }
-
   test("Change parameter order") {
     roundtrip2(Scope9.C1(123, "foo"), Scope9.C2("foo", 123))
   }
