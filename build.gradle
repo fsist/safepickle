@@ -39,6 +39,9 @@ allprojects {
     publications {
       mavenJava(MavenPublication) {
         from components.java
+
+        groupId 'com.fsist'
+        artifactId 'safepickle'
       }
     }
     repositories {
