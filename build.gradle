@@ -2,10 +2,10 @@ task wrapper(type: Wrapper) {
   gradleVersion = '2.2.1'
 }
 
-group = 'com.fsist'
-version = '0.1.0'
-
 allprojects {
+  group = 'com.fsist'
+  version = '0.1.0'
+
   apply plugin: 'scala'
   apply plugin: 'maven'
   apply plugin: 'signing'
@@ -66,8 +66,6 @@ allprojects {
     repositories {
       mavenDeployer {
         repository(url: "file:maven")
-
-        pom.artifactId = project.name + '_2.11'
 
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 

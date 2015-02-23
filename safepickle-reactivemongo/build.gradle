@@ -7,7 +7,7 @@ repositories {
 
 dependencies {
   dependOnProject(project, ':')
-  dependOnProject(project, ':joda-time')
+  dependOnProject(project, ':safepickle-joda-time')
 
   compile 'org.reactivemongo:reactivemongo_2.11:0.10.5.0.akka23'
 }
