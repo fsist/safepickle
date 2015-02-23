@@ -3,6 +3,9 @@
 test-output-xml
 test-output-html
 
+# gradle specific
+.gradle
+
 # sbt specific
 .cache/
 .history/

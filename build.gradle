@@ -2,10 +2,14 @@ task wrapper(type: Wrapper) {
   gradleVersion = '2.2.1'
 }
 
+group = 'com.fsist'
+version = '0.1.0'
+
 allprojects {
   apply plugin: 'scala'
-  apply plugin: 'maven-publish'
-  
+  apply plugin: 'maven'
+  apply plugin: 'signing'
+
   defaultTasks 'compileScala', 'compileTestScala'
 
   // Can't set targetCompatibility (i.e. JDK level) to 1.7 or above because of https://issues.scala-lang.org/browse/SI-8645
@@ -35,38 +39,91 @@ allprojects {
     testCompile 'org.pegdown:pegdown:1.4.2'
   }
 
-  publishing {
-    publications {
-      mavenJava(MavenPublication) {
-        from components.java
+  project.archivesBaseName = project.name + "_2.11"
 
-        groupId 'com.fsist'
-        artifactId 'safepickle'
-      }
-    }
+  task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+
+  task scaladocJar(type: Jar, dependsOn: scaladoc) {
+    classifier = 'javadoc'
+    from scaladoc.destinationDir
+  }
+
+  task testJar(type: Jar, dependsOn: compileTestScala) {
+    from compileTestScala.destinationDir
+    appendix 'test' // Names the jar
+  }
+
+  signing {
+    sign jar
+    sign sourcesJar
+    sign scaladocJar
+  }
+
+  uploadArchives {
     repositories {
-      maven {
-        url "file:maven"
+      mavenDeployer {
+        repository(url: "file:maven")
+
+        pom.artifactId = project.name + '_2.11'
+
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+//        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+//          authentication(userName: ossrhUsername, password: ossrhPassword)
+//        }
+//
+//        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+//          authentication(userName: ossrhUsername, password: ossrhPassword)
+//        }
+
+        pom.project {
+          name 'safepickle'
+          artifactId = project.name + '_2.11'
+
+          packaging 'jar'
+          description 'A small Scala pickling library.'
+          url 'https://github.com/fsist/safepickle'
+
+          scm {
+            connection 'scm:git:git@github.com:fsist/safepickle.git'
+            developerConnection 'git@github.com:fsist/safepickle.git'
+            url 'https://github.com/fsist/safepickle'
+          }
+
+          organization {
+            name = 'Sentrix'
+            url = 'http://www.sentrix.com/'
+          }
+
+          licenses {
+            license {
+              name 'The Apache License, Version 2.0'
+              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+          }
+
+          developers {
+            developer {
+              id 'danarmak'
+              name 'Daniel Armak'
+              email 'daniel@sentrix.com'
+            }
+          }
+        }
       }
     }
   }
-}
 
-version = '0.1.0'
-
-/* Tests for each project, separately */
-
-task testJar(type: Jar, dependsOn: compileTestScala) {
-  from compileTestScala.destinationDir
-  appendix 'test' // Names the jar
-}
-
-task scalatest(type: JavaExec, dependsOn: [ compileTestScala, testJar] ) {
-  maxHeapSize '4096M'
-  main 'org.scalatest.tools.Runner'
-  classpath compileTestScala.classpath
-  classpath testJar.archivePath
-  args = [ '-o', '-w', 'com.fsist.safepickle', '-h', 'test-output-html', '-R', testJar.archivePath ]
+  task scalatest(type: JavaExec, dependsOn: [ compileTestScala, testJar] ) {
+//    maxHeapSize '4096M'
+    main 'org.scalatest.tools.Runner'
+    classpath compileTestScala.classpath
+    classpath testJar.archivePath
+    args = [ '-o', '-w', 'com.fsist.safepickle', '-h', 'test-output-html', '-R', testJar.archivePath ]
+  }
 }
 
 /* Tests for all projects, at once */
@@ -91,7 +148,7 @@ for (prj in allprojects) {
 }
 
 clean << {
-  delete 'test-output'
+  delete 'test-output-xml'
   delete 'test-output-html'
 }
 
