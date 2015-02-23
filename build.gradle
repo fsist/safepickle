@@ -65,7 +65,7 @@ allprojects {
   uploadArchives {
     repositories {
       mavenDeployer {
-        repository(url: "file:maven")
+//        repository(url: "file:maven")
 
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
