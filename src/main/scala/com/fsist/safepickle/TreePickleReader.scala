@@ -3,7 +3,7 @@ package com.fsist.safepickle
 /** A way to analyze a reified tree of nodes, with a base concrete type of `Node`,
   * representing pickled primitive values.
   */
-trait TreeParser[Node, Backend <: PicklingBackend] {
+trait TreeParser[Node] {
   def nodeType(node: Node): TreeNodeType
 
   def int(node: Node): Int
@@ -17,9 +17,9 @@ trait TreeParser[Node, Backend <: PicklingBackend] {
 }
 
 /** A Reader implementation for a reified tree of nodes representing pickled primitive values. */
-class TreeReader[Node, Backend <: PicklingBackend](parser: TreeParser[Node, Backend], root: Node) extends Reader[Backend] {
+class TreePickleReader[Node](parser: TreeParser[Node], root: Node) extends PickleReader {
 
-  import TreeReader._
+  import TreePickleReader._
 
   private var node = root
   private val stack = collection.mutable.Stack[StackedState[Node]]()
@@ -159,7 +159,7 @@ class TreeReader[Node, Backend <: PicklingBackend](parser: TreeParser[Node, Back
   def attributeName: String = nodeAttributeName.get
 }
 
-object TreeReader {
+object TreePickleReader {
 
   private trait StackedState[Node]
 

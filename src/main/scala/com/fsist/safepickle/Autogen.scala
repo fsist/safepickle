@@ -10,7 +10,7 @@ class Autogen(val c: Context) {
 
   private def info(msg: String): Unit = c.info(c.enclosingPosition, msg, false)
 
-  def generate[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag]: Expr[Pickler[T, Backend]] = {
+  def generate[T: c.WeakTypeTag]: Expr[Pickler[T]] = {
     val tag = implicitly[WeakTypeTag[T]]
     val symbol = tag.tpe.typeSymbol.asType
 
@@ -53,40 +53,38 @@ class Autogen(val c: Context) {
     }
   }
 
-  private def generateModulePickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](symbol: ModuleSymbol): Expr[Pickler[T, Backend]] = {
+  private def generateModulePickler[T: c.WeakTypeTag](symbol: ModuleSymbol): Expr[Pickler[T]] = {
     // A module is pickled by writing its non-qualified name as a string.
 
     val name = symbol.name.decodedName.toString
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
-    val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
-    val ret = q"new SingletonPickler[$ttype, $btype]($name, $symbol)"
+    val ret = q"new SingletonPickler[$ttype]($name, $symbol)"
     //    info(s"Generated for module: $ret")
-    c.Expr(ret)
+    c.Expr[Pickler[T]](ret)
   }
 
-  private def generateClassPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](clazz: ClassSymbol): Expr[Pickler[T, Backend]] = {
+  private def generateClassPickler[T: c.WeakTypeTag](clazz: ClassSymbol): Expr[Pickler[T]] = {
     val ctor = clazz.primaryConstructor.asMethod
     if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Cannot generate pickler for generic type $clazz")
 
     if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, s"Cannot generate pickler for class with multiple parameter lists $clazz")
 
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
-    val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
 
     val clazzName = clazz.name.decodedName.toString
 
     // Pickle 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
-      val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz)"
+      val ret = q"new SingletonPickler[$ttype]($clazzName, new $clazz)"
       //      info(s"Generated for class without param lists: $ret")
-      c.Expr(ret)
+      c.Expr[Pickler[T]](ret)
     }
     else {
       val params = ctor.paramLists.head
       if (params.isEmpty) {
-        val ret = q"new SingletonPickler[$ttype, $btype]($clazzName, new $clazz())"
+        val ret = q"new SingletonPickler[$ttype]($clazzName, new $clazz())"
         //        info(s"Generated for class with empty param list: $ret")
-        c.Expr(ret)
+        c.Expr[Pickler[T]](ret)
       }
       else {
         case class ParamInfo(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, writeParam: Tree,
@@ -105,7 +103,7 @@ class Autogen(val c: Context) {
           }
 
           val paramPicklerName = TermName(name + "$paramPickler")
-          val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
+          val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe]]"
 
           val defaultArgValueName = TermName(name + "$default")
           val defaultArgValueDecl = defaultValue map (tree => q"val $defaultArgValueName = $tree")
@@ -114,21 +112,21 @@ class Autogen(val c: Context) {
             ann.tree.tpe =:= typeOf[com.fsist.safepickle.Name]
           }.map { ann =>
             val nameTree = ann.tree.children.tail.head
-            if (! nameTree.isInstanceOf[LiteralApi])
+            if (!nameTree.isInstanceOf[LiteralApi])
               c.abort(c.enclosingPosition, s"Argument to Name annotation must be a String literal (in $clazzName.$name)")
             nameTree.asInstanceOf[LiteralApi].value.value.asInstanceOf[String]
           }.getOrElse(name.toString)
 
           val doWriteParam = if (!isOption) {
             q"""writer.writeAttributeName($pickledArgName)
-               $paramPicklerName.pickle(paramValue, writer)
+                writer.write[$tpe](paramValue, true)($paramPicklerName)
               """
           }
           else {
             q"""paramValue match {
                   case Some(inner) =>
                     writer.writeAttributeName($pickledArgName)
-                    $paramPicklerName.pickle(inner, writer)
+                    writer.write[$tpe](inner, true)($paramPicklerName)
                   case None =>
                 }
                """
@@ -162,9 +160,9 @@ class Autogen(val c: Context) {
           val argInitDecl = q"var $argInit: Boolean = ${defaultValue.isDefined || isOption}"
 
           val argNameMatchClause = if (isOption) {
-            cq"$pickledArgName => $name = Some($paramPicklerName.unpickle(reader)) ; $argInit = true"
+            cq"$pickledArgName => $name = Some(reader.read[$tpe](${tpe.toString}, true)($paramPicklerName)) ; $argInit = true"
           } else {
-            cq"$pickledArgName => $name = $paramPicklerName.unpickle(reader) ; $argInit = true"
+            cq"$pickledArgName => $name = reader.read[$tpe](${tpe.toString}, true)($paramPicklerName) ; $argInit = true"
           }
 
           val paramFullName = s"$clazzName.$name"
@@ -201,20 +199,21 @@ class Autogen(val c: Context) {
               }"""
 
         val ret = q"""
-          new Pickler[$ttype, $btype] {
+          new Pickler[$ttype] {
             import com.fsist.safepickle._
+            import PrimitivePicklers._
 
             ..$implicitSubPicklers
 
             ..$defaultArgValues
 
-            override def pickle(tvalue: $ttype, writer: $btype#PickleWriter, emitObjectStart: Boolean = true): Unit = {
+            override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
               if (emitObjectStart) writer.writeObjectStart()
               ..$writeParams
               writer.writeObjectEnd()
             }
 
-            override def unpickle(reader: $btype#PickleReader, expectObjectStart: Boolean = true): $ttype = {
+            override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): $ttype = {
               ..$argInitDecls
               ..$argDecls
 
@@ -240,9 +239,9 @@ class Autogen(val c: Context) {
           }
          """
 
-//                                        info(s"Generated for class: $ret")
+//       info(s"Generated for class: $ret")
 
-        c.Expr(ret)
+        c.Expr[Pickler[T]](ret)
       }
     }
   }
@@ -266,9 +265,8 @@ class Autogen(val c: Context) {
     }
   }
 
-  private def generateSealedPickler[T: c.WeakTypeTag, Backend <: PicklingBackend : c.WeakTypeTag](sealedSym: ClassSymbol): Expr[Pickler[T, Backend]] = {
+  private def generateSealedPickler[T: c.WeakTypeTag](sealedSym: ClassSymbol): Expr[Pickler[T]] = {
     val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
-    val btype = tq"${implicitly[c.WeakTypeTag[Backend]].tpe}"
 
     val traitName = sealedSym.name.decodedName.toString
 
@@ -299,13 +297,14 @@ class Autogen(val c: Context) {
       val tpe = subclass.toType
 
       val paramPicklerName = TermName(c.freshName(s"paramPickler_$name"))
-      val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe, $btype]]"
+      val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe]]"
 
       // Analyze the subtype's primary ctor to determine if it has any parameters; if not, it will be written as a
       // single string
 
       val writtenAsObject = {
-        subclass.isTrait || { // Another sealed trait
+        subclass.isTrait || {
+          // Another sealed trait
           val ctor = subclass.primaryConstructor.asMethod
           if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Generic types are not supported (in subtype $name of $traitName)")
           if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported (in subtype $name of $traitName)")
@@ -319,15 +318,15 @@ class Autogen(val c: Context) {
            writer.writeObjectStart()
            writer.writeAttributeName("$$type")
            writer.writeString(${name.toString})
-           
-           $paramPicklerName.pickle(value, writer, false)"""
+
+           writer.write[$tpe](value, false)($paramPicklerName)"""
       }
       else {
         cq"""value: $tpe =>
           writer.writeString(${name.toString})"""
       }
 
-      val unpicklerMatchClause = cq"${name.toString} => $paramPicklerName.unpickle(reader, false)"
+      val unpicklerMatchClause = cq"${name.toString} => reader.read[$tpe](${tpe.toString}, false)($paramPicklerName)"
 
       Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause)
     }
@@ -354,19 +353,20 @@ class Autogen(val c: Context) {
     val tokenType = "$type"
 
     val ret = q"""
-          new Pickler[$ttype, $btype] {
+          new Pickler[$ttype] {
             import com.fsist.safepickle._
+            import PrimitivePicklers._
 
             ..$implicitSubPicklers
 
-            override def pickle(tvalue: $ttype, writer: $btype#PickleWriter, emitObjectStart: Boolean = true): Unit = {
+            override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
               tvalue match {
                 case ..$picklerMatchClauses
                 case null => throw new IllegalArgumentException("Refusing to pickle null value of type " + $traitName)
               }
             }
 
-            override def unpickle(reader: $btype#PickleReader, expectObjectStart: Boolean = true): $ttype = {
+            override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): $ttype = {
               reader.tokenType match {
                 case TokenType.String => 
                   // String value indicates the type of a no-arg subtype, possibly using default arguments
@@ -400,19 +400,27 @@ class Autogen(val c: Context) {
           }
          """
 
-//            info(s"Generated for trait: $ret")
+    //            info(s"Generated for trait: $ret")
 
-    c.Expr(ret)
+    c.Expr[Pickler[T]](ret)
   }
 }
 
 /** A pickler for a value T that pickles it to the fixed string `name`. */
-class SingletonPickler[T, Backend <: PicklingBackend](name: String, value: T) extends Pickler[T, Backend] {
-  override def pickle(t: T, writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit = {
+class SingletonPickler[T](name: String, value: T) extends Pickler[T] {
+  override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
     writer.writeString(name)
   }
-  override def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T = {
+  override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T = {
     val read = reader.string
     if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
+  }
+}
+
+object Autogen {
+  /** Implicit definitions of the autogen macro for all types T */
+  object Implicits {
+    /** Autogenerate a Pickler. See the documentation in the project's README.md. */
+    implicit def generate[T]: Pickler[T] = macro Autogen.generate[T]
   }
 }

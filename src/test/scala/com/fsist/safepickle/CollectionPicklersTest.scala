@@ -3,7 +3,8 @@ package com.fsist.safepickle
 import org.scalatest.FunSuite
 
 class CollectionPicklersTest extends FunSuite with WrapperTester {
-  import WrapperBackend.picklers._
+  import DefaultPicklers._
+  import Autogen.Implicits._
 
   test("Iterables") {
     val xs = Seq(1,2,3)

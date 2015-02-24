@@ -1,27 +1,29 @@
 package com.fsist.safepickle.reactivemongo
 
 import com.fsist.safepickle.joda.JodaTimePicklers
-import com.fsist.safepickle.{LongWrapper, StringWrapper, WrapperBackend}
+import com.fsist.safepickle.{PrimitivePicklers, LongWrapper, StringWrapper, WrapperBackend}
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.Instant
 import org.scalatest.FunSuite
 import reactivemongo.bson.{BSONDateTime, BSONBinary, BSONObjectID}
 
 class ReactiveMongoPicklersTest extends FunSuite {
-  import ReactiveMongoPicklingBackend.picklers._
+  import PrimitivePicklers._
+  import JodaTimePicklers._
+  import ReactiveMongoPicklers._
 
   test("Write ObjectId to different backends") {
     val oid = BSONObjectID.generate
     
     {
-      val writer = ReactiveMongoPicklingBackend.writer()
-      writer.pickle(oid)
+      val writer = ReactiveMongoPicklerBackend.writer()
+      writer.write(oid)
       assert(writer.result() == oid)
     }
     
     {
       val writer = WrapperBackend.writer()
-      writer.pickle(oid)
+      writer.write(oid)
       assert(writer.result() == StringWrapper(oid.stringify))
     }
   }
@@ -30,8 +32,8 @@ class ReactiveMongoPicklersTest extends FunSuite {
     val arr = Array[Byte](1,2,3,4,5)
 
     {
-      val writer = ReactiveMongoPicklingBackend.writer()
-      writer.pickle(arr)
+      val writer = ReactiveMongoPicklerBackend.writer()
+      writer.write(arr)
       // BSONBinary.equals doesn't compare contents of arrays and so always returns false
       val result = writer.result().asInstanceOf[BSONBinary]
       assert(result.value.readArray(result.value.size).toIndexedSeq == arr.toIndexedSeq)
@@ -39,7 +41,7 @@ class ReactiveMongoPicklersTest extends FunSuite {
 
     {
       val writer = WrapperBackend.writer()
-      writer.pickle(arr)
+      writer.write(arr)
       assert(writer.result() == StringWrapper(Base64.encodeBase64String(arr)))
     }
   }
@@ -48,8 +50,8 @@ class ReactiveMongoPicklersTest extends FunSuite {
     val ts = new Instant(12345)
 
     {
-      val writer = ReactiveMongoPicklingBackend.writer()
-      writer.pickle(ts)
+      val writer = ReactiveMongoPicklerBackend.writer()
+      writer.write(ts)
       val result = writer.result().asInstanceOf[BSONDateTime]
       assert(result.value == ts.getMillis)
     }
@@ -57,7 +59,7 @@ class ReactiveMongoPicklersTest extends FunSuite {
     {
       import JodaTimePicklers._
       val writer = WrapperBackend.writer()
-      writer.pickle(ts)
+      writer.write(ts)
       assert(writer.result() == LongWrapper(12345))
     }
   }

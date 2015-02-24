@@ -2,7 +2,7 @@ package com.fsist.safepickle
 
 import org.scalatest.FunSuite
 
-class TreeReaderTest extends FunSuite {
+class TreePickleReaderTest extends FunSuite {
   def reader(value: Wrapper) = WrapperBackend.reader(value)
 
   test("Read string") {

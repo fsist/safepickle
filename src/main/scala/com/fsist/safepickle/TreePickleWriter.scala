@@ -4,12 +4,12 @@ import scala.collection.mutable
 
 /** A way to create new TreeNodes in some concrete implementation.
   *
-  * Implementing this trait provides a `Writer` implementation via [[TreeWriter]].
+  * Implementing this trait provides a `Writer` implementation via [[TreePickleWriter]].
   * However, tree-based representations are both less efficient and less secure than stream-based ones.
   *
   * @tparam Base the base concrete type of the nodes created by this factory.
   */
-trait TreeBuilder[Base, Backend <: PicklingBackend] {
+trait TreeBuilder[Base] {
   def int(int: Int): Base
   def long(long: Long): Base
   def float(float: Float): Base
@@ -22,9 +22,9 @@ trait TreeBuilder[Base, Backend <: PicklingBackend] {
 }
 
 /** Implements a Writer if given a way to build nodes in a tree-based representation. */
-class TreeWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Backend]) extends Writer[Base, Backend] {
+class TreePickleWriter[Base](builder: TreeBuilder[Base]) extends PickleWriter[Base] {
 
-  import TreeWriter._
+  import TreePickleWriter._
 
   private val stack = mutable.Stack[StackableWriter[Base]]()
 
@@ -88,7 +88,7 @@ class TreeWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Ba
   }
   
   override def writeArrayEnd(): this.type = stack.top match {
-    case array: ArrayWriter[Base, Backend] =>
+    case array: ArrayWriter[Base] =>
       stack.pop()
       stack.top.append(array.result)
       
@@ -97,7 +97,7 @@ class TreeWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Ba
   }
   
   override def writeObjectEnd(): this.type = stack.top match {
-    case obj: ObjectWriter[Base, Backend] =>
+    case obj: ObjectWriter[Base] =>
       stack.pop()
       stack.top.append(obj.result)
       
@@ -106,14 +106,14 @@ class TreeWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Ba
   }
   
   override def writeAttributeName(name: String): this.type = stack.top match {
-    case obj: ObjectWriter[Base, Backend] =>
+    case obj: ObjectWriter[Base] =>
       obj.writeAttributeName(name)
       this
     case other => throw new IllegalStateException("Not in an object")
   }
 }
 
-private object TreeWriter {
+private object TreePickleWriter {
 
   trait StackableWriter[Base] {
     def append(value: Base): Unit
@@ -131,7 +131,7 @@ private object TreeWriter {
     override def result: Base = value.getOrElse(throw new IllegalStateException("No value written"))
   }
 
-  class ArrayWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Backend]) extends StackableWriter[Base] {
+  class ArrayWriter[Base](builder: TreeBuilder[Base]) extends StackableWriter[Base] {
     private val vector = Vector.newBuilder[Base]
     
     override def append(value: Base): Unit = vector += value
@@ -139,7 +139,7 @@ private object TreeWriter {
     override def result: Base = builder.array(vector.result())
   }
 
-  class ObjectWriter[Base, Backend <: PicklingBackend](builder: TreeBuilder[Base, Backend]) extends StackableWriter[Base] {
+  class ObjectWriter[Base](builder: TreeBuilder[Base]) extends StackableWriter[Base] {
     private val map = Map.newBuilder[String, Base]
     private var nextAttributeName: String = ""
     

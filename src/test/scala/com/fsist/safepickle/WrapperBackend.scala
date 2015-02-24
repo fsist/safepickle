@@ -1,15 +1,15 @@
 package com.fsist.safepickle
 
+import scala.reflect.runtime.universe._
+
 import org.scalatest.FunSuiteLike
 
 /** Pickles to ordinary Scala objects. Used for testing. */
-object WrapperBackend extends PicklingBackend {
+object WrapperBackend extends PicklerBackend {
   override type Repr = Wrapper
-  override type PickleWriter = TreeWriter[Wrapper, this.type]
-  override type PickleReader = TreeReader[Wrapper, this.type]
-  
-  override def writer(): PickleWriter = new TreeWriter(WrapperBuilder)
-  override def reader(repr: Repr): PickleReader = new TreeReader(WrapperParser, repr)
+
+  override def writer(): TreePickleWriter[Wrapper] = new TreePickleWriter(WrapperBuilder)
+  override def reader(repr: Repr): TreePickleReader[Wrapper] = new TreePickleReader(WrapperParser, repr)
 }
 
 sealed trait Wrapper
@@ -24,7 +24,7 @@ case object NullWrapper extends Wrapper
 case class ObjectWrapper(attributes: Map[String, Wrapper]) extends Wrapper
 case class ArrayWrapper(values: Iterable[Wrapper]) extends Wrapper
 
-object WrapperBuilder extends TreeBuilder[Wrapper, WrapperBackend.type] {
+object WrapperBuilder extends TreeBuilder[Wrapper] {
   override def int(int: Int): Wrapper = IntWrapper(int)
   override def boolean(boolean: Boolean): Wrapper = BooleanWrapper(boolean)
   override def float(float: Float): Wrapper = FloatWrapper(float)
@@ -36,7 +36,7 @@ object WrapperBuilder extends TreeBuilder[Wrapper, WrapperBackend.type] {
   override def obj(obj: Map[String, Wrapper]): Wrapper = ObjectWrapper(obj)
 }
 
-object WrapperParser extends TreeParser[Wrapper, WrapperBackend.type] {
+object WrapperParser extends TreeParser[Wrapper] {
   override def nodeType(node: Wrapper): TreeNodeType = node match {
     case StringWrapper(_) => TreeNodeType.String
     case BooleanWrapper(_) => TreeNodeType.Boolean
@@ -48,7 +48,7 @@ object WrapperParser extends TreeParser[Wrapper, WrapperBackend.type] {
     case ObjectWrapper(_) => TreeNodeType.Object
     case ArrayWrapper(_) => TreeNodeType.Array
   }
-  
+
   override def boolean(node: Wrapper): Boolean = node.asInstanceOf[BooleanWrapper].boolean
   override def float(node: Wrapper): Float = node.asInstanceOf[FloatWrapper].float
   override def int(node: Wrapper): Int = node.asInstanceOf[IntWrapper].int
@@ -61,15 +61,13 @@ object WrapperParser extends TreeParser[Wrapper, WrapperBackend.type] {
 
 trait WrapperTester { self: FunSuiteLike =>
   def roundtrip[T](value: T, expectedWrapper: Wrapper, equalityTest: Option[(T, T) => Boolean] = None)
-                  (implicit pickler: Pickler[T, PicklingBackend]): Unit = {
-    import WrapperBackend.picklers._
-
+                  (implicit pickler: Pickler[T], tag: TypeTag[T]): Unit = {
     val writer = WrapperBackend.writer()
-    pickler.pickle(value, writer)
+    writer.write(value)(pickler)
     val wrapper = writer.result()
     assert(wrapper == expectedWrapper)
     val reader = WrapperBackend.reader(wrapper)
-    val read = pickler.unpickle(reader)
+    val read = reader.readTagged[T]()
 
     equalityTest match {
       case Some(test) => assert(test(read, value))

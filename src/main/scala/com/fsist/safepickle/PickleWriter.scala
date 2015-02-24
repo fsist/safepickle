@@ -8,7 +8,7 @@ package com.fsist.safepickle
   * Methods may, but are not required to, fail with an IllegalStateException if called in an illegal sequence
   * (e.g. writeAttributeName twice in a row).
   */
-trait Writer[Repr, Backend <: PicklingBackend] {
+trait PickleWriter[+Repr] {
 
   /** Returns everything written so far.
     * 
@@ -27,6 +27,15 @@ trait Writer[Repr, Backend <: PicklingBackend] {
   def writeBoolean(boolean: Boolean): this.type
   def writeNull(): this.type
 
+  /** Can be overridden by a particular implementation to intercept certain types, based on runtime type checking of `t`,
+    * and write them in some backend-specific way without using the provided `pickler`.
+    *
+    * Otherwise, if the type is not being overridden, delegates to the `pickler` provided. */
+  def write[T](t: T, emitObjectStart: Boolean = true)(implicit pickler: Pickler[T]): this.type = {
+    pickler.pickle(t, this, emitObjectStart)
+    this
+  }
+
   /** After writing an attribute name, write its value using one of the other writeXxx methods */
   def writeAttributeName(name: String): this.type
   
@@ -35,13 +44,5 @@ trait Writer[Repr, Backend <: PicklingBackend] {
   
   def writeObjectStart(): this.type
   def writeObjectEnd(): this.type
-  
-  def pickle[T](t: T)(implicit pickler: Pickler[T, Backend]): this.type = {
-    pickler.pickle(t, this.asInstanceOf[Backend#PickleWriter])
-    this
-  }
 }
 
-object Writer {
-  type Generic[Repr] = Writer[Repr, PicklingBackend]
-}

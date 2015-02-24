@@ -2,7 +2,7 @@ package com.fsist.safepickle
 
 import org.scalatest.FunSuite
 
-class TreeWriterTest extends FunSuite {
+class TreePickleWriterTest extends FunSuite {
   def writer = WrapperBackend.writer()
 
   def testWriting(value: Wrapper): Unit = {

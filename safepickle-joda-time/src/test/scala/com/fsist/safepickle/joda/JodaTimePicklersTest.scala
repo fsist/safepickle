@@ -1,11 +1,10 @@
 package com.fsist.safepickle.joda
 
-import com.fsist.safepickle.{ArrayWrapper, LongWrapper, WrapperBackend, WrapperTester}
+import com.fsist.safepickle._
 import org.joda.time.{DateTime, Interval, Duration, Instant}
 import org.scalatest.FunSuite
 
 class JodaTimePicklersTest extends FunSuite with WrapperTester {
-  import WrapperBackend.picklers._
   import JodaTimePicklers._
 
   test("Pickling") {

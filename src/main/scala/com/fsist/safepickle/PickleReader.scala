@@ -1,5 +1,7 @@
 package com.fsist.safepickle
 
+import scala.reflect.runtime.universe._
+
 /** Produces a stream of tokens. Counterpart of `Writer`.
   * 
   * This is patterned after the Jackson stream interface. At any given time, the Reader has a current token,
@@ -13,7 +15,7 @@ package com.fsist.safepickle
   * The methods `int`, `string` etc. throw an UnpicklingException if the current token is not of the right type,
   * or if there is no current token.
   */
-trait Reader[Backend <: PicklingBackend] {
+trait PickleReader {
   /** Advances to the next token. Returns false on EOF. */
   def next(): Boolean
 
@@ -38,10 +40,20 @@ trait Reader[Backend <: PicklingBackend] {
   def string: String
   def boolean: Boolean
   def attributeName: String
-  
-  def unpickle[T](implicit unpickler: Pickler[T, Backend]): T = unpickler.unpickle(this.asInstanceOf[Backend#PickleReader])
+
+  /** Can be overridden by a particular implementation to intercept certain types, based on runtime type checking of
+    * the `typeName`, and read them in some backend-specific way without using the provided `pickler`.
+    *
+    * Otherwise, if the type is not being overridden, delegates to the `pickler` provided.
+    *
+    * @param typeName the full name of the concrete type. This is returned by Type.toString.
+    *                 This is used in place of a TypeTag to improve performance.
+    */
+  def read[T](typeName: String, expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T =
+    pickler.unpickle(this, expectObjectStart)
+
+  /** As `read`, but uses a TypeTag, which is slightly more expensive. */
+  def readTagged[T](expectObjectStart: Boolean = true)(implicit pickler: Pickler[T], tag: TypeTag[T]): T =
+    read(tag.tpe.toString, expectObjectStart)(pickler)
 }
 
-object Reader {
-  type Generic = Reader[PicklingBackend]
-}

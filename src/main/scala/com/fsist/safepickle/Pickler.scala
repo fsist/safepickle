@@ -1,36 +1,41 @@
 package com.fsist.safepickle
 
+import scala.language.experimental.macros
+
 import org.apache.commons.codec.binary.Base64
 
-/** A way to pickle or unpickle a type.
-  *
-  * @tparam Backend allows the pickler to be specific to a backend, allowing different picklers to produce different
-  *                 representations of the same value for different backends.
-  */
-trait Pickler[T, -Backend <: PicklingBackend] {
-  /** Should call whatever Writer methods are necessary to write the value `t`.
+/** A way to pickle or unpickle a type. */
+trait Pickler[T] {
+  /** Should write the value `t` to the `writer`. If the type `T` contains sub-types for which we have sub-picklers,
+    * they should be used by calling `writer.write[T](pickler)` for those types.
+    *
+    * WARNING: do not call this method directly; use `PickleWriter.write` with this pickler instead.
     *
     * @param emitObjectStart If writing an object, and this argument is true, the pickler will write an ObjectStart token.
     *                        If false, it will assume an object scope has already been opened, and start emitting attributes.
     */
-  def pickle(t: T, writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit
+  def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit
 
-  /** Should read and parse the reader's current token without advancing it.
+  /** Should read and parse the reader's current token without advancing it. If the type `T` contains sub-types for
+    * which we have sub-picklers, they should be used by calling `reader.read[T](pickler)` for those types.
     * 
     * If reading a complex value (object, array) or a series of values, consisting of multiple Reader tokens, 
     * should assume the current token when called is the first token to be read, and should leave the last token
     * that was read and processed as the current token.
-    * 
+    *
+    * WARNING: do not call this method directly; use `PickleReader.read` with this pickler instead.
+    *
     * @param expectObjectStart if reading an object, and this argument is true, expect the current reader token to be
     *                          the object start. If it is false, expect the current token to be the first attribute name
     *                          inside the object. If not reading an object, ignore this argument.
     * @throws UnpicklingException if the reader provides unexpected input
     */
-  def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T
+  def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
 }
 
 object Pickler {
-  type Generic[T] = Pickler[T, PicklingBackend]
+  /** Generate a Pickler for a case class or sealed trait. See the documentation in the project's README.md. */
+  def generate[T]: Pickler[T] = macro Autogen.generate[T]
 }
 
 class UnpicklingException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
@@ -41,78 +46,81 @@ object UnpicklingException {
 case class UnexpectedEofException(expected: String) extends UnpicklingException(s"Unexpected EOF (expected: $expected)")
 
 /** Implicit definitions of picklers for standard types.
-  * 
-  * NOTE: this trait exists only so that mixing it into a Backend.picklers cake can export its implicits.
-  * You should not extend it yourself, since that will create new classes & instances for all the picklers it defines,
-  * for every instance of your class that extends the trait. Instead, use [[PrimitivePicklers]] directly.
+  *
+  * This trait exists as a mixin so that types extending it can re-export its implicit definitions.
+  * If you don't need that, use the PrimitivePicklers object.
+  *
+  * NOTE: in non-generic situations, when you know the type T you're dealing with statically, you don't have to use these
+  * as sub-picklers; you can call the methods PickleWriter.writeXxx and PickleReader.readXxx directly instead, which is
+  * more efficient and clearer to read.
   */
 trait PrimitivePicklersMixin {
 
-  implicit object IntPickler extends Pickler.Generic[Int] {
-    override def pickle(int: Int, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
+  implicit object IntPickler extends Pickler[Int] {
+    final override def pickle(int: Int, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeInt(int)
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Int = 
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Int =
       reader.int
   }
 
-  implicit object LongPickler extends Pickler.Generic[Long] {
-    override def pickle(long: Long, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
+  implicit object LongPickler extends Pickler[Long] {
+    final override def pickle(long: Long, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeLong(long)
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Long = 
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Long =
       reader.long
   }
 
-  implicit object FloatPickler extends Pickler.Generic[Float] {
-    override def pickle(float: Float, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
+  implicit object FloatPickler extends Pickler[Float] {
+    final override def pickle(float: Float, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeFloat(float)
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Float = 
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Float =
       reader.float
   }
 
-  implicit object DoublePickler extends Pickler.Generic[Double] {
-    override def pickle(double: Double, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
+  implicit object DoublePickler extends Pickler[Double] {
+    final override def pickle(double: Double, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeDouble(double)
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Double = 
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Double =
       reader.double
   }
 
-  implicit object BooleanPickler extends Pickler.Generic[Boolean] {
-    override def pickle(boolean: Boolean, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
+  implicit object BooleanPickler extends Pickler[Boolean] {
+    final override def pickle(boolean: Boolean, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeBoolean(boolean)
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Boolean = 
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Boolean =
       reader.boolean
   }
 
-  implicit object StringPickler extends Pickler.Generic[String] {
-    override def pickle(string: String, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
+  implicit object StringPickler extends Pickler[String] {
+    final override def pickle(string: String, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeString(string)
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): String = 
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): String =
       reader.string
   }
 
-  implicit object NullPickler extends Pickler.Generic[Null] {
-    override def pickle(Null: Null, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit =
+  implicit object NullPickler extends Pickler[Null] {
+    final override def pickle(Null: Null, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeNull()
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean = true): Null = {
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Null = {
       reader.assertTokenType(TokenType.Null)
       null
     }
   }
 
   /** Byte array pickler that writes the base64 value of the array as a string. */
-  implicit object ByteArrayPickler extends Pickler[Array[Byte], PicklingBackend] {
-    override def pickle(t: Array[Byte], writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean): Unit = {
+  implicit object ByteArrayPickler extends Pickler[Array[Byte]] {
+    final override def pickle(t: Array[Byte], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
       writer.writeString(Base64.encodeBase64String(t))
     }
 
-    override def unpickle(reader: PicklingBackend#PickleReader, expectObjectStart: Boolean): Array[Byte] = {
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean): Array[Byte] = {
       Base64.decodeBase64(reader.string)
     }
   }
@@ -122,21 +130,21 @@ trait PrimitivePicklersMixin {
 object PrimitivePicklers extends PrimitivePicklersMixin
 
 /** Pickles values of type `T` by converting them to values of type `Other`, which has an `otherPickler` provided. */
-trait ConvertPickler[T, Other, Backend <: PicklingBackend] extends Pickler[T, Backend]{
-  implicit def otherPickler: Pickler[Other, Backend]
+trait ConvertPickler[T, Other] extends Pickler[T]{
+  implicit def otherPickler: Pickler[Other]
 
   def convertTo(t: T): Other
   def convertFrom(other: Other): T
 
-  def pickle(t: T, writer: Backend#PickleWriter, emitObjectStart: Boolean = true): Unit =
+  def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
     otherPickler.pickle(convertTo(t), writer, emitObjectStart)
 
-  def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T =
+  def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T =
     convertFrom(otherPickler.unpickle(reader, expectObjectStart))
 }
 
 /** A refining of [[ConvertPickler]] for converting types to Strings using their `toString` method. */
-trait ConvertToStringPickler[T] extends ConvertPickler[T, String, PicklingBackend] {
-  implicit def otherPickler: Pickler[String, PicklingBackend] = PrimitivePicklers.StringPickler
+trait ConvertToStringPickler[T] extends ConvertPickler[T, String] {
+  implicit def otherPickler: Pickler[String] = PrimitivePicklers.StringPickler
   def convertTo(t: T): String = t.toString
 }

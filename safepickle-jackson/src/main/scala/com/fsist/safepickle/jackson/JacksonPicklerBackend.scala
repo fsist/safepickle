@@ -7,7 +7,7 @@ import com.fsist.safepickle._
 
 import com.fasterxml.jackson.core._
 
-object JacksonPicklingBackend {
+object JacksonPicklerBackend {
   private lazy val factory = (new JsonFactory)
     .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
     .configure(JsonParser.Feature.ALLOW_COMMENTS, true)
@@ -18,35 +18,31 @@ object JacksonPicklingBackend {
     .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
     .configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true)
 
-  object Array extends PicklingBackend {
+  object Array extends PicklerBackend {
     type Repr = Array[Byte]
-    type PickleReader = JacksonReader[this.type]
-    type PickleWriter = JacksonWriter[Repr, this.type]
-    
-    override def reader(repr: Array[Byte]): PickleReader = new JacksonReader(factory.createParser(repr))
 
-    override def writer(): PickleWriter = {
+    override def reader(repr: Array[Byte]): PickleReader = new JacksonPickleReader(factory.createParser(repr))
+
+    override def writer(): PickleWriter[Repr] = {
       val bos = new ByteArrayOutputStream()
       val gen = factory.createGenerator(bos).useDefaultPrettyPrinter()
-      new JacksonWriter(gen, {
+      new JacksonPickleWriter(gen, {
         gen.flush()
         bos.toByteArray
       })
     }
   }
 
-  object String extends PicklingBackend {
+  object String extends PicklerBackend {
     type Repr = String
-    type PickleReader = JacksonReader[this.type]
-    type PickleWriter = JacksonWriter[Repr, this.type]
 
-    override def reader(repr: String): PickleReader = new JacksonReader(factory.createParser(repr))
+    override def reader(repr: String): PickleReader = new JacksonPickleReader(factory.createParser(repr))
 
-    override def writer(): PickleWriter = {
+    override def writer(): PickleWriter[Repr] = {
       val buf = new StringWriter()
       val gen = factory.createGenerator(buf).useDefaultPrettyPrinter()
 
-      new JacksonWriter(gen, {
+      new JacksonPickleWriter(gen, {
         gen.flush()
         buf.toString
       })
@@ -55,7 +51,7 @@ object JacksonPicklingBackend {
 
 }
 
-class JacksonReader[Backend <: PicklingBackend](parser: JsonParser) extends Reader[Backend] {
+class JacksonPickleReader[Backend <: PicklerBackend](parser: JsonParser) extends PickleReader {
 
   import com.fasterxml.jackson.core.JsonTokenId._
 
@@ -137,7 +133,7 @@ class JacksonReader[Backend <: PicklingBackend](parser: JsonParser) extends Read
   }
 }
 
-class JacksonWriter[Repr, Backend <: PicklingBackend](generator: JsonGenerator, makeResult: => Repr) extends Writer[Repr, Backend] {
+class JacksonPickleWriter[Repr](generator: JsonGenerator, makeResult: => Repr) extends PickleWriter[Repr] {
   override def result(): Repr = makeResult
 
   override def writeString(string: String): this.type = try {
