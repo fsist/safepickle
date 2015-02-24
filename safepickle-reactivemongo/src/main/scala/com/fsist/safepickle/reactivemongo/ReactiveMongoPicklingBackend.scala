@@ -2,13 +2,14 @@ package com.fsist.safepickle.reactivemongo
 
 import java.util.Date
 
+import com.fsist.safepickle
+import com.fsist.safepickle.PicklingBackend.DefaultPicklers
 import com.fsist.safepickle.reactivemongo.ReactiveMongoPicklingBackend.{PickleWriter, PickleReader}
 import org.joda.time.{DateTime, Instant}
 import reactivemongo.bson._
 import com.fsist.safepickle._
-import PicklingBackend.DefaultPicklers
 
-object ReactiveMongoPicklingBackend extends PicklingBackend {
+object ReactiveMongoPicklingBackend extends safepickle.PicklingBackend {
   type Repr = BSONValue
   type PickleReader = BSONTreeReader
   type PickleWriter = BSONTreeWriter
