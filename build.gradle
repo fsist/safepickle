@@ -62,6 +62,12 @@ allprojects {
     sign scaladocJar
   }
 
+  artifacts {
+    archives jar
+    archives sourcesJar
+    archives scaladocJar
+  }
+
   uploadArchives {
     repositories {
       mavenDeployer {
