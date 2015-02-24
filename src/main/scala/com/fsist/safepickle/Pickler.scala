@@ -126,3 +126,9 @@ trait ConvertPickler[T, Other, Backend <: PicklingBackend] extends Pickler[T, Ba
   def unpickle(reader: Backend#PickleReader, expectObjectStart: Boolean = true): T =
     convertFrom(otherPickler.unpickle(reader, expectObjectStart))
 }
+
+/** A refining of [[ConvertPickler]] for converting types to Strings using their `toString` method. */
+trait ConvertToStringPickler[T] extends ConvertPickler[T, String, PicklingBackend] with PrimitivePicklers {
+  implicit def otherPickler: Pickler[String, PicklingBackend] = StringPickler
+  def convertTo(t: T): String = t.toString
+}
