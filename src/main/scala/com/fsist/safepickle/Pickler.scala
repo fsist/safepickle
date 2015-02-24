@@ -40,8 +40,13 @@ object UnpicklingException {
 
 case class UnexpectedEofException(expected: String) extends UnpicklingException(s"Unexpected EOF (expected: $expected)")
 
-/** Implicit definitions of picklers for standard types. */
-trait PrimitivePicklers {
+/** Implicit definitions of picklers for standard types.
+  * 
+  * NOTE: this trait exists only so that mixing it into a Backend.picklers cake can export its implicits.
+  * You should not extend it yourself, since that will create new classes & instances for all the picklers it defines,
+  * for every instance of your class that extends the trait. Instead, use [[PrimitivePicklers]] directly.
+  */
+trait PrimitivePicklersMixin {
 
   implicit object IntPickler extends Pickler.Generic[Int] {
     override def pickle(int: Int, writer: PicklingBackend#PickleWriter, emitObjectStart: Boolean = true): Unit = 
@@ -113,6 +118,9 @@ trait PrimitivePicklers {
   }
 }
 
+/** Implicit definitions of picklers for standard types. */
+object PrimitivePicklers extends PrimitivePicklersMixin
+
 /** Pickles values of type `T` by converting them to values of type `Other`, which has an `otherPickler` provided. */
 trait ConvertPickler[T, Other, Backend <: PicklingBackend] extends Pickler[T, Backend]{
   implicit def otherPickler: Pickler[Other, Backend]
@@ -128,7 +136,7 @@ trait ConvertPickler[T, Other, Backend <: PicklingBackend] extends Pickler[T, Ba
 }
 
 /** A refining of [[ConvertPickler]] for converting types to Strings using their `toString` method. */
-trait ConvertToStringPickler[T] extends ConvertPickler[T, String, PicklingBackend] with PrimitivePicklers {
-  implicit def otherPickler: Pickler[String, PicklingBackend] = StringPickler
+trait ConvertToStringPickler[T] extends ConvertPickler[T, String, PicklingBackend] {
+  implicit def otherPickler: Pickler[String, PicklingBackend] = PrimitivePicklers.StringPickler
   def convertTo(t: T): String = t.toString
 }

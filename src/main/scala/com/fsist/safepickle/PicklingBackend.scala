@@ -30,7 +30,7 @@ trait PicklingBackend {
 
 object PicklingBackend {
   /** The default backend-neutral picklers. */
-  trait DefaultPicklers extends PrimitivePicklers with CollectionPicklers {
+  trait DefaultPicklers extends PrimitivePicklersMixin with CollectionPicklers {
   }
 
   /** Autogenerate a Pickler. See the documentation in the project's README.md.

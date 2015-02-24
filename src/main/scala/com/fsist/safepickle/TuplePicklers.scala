@@ -1,5 +1,6 @@
 package com.fsist.safepickle
 
+/** Implicit definitions of picklers for tuples of all sizes. */
 trait TuplePicklers {
   implicit def tuple1[T1, Backend <: PicklingBackend](implicit tpickler1: Pickler[T1, Backend]): Pickler[Tuple1[T1], Backend] =
     new Pickler[Tuple1[T1], Backend] {
