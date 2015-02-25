@@ -31,6 +31,8 @@ trait Pickler[T] {
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
 }
 
+object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin
+
 class UnpicklingException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 object UnpicklingException {
   def apply(msg: String, cause: Throwable = null) = new UnpicklingException(msg, cause)
@@ -132,7 +134,7 @@ object PrimitivePicklers extends PrimitivePicklersMixin
 
 /** Pickles values of type `T` by converting them to values of type `Other`, which has an `otherPickler` provided. */
 trait ConvertPickler[T, Other] extends Pickler[T]{
-  implicit def otherPickler: Pickler[Other] = implicitly[Pickler[Other]]
+  implicit def otherPickler: Pickler[Other]
 
   def convertTo(t: T): Other
   def convertFrom(other: Other): T
