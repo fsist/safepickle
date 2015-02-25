@@ -14,8 +14,6 @@ import scala.reflect.ClassTag
   * If you don't need that, use the CollectionPicklers object.
   */
 trait CollectionPicklersMixin extends TuplePicklers {
-  import PrimitivePicklers._
-
   implicit def iterablePickler[T, Coll[T] <: Iterable[T]](implicit tpickler: Pickler[T],
                                                           cbf: CanBuildFrom[Nothing, T, Coll[T]],
                                                           tag: TypeTag[T]): Pickler[Coll[T]] = new Pickler[Coll[T]] {

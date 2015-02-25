@@ -8,7 +8,6 @@ import org.scalatest.FunSuite
 import reactivemongo.bson.{BSONDateTime, BSONBinary, BSONObjectID}
 
 class ReactiveMongoPicklersTest extends FunSuite {
-  import PrimitivePicklers._
   import JodaTimePicklers._
   import ReactiveMongoPicklers._
 

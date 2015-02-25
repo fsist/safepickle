@@ -25,9 +25,6 @@ class Autogen(val c: Context) {
 
     checkInitialSymbol(symbol)
 
-    if (canBeWrittenPrimitively(tag.tpe)) {
-      c.abort(c.enclosingPosition, s"$symbol should not be written using this macro. Try using PrimitivePicklers and CollectionPicklers.")
-    }
     if (symbol.isExistential) {
       c.abort(c.enclosingPosition, s"Cannot generate pickler for existential type $symbol")
     }
@@ -123,10 +120,7 @@ class Autogen(val c: Context) {
     c.Expr[Pickler[T]](ret)
   }
 
-  /** Returns the implicit Pickler for this type if one is in scope, or a call to Autogen.
-    *
-    * Types defined in DefaultPicklers (eg collections) always get that explicit pickler.
-    */
+  /** Returns the implicit Pickler for this type if one is in scope, or a call to Autogen. */
   private def picklerForType(tpe: Type): Tree = {
     val picklerTpe = c.universe.appliedType(typeOf[Pickler[_]], List(tpe))
     val implicitPickler = c.inferImplicitValue(picklerTpe)
@@ -134,46 +128,8 @@ class Autogen(val c: Context) {
       q"implicitly[Pickler[$tpe]]"
     }
     else {
-      // More expensive test:
-      // We can't generate code that will decide at runtime, using implicits, whether to invoke Autogen[tpe],
-      // because the generated call to Autogen would still be expanded, and would fail if it's e.g. Autogen[String].
-      // So we need to know at compile time whether the implicit exists, either originally, or with the addition
-      // of DefaultPicklers.
-
-      val test = q"""import com.fsist.safepickle._
-                   import DefaultPicklers._
-                   implicitly[Pickler[$tpe]]
-                   """
-      try {
-        val pickler = c.eval(c.Expr[Pickler[_]](c.untypecheck(test.duplicate)))
-        q"implicitly[Pickler[$tpe]]"
-      }
-      catch {
-        case e: InvocationTargetException if e.getCause.isInstanceOf[NoClassDefFoundError] =>
-          // Known issue: if the pickler for this type was defined in the same compilation unit as we have,
-          // then this test will compile but fail to run, since its classfile is not available yet.
-          q"implicitly[Pickler[$tpe]]"
-        case e: ToolBoxError =>
-          q"Autogen[$tpe]"
-      }
+      q"Autogen[$tpe]"
     }
-  }
-
-  /** Returns true if this is a type that can be written primitively to a PickleWriter. */
-  private def canBeWrittenPrimitively(tpe: Type): Boolean = {
-    tpe =:= typeOf[Int] ||
-      tpe =:= typeOf[Long] ||
-      tpe =:= typeOf[Short] ||
-      tpe =:= typeOf[Byte] ||
-      tpe =:= typeOf[Float] ||
-      tpe =:= typeOf[Double] ||
-      tpe =:= typeOf[String] ||
-      tpe =:= typeOf[Null] ||
-      tpe =:= typeOf[Boolean] ||
-      tpe =:= typeOf[Array[Byte]] ||
-      tpe.typeConstructor <:< typeOf[Iterable[_]] ||
-      tpe.typeConstructor =:= typeOf[Array[_]] ||
-      tpe.toString.startsWith("scala.Tuple")
   }
 
   private def generateClassPickler[T](clazz: ClassSymbol)(implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
@@ -312,7 +268,6 @@ class Autogen(val c: Context) {
 
         val ret = q""" {
           import com.fsist.safepickle._
-          import DefaultPicklers._
 
           ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
 
@@ -537,7 +492,6 @@ class Autogen(val c: Context) {
 
     val ret = q"""{
           import com.fsist.safepickle._
-          import PrimitivePicklers._
 
           ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
 

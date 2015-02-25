@@ -4,8 +4,6 @@ import scala.reflect.runtime.universe._
 
 /** Implicit definitions of picklers for tuples of all sizes. */
 trait TuplePicklers {
-  import PrimitivePicklers._
-
   implicit def tuple1[T1](implicit tpickler1: Pickler[T1], tag1: TypeTag[T1]): Pickler[Tuple1[T1]] =
     new Pickler[Tuple1[T1]] {
       override def pickle(t: Tuple1[T1], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
