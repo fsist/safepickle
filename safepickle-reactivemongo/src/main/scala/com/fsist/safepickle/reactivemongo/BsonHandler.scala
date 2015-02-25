@@ -15,7 +15,7 @@ object BsonHandler {
   /** Creates a ReactiveMongo document handler based on the given Pickler.
     *
     * If the pickler produces an Object, it is used directly. Otherwise, if the pickler produces a primitive value,
-    * it is wrapped in a BSONDocument that looks like { "_id" -> pickled value, "$wrapped" -> true }.
+    * it is wrapped in a BSONDocument that looks like { "_id" -> pickled value, "$$wrapped" -> true }.
     */
   def document[T](implicit pickler: Pickler[T], tag: TypeTag[T]): BSONDocumentReader[T] with BSONDocumentWriter[T] =
     new BSONDocumentReader[T] with BSONDocumentWriter[T] {
