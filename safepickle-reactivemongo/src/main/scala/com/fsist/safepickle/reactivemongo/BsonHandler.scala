@@ -7,7 +7,7 @@ import reactivemongo.bson._
 
 object BsonHandler {
   /** Creates a ReactiveMongo BSONHandler based on the given Pickler. */
-  def of[T](implicit pickler: Pickler[T], tag: TypeTag[T]): BSONHandler[BSONValue, T] = new BSONHandler[BSONValue, T] {
+  def apply[T](implicit pickler: Pickler[T], tag: TypeTag[T]): BSONHandler[BSONValue, T] = new BSONHandler[BSONValue, T] {
     override def read(bson: BSONValue): T = ReactiveMongoPicklerBackend.reader(bson).readTagged[T]()
     override def write(t: T): BSONValue = ReactiveMongoPicklerBackend.writer().write[T](t).result()
   }
