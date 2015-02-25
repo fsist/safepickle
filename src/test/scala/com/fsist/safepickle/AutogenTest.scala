@@ -63,13 +63,8 @@ object AutogenTest {
 
   sealed trait T2
   object T2 {
-    private implicit val t3picker : Pickler[T3] = T3.pickler
+    private implicit val t3picker: Pickler[T3] = T3.pickler
     implicit val pickler = Autogen.children[T2, T3]
-  }
-
-  sealed trait T3 extends T2
-  object T3 {
-    implicit val pickler = Autogen.children[T3, C7]
   }
 
   case class C7(i: Int) extends T3
@@ -77,13 +72,19 @@ object AutogenTest {
     implicit val pickler = Autogen[C7]
   }
 
-  sealed abstract class C8(i: Int)
-  object C8 {
-    implicit val pickler = Autogen.children[C8, C9]
+  sealed trait T3 extends T2
+  object T3 {
+    implicit val pickler = Autogen.children[T3, C7]
   }
+
   case class C9(i: Int) extends C8(i)
   object C9 {
     implicit val pickler = Autogen[C9]
+  }
+
+  sealed abstract class C8(i: Int)
+  object C8 {
+    implicit val pickler = Autogen.children[C8, C9]
   }
 
   case class C10(i: Int)
