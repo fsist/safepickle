@@ -1,7 +1,5 @@
 package com.fsist.safepickle
 
-import scala.language.experimental.macros
-
 import org.apache.commons.codec.binary.Base64
 
 /** A way to pickle or unpickle a type. */
@@ -33,11 +31,6 @@ trait Pickler[T] {
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
 }
 
-object Pickler {
-  /** Generate a Pickler for a case class or sealed trait. See the documentation in the project's README.md. */
-  def generate[T]: Pickler[T] = macro Autogen.generate[T]
-}
-
 class UnpicklingException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 object UnpicklingException {
   def apply(msg: String, cause: Throwable = null) = new UnpicklingException(msg, cause)
@@ -55,6 +48,14 @@ case class UnexpectedEofException(expected: String) extends UnpicklingException(
   * more efficient and clearer to read.
   */
 trait PrimitivePicklersMixin {
+
+  implicit object ShortPickler extends Pickler[Short] {
+    final override def pickle(short: Short, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
+      writer.writeInt(short)
+
+    final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Short =
+      reader.int.toShort
+  }
 
   implicit object IntPickler extends Pickler[Int] {
     final override def pickle(int: Int, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =

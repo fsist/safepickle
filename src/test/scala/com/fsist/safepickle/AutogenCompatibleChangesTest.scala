@@ -4,10 +4,148 @@ import org.scalatest.FunSuite
 
 import scala.reflect.runtime.universe._
 
+object AutogenCompatibleChangesTest {
+
+  // Note: classes within objects have to live here in the companion object, and cannot be defined inside the test
+  // methods, because that creates types the Autogen macro legitimately can't handle.
+  // This includes classes with default arguments, because the default argument definitions are generated
+  // on the companion object.
+
+  object Scope1 {
+    class C
+    object C {
+      implicit val pickler = Autogen[C]
+    }
+  }
+  object Scope2 {
+    class C()
+    object C {
+      implicit val pickler = Autogen[C]
+    }
+  }
+  object Scope3 {
+    object C {
+      implicit val pickler = Autogen[C.type]
+    }
+  }
+
+  object Scope4 {
+    case class C1(i: Int)
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    class C2(val i: Int)
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+
+    class C3(var i: Int)
+    object C3 {
+      implicit val pickler = Autogen[C3]
+    }
+
+    object O {
+      implicit val pickler = Autogen[O.type]
+    }
+  }
+
+  object Scope5 {
+    case object O {
+      implicit val pickler = Autogen[O.type]
+    }
+  }
+
+  object Scope6 {
+    case class C1(i: Int)
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    case class C2(i: Int, s: String = "foo")
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+
+    case class C3(s: String = "foo", i: Int)
+    object C3 {
+      implicit val pickler = Autogen[C3]
+    }
+  }
+
+  object Scope7 {
+    case class C1(i: Int)
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    case class C2(i: Int)
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+  }
+
+  object Scope8 {
+    case class C1(i: Int = 1)
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    case class C2(i: Int = 2)
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+  }
+
+  object Scope9 {
+    case class C1(i: Int, s: String)
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    case class C2(s: String, i: Int)
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+  }
+
+  object Scope10 {
+    case class C1(ints: List[Int])
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    case class C2(ints: Vector[Int])
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+
+    case class C3(ints: Set[Int])
+    object C3 {
+      implicit val pickler = Autogen[C3]
+    }
+
+    case class C4(ints: Iterable[Int])
+    object C4 {
+      implicit val pickler = Autogen[C4]
+    }
+  }
+
+  object Scope11 {
+    case class C1(i: Int = 8)
+    object C1 {
+      implicit val pickler = Autogen[C1]
+    }
+
+    case class C2(i: Option[Int])
+    object C2 {
+      implicit val pickler = Autogen[C2]
+    }
+  }
+}
+
 class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
   import AutogenCompatibleChangesTest._
-  import DefaultPicklers._
-  import Autogen.Implicits._
 
   def assertEqualPickle[A, B](a: A, b: B)(implicit apickler: Pickler[A], bpickler: Pickler[B]): Unit = {
     val awriter = WrapperBackend.writer()
@@ -72,67 +210,5 @@ class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
   test("Make param with default value optional") {
     roundtrip2(Scope11.C1(5), Scope11.C2(Some(5)))
     roundtrip2(Scope11.C2(None), Scope11.C1(8))
-  }
-}
-
-object AutogenCompatibleChangesTest {
-
-  // Note: classes within objects have to live here in the companion object, and cannot be defined inside the test
-  // methods, because that creates types the Autogen macro legitimately can't handle.
-  // This includes classes with default arguments, because the default argument definitions are generated
-  // on the companion object.
-
-  object Scope1 {
-    class C
-  }
-  object Scope2 {
-    class C()
-  }
-  object Scope3 {
-    object C
-  }
-
-  object Scope4 {
-    case class C1(i: Int)
-    class C2(val i: Int)
-    class C3(var i: Int)
-
-    object O
-  }
-  object Scope5 {
-    case object O
-  }
-
-  object Scope6 {
-    case class C1(i: Int)
-    case class C2(i: Int, s: String = "foo")
-    case class C3(s: String = "foo", i: Int)
-  }
-
-  object Scope7 {
-    case class C1(i: Int)
-    case class C2(i: Int)
-  }
-
-  object Scope8 {
-    case class C1(i: Int = 1)
-    case class C2(i: Int = 2)
-  }
-
-  object Scope9 {
-    case class C1(i: Int, s: String)
-    case class C2(s: String, i: Int)
-  }
-
-  object Scope10 {
-    case class C1(ints: List[Int])
-    case class C2(ints: Vector[Int])
-    case class C3(ints: Set[Int])
-    case class C4(ints: Iterable[Int])
-  }
-
-  object Scope11 {
-    case class C1(i: Int = 8)
-    case class C2(i: Option[Int])
   }
 }

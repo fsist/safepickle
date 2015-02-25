@@ -1,7 +1,16 @@
 package com.fsist.safepickle
 
+import java.lang.reflect.InvocationTargetException
+
+import scala.language.implicitConversions
+import scala.language.higherKinds
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
+import scala.tools.reflect.ToolBoxError
+
+import scala.collection.mutable
+
+import com.fsist.safepickle.Autogen.|
 
 /** Entrypoint for the Pickler autogeneration macro. See the documentation in the project's README.md. */
 class Autogen(val c: Context) {
@@ -14,16 +23,24 @@ class Autogen(val c: Context) {
     val tag = implicitly[WeakTypeTag[T]]
     val symbol = tag.tpe.typeSymbol.asType
 
-    {
-      var owner = symbol.owner
-      while (owner != c.universe.NoSymbol) {
-        if (owner.isClass && !owner.isModuleClass)
-          c.abort(c.enclosingPosition, s"Cannot generate pickler for $symbol because it is owned by class $owner")
-        owner = owner.owner
-      }
-    }
+    checkInitialSymbol(symbol)
 
-    if (symbol.isClass) {
+    if (canBeWrittenPrimitively(tag.tpe)) {
+      c.abort(c.enclosingPosition, s"$symbol should not be written using this macro. Try using PrimitivePicklers and CollectionPicklers.")
+    }
+    if (symbol.isExistential) {
+      c.abort(c.enclosingPosition, s"Cannot generate pickler for existential type $symbol")
+    }
+    else if (symbol.isImplementationArtifact) {
+      c.abort(c.enclosingPosition, s"Not generating pickler for implementation artifact $symbol, this sounds dangerous")
+    }
+    else if (symbol.isSynthetic) {
+      c.abort(c.enclosingPosition, s"Not generating pickler for synthetic type $symbol, this sounds dangerous")
+    }
+    else if (symbol.typeParams.nonEmpty) {
+      c.abort(c.enclosingPosition, s"Cannot generate pickler for generic type $symbol")
+    }
+    else if (symbol.isClass) {
       val cls = symbol.asClass
       if (cls.isTrait || cls.isAbstract) {
         if (cls.isSealed) {
@@ -53,24 +70,119 @@ class Autogen(val c: Context) {
     }
   }
 
-  private def generateModulePickler[T: c.WeakTypeTag](symbol: ModuleSymbol): Expr[Pickler[T]] = {
+  private def checkInitialSymbol(symbol: Symbol): Unit = {
+    var owner = symbol.owner
+    while (owner != c.universe.NoSymbol) {
+      if (owner.isClass && !owner.isModuleClass)
+        c.abort(c.enclosingPosition, s"Cannot generate pickler for $symbol because it is owned by class $owner")
+      owner = owner.owner
+    }
+  }
+
+  def generateChildren[T: c.WeakTypeTag, Children: c.WeakTypeTag]: Expr[Pickler[T]] = {
+    val tag = implicitly[WeakTypeTag[T]]
+    val symbol = tag.tpe.typeSymbol.asType
+    checkInitialSymbol(symbol)
+
+    def collectChildTypes(tpe: Type): List[Type] = {
+      if (tpe <:< typeOf[|[_, _]]) {
+        val rest = tpe.typeArgs(0)
+        val next = tpe.typeArgs(1)
+        next :: collectChildTypes(rest)
+      }
+      else List(tpe)
+    }
+
+    val childTypes = collectChildTypes(implicitly[WeakTypeTag[Children]].tpe)
+    for (tpe <- childTypes) {
+      if (!(tpe <:< tag.tpe)) c.abort(c.enclosingPosition, s"$tpe (passed to Autogen.children) is not a subtype of ${tag.tpe}")
+    }
+    val childSymbols = childTypes.map(_.typeSymbol.asClass)
+
+    if (!symbol.isClass) {
+      c.abort(c.enclosingPosition, s"Autogen.children can only be called on a sealed trait or abstract class, is not applicable to $symbol")
+    }
+    else {
+      val cls = symbol.asClass
+      if (!(cls.isAbstract || cls.isTrait)) {
+        c.abort(c.enclosingPosition, s"Autogen.children can only be called on a sealed trait or abstract class, is not applicable to $symbol")
+      }
+      else {
+        generateSealedPickler(cls, Some(childSymbols))
+      }
+    }
+  }
+
+  private def generateModulePickler[T](symbol: ModuleSymbol)(implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
     // A module is pickled by writing its non-qualified name as a string.
 
     val name = symbol.name.decodedName.toString
-    val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
+    val ttype = ttag.tpe
     val ret = q"new SingletonPickler[$ttype]($name, $symbol)"
     //    info(s"Generated for module: $ret")
     c.Expr[Pickler[T]](ret)
   }
 
-  private def generateClassPickler[T: c.WeakTypeTag](clazz: ClassSymbol): Expr[Pickler[T]] = {
+  /** Returns the implicit Pickler for this type if one is in scope, or a call to Autogen.
+    *
+    * Types defined in DefaultPicklers (eg collections) always get that explicit pickler.
+    */
+  private def picklerForType(tpe: Type): Tree = {
+    val picklerTpe = c.universe.appliedType(typeOf[Pickler[_]], List(tpe))
+    val implicitPickler = c.inferImplicitValue(picklerTpe)
+    if (implicitPickler.nonEmpty) {
+      q"implicitly[Pickler[$tpe]]"
+    }
+    else {
+      // More expensive test:
+      // We can't generate code that will decide at runtime, using implicits, whether to invoke Autogen[tpe],
+      // because the generated call to Autogen would still be expanded, and would fail if it's e.g. Autogen[String].
+      // So we need to know at compile time whether the implicit exists, either originally, or with the addition
+      // of DefaultPicklers.
+
+      val test = q"""import com.fsist.safepickle._
+                   import DefaultPicklers._
+                   implicitly[Pickler[$tpe]]
+                   """
+      try {
+        val pickler = c.eval(c.Expr[Pickler[_]](c.untypecheck(test.duplicate)))
+        q"implicitly[Pickler[$tpe]]"
+      }
+      catch {
+        case e: InvocationTargetException if e.getCause.isInstanceOf[NoClassDefFoundError] =>
+          // Known issue: if the pickler for this type was defined in the same compilation unit as we have,
+          // then this test will compile but fail to run, since its classfile is not available yet.
+          q"implicitly[Pickler[$tpe]]"
+        case e: ToolBoxError =>
+          q"Autogen[$tpe]"
+      }
+    }
+  }
+
+  /** Returns true if this is a type that can be written primitively to a PickleWriter. */
+  private def canBeWrittenPrimitively(tpe: Type): Boolean = {
+    tpe =:= typeOf[Int] ||
+      tpe =:= typeOf[Long] ||
+      tpe =:= typeOf[Short] ||
+      tpe =:= typeOf[Byte] ||
+      tpe =:= typeOf[Float] ||
+      tpe =:= typeOf[Double] ||
+      tpe =:= typeOf[String] ||
+      tpe =:= typeOf[Null] ||
+      tpe =:= typeOf[Boolean] ||
+      tpe =:= typeOf[Array[Byte]] ||
+      tpe.typeConstructor <:< typeOf[Iterable[_]] ||
+      tpe.typeConstructor =:= typeOf[Array[_]] ||
+      tpe.toString.startsWith("scala.Tuple")
+  }
+
+  private def generateClassPickler[T](clazz: ClassSymbol)(implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
     val ctor = clazz.primaryConstructor.asMethod
     if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Cannot generate pickler for generic type $clazz")
 
     if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, s"Cannot generate pickler for class with multiple parameter lists $clazz")
 
-    val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
-
+    val ttype = ttag.tpe
     val clazzName = clazz.name.decodedName.toString
 
     // Pickle 0-parameter classes the same way as modules
@@ -103,7 +215,7 @@ class Autogen(val c: Context) {
           }
 
           val paramPicklerName = TermName(name + "$paramPickler")
-          val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe]]"
+          val paramPicklerDecl = q"val $paramPicklerName = ${picklerForType(tpe)}"
 
           val defaultArgValueName = TermName(name + "$default")
           val defaultArgValueDecl = defaultValue map (tree => q"val $defaultArgValueName = $tree")
@@ -198,13 +310,13 @@ class Autogen(val c: Context) {
                 reader.nextInObject()
               }"""
 
-        val ret = q"""
+        val ret = q""" {
+          import com.fsist.safepickle._
+          import DefaultPicklers._
+
+          ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
+
           new Pickler[$ttype] {
-            import com.fsist.safepickle._
-            import PrimitivePicklers._
-
-            ..$implicitSubPicklers
-
             ..$defaultArgValues
 
             override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
@@ -236,10 +348,12 @@ class Autogen(val c: Context) {
 
               new $clazz(..$getArgValues)
             }
-          }
-         """
 
-//       info(s"Generated for class: $ret")
+            override def toString(): String = "Autogenerated pickler for " + $clazzName
+          }
+         }"""
+
+        //               info(s"Generated for class: $ret")
 
         c.Expr[Pickler[T]](ret)
       }
@@ -251,82 +365,151 @@ class Autogen(val c: Context) {
     * The actual Trees returned are calls to the compiler-generated methods on the class's companion object that return
     * the default values.
     *
-    * See: http://stackoverflow.com/a/21970758/1314705 
+    * Normally we can just generate a call to the compiler-generated method of the companion object which returns the
+    * default value, and is named apply$default$index. See: http://stackoverflow.com/a/21970758/1314705
+    *
+    * However, if the call to the macro itself is inside the companion object, then calling apply$default$index won't
+    * compile; scalac will insist this method doesn't exist. In this case we take advantage of the fact we're inside
+    * the companion object, and inspect the original constructor declaration to get a copy of the default parameter
+    * value Tree directly.
     */
   private def paramDefaultValues(classSym: ClassSymbol, method: MethodSymbol): List[Option[Tree]] = {
     val moduleSym = classSym.companion
 
+    val isInsideCompanionModule = {
+      val enclosing = mutable.Stack[Symbol](c.internal.enclosingOwner)
+      while (enclosing.top != NoSymbol) {
+        enclosing.push(enclosing.top.owner)
+      }
+
+      enclosing.exists { sym =>
+        if (sym.isModuleClass) {
+          val module = sym.asClass.companion.companion
+          if (module.isModule && module == moduleSym) true
+          else false
+        }
+        else false
+      }
+    }
+
     method.paramLists.head.map(_.asTerm).zipWithIndex.map { case (p, i) =>
       if (!p.isParamWithDefault) None
       else {
-        val getterName = TermName("apply$default$" + (i + 1))
-        Some(q"$moduleSym.$getterName")
+        val defaultMethodName = "apply$default$" + (i + 1)
+
+        if (isInsideCompanionModule) {
+          Some(
+            q"""{
+                import scala.tools.reflect._
+                import scala.reflect.runtime.{universe => ru}
+
+                val mirr = ru.runtimeMirror(getClass.getClassLoader)
+
+                val tpe = ru.typeOf[$moduleSym]
+                val method = tpe.decl(ru.TermName($defaultMethodName)).asMethod
+                val classSymbol = mirr.classSymbol(mirr.runtimeClass(tpe)) // This is the module class
+                val moduleSymbol = classSymbol.companion.companion.asModule
+                val module = mirr.reflectModule(moduleSymbol).instance
+                val moduleMirr = mirr.reflect(module)
+                val methodMirr = moduleMirr.reflectMethod(method)
+                methodMirr.apply().asInstanceOf[${p.typeSignature}]
+             }""")
+        }
+        else {
+          val getterName = TermName(defaultMethodName)
+          Some(q"$moduleSym.$getterName")
+        }
       }
     }
   }
 
-  private def generateSealedPickler[T: c.WeakTypeTag](sealedSym: ClassSymbol): Expr[Pickler[T]] = {
-    val ttype = tq"${implicitly[c.WeakTypeTag[T]].tpe}"
+  private def collectDescendantClasses(parent: ClassSymbol): Set[ClassSymbol] = {
+    if (parent.isTrait || parent.isAbstract) {
+      if (parent.isSealed) {
+        parent.typeSignature // Initializes parent.knownDirectSubclasses, works around SI-7588 in some but not all cases
+        val direct = parent.knownDirectSubclasses
+        if (direct.isEmpty) {
+          c.abort(c.enclosingPosition, s"Cannot generate pickler for sealed trait or abstract class '$parent', no subtypes found. " +
+            s"If the macro was invoked in the same compilation unit as the definition of $parent, this is due to SI-7588. " +
+            s"In that case, use Autogen.children.")
+        }
+        else direct.map(_.asClass)
+      }
+      else {
+        c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed $parent")
+      }
+    }
+    else Set(parent)
+  }
+
+  private def generateSealedPickler[T](sealedSym: ClassSymbol, children: Option[List[ClassSymbol]] = None)
+                                      (implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
+    val ttype = ttag.tpe
 
     val traitName = sealedSym.name.decodedName.toString
 
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
                        unpicklerMatchClause: Tree)
 
-    def collectDescendantClasses(parent: ClassSymbol): Set[ClassSymbol] = {
-      if (parent.isTrait || parent.isAbstract) {
-        if (parent.isSealed) {
-          val direct = parent.knownDirectSubclasses
-          if (direct.isEmpty) {
-            c.abort(c.enclosingPosition, s"Cannot generate pickler for sealed trait or abstract class '$parent', no subtypes found. " +
-              s"If it has subtypes, this can happen if you invoke the macro in the same file where the trait or abstract class is defined. " +
-              s"In this case, the macro invocation must come after all of the subtype definitions.")
-          }
-          else direct.flatMap(sym => collectDescendantClasses(sym.asClass))
-        }
-        else {
-          c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed $parent")
-        }
-      }
-      else Set(parent)
-    }
-
-    val subtypes = for (subtype <- collectDescendantClasses(sealedSym)) yield {
+    val subtypes = for (subtype <- children.getOrElse(collectDescendantClasses(sealedSym))) yield {
       val subclass = subtype.asClass
       val name = subclass.name.decodedName.toTermName
       val tpe = subclass.toType
 
       val paramPicklerName = TermName(c.freshName(s"paramPickler_$name"))
-      val paramPicklerDecl = q"val $paramPicklerName = implicitly[Pickler[$tpe]]"
+      val paramPicklerDecl = q"val $paramPicklerName = ${picklerForType(tpe)}"
+
+      val writtenAsDollarValue = subclass.isSealed && (subclass.isTrait || subclass.isAbstract)
 
       // Analyze the subtype's primary ctor to determine if it has any parameters; if not, it will be written as a
       // single string
 
-      val writtenAsObject = {
-        subclass.isTrait || {
-          // Another sealed trait
-          val ctor = subclass.primaryConstructor.asMethod
-          if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Generic types are not supported (in subtype $name of $traitName)")
-          if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported (in subtype $name of $traitName)")
+      val writtenAsObject = !writtenAsDollarValue && {
+        val ctor = subclass.primaryConstructor.asMethod
+        if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Generic types are not supported (in subtype $name of $traitName)")
+        if (ctor.paramLists.size > 1) c.abort(c.enclosingPosition, "Classes with multiple parameter lists are not supported (in subtype $name of $traitName)")
 
-          ctor.paramLists.nonEmpty && ctor.paramLists.head.nonEmpty
-        }
+        ctor.paramLists.nonEmpty && ctor.paramLists.head.nonEmpty
       }
 
-      val picklerMatchClause = if (writtenAsObject) {
-        cq"""value: ${tpe} =>
-           writer.writeObjectStart()
-           writer.writeAttributeName("$$type")
-           writer.writeString(${name.toString})
+      val dollarValue = "$value"
 
-           writer.write[$tpe](value, false)($paramPicklerName)"""
+      val picklerMatchClause = if (writtenAsDollarValue) {
+        cq"""value: $tpe =>
+                 writer.writeObjectStart()
+                 writer.writeAttributeName("$$type")
+                 writer.writeString(${name.toString})
+                 writer.writeAttributeName($dollarValue)
+                 writer.write[$tpe](value, false)($paramPicklerName)
+          """
+      }
+      else if (writtenAsObject) {
+        cq"""value: $tpe =>
+                 writer.writeObjectStart()
+                 writer.writeAttributeName("$$type")
+                 writer.writeString(${name.toString})
+                 writer.write[$tpe](value, false)($paramPicklerName)
+          """
       }
       else {
         cq"""value: $tpe =>
-          writer.writeString(${name.toString})"""
+                 writer.writeString(${name.toString})"""
       }
 
-      val unpicklerMatchClause = cq"${name.toString} => reader.read[$tpe](${tpe.toString}, false)($paramPicklerName)"
+      val unpicklerMatchClause = if (writtenAsDollarValue) {
+        cq"""
+           ${name.toString} =>
+                  reader.assertTokenType(TokenType.AttributeName)
+                  if (reader.attributeName != $dollarValue) {
+                    throw new UnpicklingException(s"Expected attribute name $$$$value, found $${reader.attributeName}")
+                  }
+
+                  reader.nextInObject()
+                  reader.read[$tpe](${tpe.toString}, false)($paramPicklerName)
+          """
+      } else {
+        cq"${name.toString} => reader.read[$tpe](${tpe.toString}, false)($paramPicklerName)"
+      }
 
       Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause)
     }
@@ -352,13 +535,13 @@ class Autogen(val c: Context) {
 
     val tokenType = "$type"
 
-    val ret = q"""
+    val ret = q"""{
+          import com.fsist.safepickle._
+          import PrimitivePicklers._
+
+          ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
+
           new Pickler[$ttype] {
-            import com.fsist.safepickle._
-            import PrimitivePicklers._
-
-            ..$implicitSubPicklers
-
             override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
               tvalue match {
                 case ..$picklerMatchClauses
@@ -397,8 +580,10 @@ class Autogen(val c: Context) {
                 case other => throw new IllegalStateException("Unexpected next token type $$other")
               }
             }
+
+            override def toString(): String = "Autogenerated pickler for " + $traitName
           }
-         """
+         }"""
 
     //            info(s"Generated for trait: $ret")
 
@@ -418,9 +603,19 @@ class SingletonPickler[T](name: String, value: T) extends Pickler[T] {
 }
 
 object Autogen {
-  /** Implicit definitions of the autogen macro for all types T */
-  object Implicits {
-    /** Autogenerate a Pickler. See the documentation in the project's README.md. */
-    implicit def generate[T]: Pickler[T] = macro Autogen.generate[T]
-  }
+  /** Autogenerate a Pickler. See the documentation in the project's README.md. */
+  def apply[T]: Pickler[T] = macro Autogen.generate[T]
+
+  /** A way to list two or more types, e.g. `String | Int | Foo`. */
+  type |[A, B]
+
+  /** Works like `Autogen.apply[T]`. T must be a sealed trait or sealed abstract class.
+    *
+    * The type argument `Children` explicitly specifies the concrete sub-types of T that should be supported.
+    * It is necessary to call this instead of Autogen.apply[T] when the macro call is made in the same compilation unit
+    * where T is defined, due to SI-7588.
+    *
+    * @tparam Children should be either a concrete subtype of T, or several types chained with the `|` type, e.g. `A | B | C`.
+    */
+  def children[T, Children]: Pickler[T] = macro Autogen.generateChildren[T, Children]
 }
