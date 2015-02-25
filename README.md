@@ -104,3 +104,6 @@ Extra TODOs (will be moved to tickets):
 - Make Autogen use the concrete PickleReader/Writer methods for primitive types to improve performance
 - Replace tuple code with macros (still 22 of them) that explicitly write the type name of each parameter in the call
   to reader.read, and so don't need to call reader.readTagged (also remove type tag params from CollectionPicklers.anyMapPickler)
+- Escape attribute names that are otherwise illegal in JSON and in BSON (separately for each)
+- Also make sure user attribute names can't clash with our $special attributes
+- Try to get rid of type tags
