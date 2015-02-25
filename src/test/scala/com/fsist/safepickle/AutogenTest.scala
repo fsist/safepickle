@@ -129,7 +129,7 @@ class AutogenTest extends FunSuite with WrapperTester {
       C1("foo", List(123, 456)),
       ObjectWrapper(Map(
         "s" -> StringWrapper("foo"),
-        "i" -> ArrayWrapper(List(
+        "is" -> ArrayWrapper(List(
           IntWrapper(123), IntWrapper(456)
         ))
       ))
