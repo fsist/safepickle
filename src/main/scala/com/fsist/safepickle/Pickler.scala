@@ -133,9 +133,7 @@ trait PrimitivePicklersMixin {
 object PrimitivePicklers extends PrimitivePicklersMixin
 
 /** Pickles values of type `T` by converting them to values of type `Other`, which has an `otherPickler` provided. */
-trait ConvertPickler[T, Other] extends Pickler[T]{
-  implicit def otherPickler: Pickler[Other]
-
+abstract class ConvertPickler[T, Other](implicit val otherPickler: Pickler[Other]) extends Pickler[T]{
   def convertTo(t: T): Other
   def convertFrom(other: Other): T
 
@@ -147,7 +145,6 @@ trait ConvertPickler[T, Other] extends Pickler[T]{
 }
 
 /** A refining of [[ConvertPickler]] for converting types to Strings using their `toString` method. */
-trait ConvertToStringPickler[T] extends ConvertPickler[T, String] {
-  final override implicit def otherPickler: Pickler[String] = PrimitivePicklers.StringPickler
+abstract class ConvertToStringPickler[T] extends ConvertPickler[T, String]()(PrimitivePicklers.StringPickler) {
   def convertTo(t: T): String = t.toString
 }
