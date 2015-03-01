@@ -2,7 +2,10 @@ package com.fsist.safepickle
 
 import org.apache.commons.codec.binary.Base64
 
+import scala.annotation.implicitNotFound
+
 /** A way to pickle or unpickle a type. */
+@implicitNotFound("Implicit Pickler for ${T} not found")
 trait Pickler[T] {
   /** Should write the value `t` to the `writer`. If the type `T` contains sub-types for which we have sub-picklers,
     * they should be used by calling `writer.write[T](pickler)` for those types.
@@ -31,7 +34,8 @@ trait Pickler[T] {
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
 }
 
-object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin
+object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin {
+}
 
 class UnpicklingException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
 object UnpicklingException {
