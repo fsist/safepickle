@@ -5,6 +5,8 @@ test-output-html
 
 # gradle specific
 .gradle
+build
+*/build
 
 # sbt specific
 .cache/
