@@ -14,12 +14,37 @@ import com.fsist.safepickle.Autogen.|
 
 /** Entrypoint for the Pickler autogeneration macro. See the documentation in the project's README.md. */
 class Autogen(val c: Context) {
-
   import c.universe._
 
-  private def info(msg: String): Unit = c.info(c.enclosingPosition, msg, false)
+  private case class Debug(enabled: Boolean)
+
+  // Entrypoints:
 
   def generate[T: c.WeakTypeTag]: Expr[Pickler[T]] = {
+    implicit val debug = Debug(false)
+    doGenerate[T]
+  }
+
+  def generateDebug[T: c.WeakTypeTag]: Expr[Pickler[T]] = {
+    implicit val debug = Debug(true)
+    doGenerate[T]
+  }
+
+  def generateChildren[T: c.WeakTypeTag, Children: c.WeakTypeTag]: Expr[Pickler[T]] = {
+    implicit val debug = Debug(false)
+    doGenerateChildren[T, Children]
+  }
+
+  def generateChildrenDebug[T: c.WeakTypeTag, Children: c.WeakTypeTag]: Expr[Pickler[T]] = {
+    implicit val debug = Debug(true)
+    doGenerateChildren[T, Children]
+  }
+
+  // End of entrypoints
+
+  private def info(msg: String)(implicit debug: Debug): Unit = if (debug.enabled) c.info(c.enclosingPosition, msg, false)
+
+  private def doGenerate[T: c.WeakTypeTag](implicit debug: Debug): Expr[Pickler[T]] = {
     val tag = implicitly[WeakTypeTag[T]]
     val symbol = tag.tpe.typeSymbol.asType
 
@@ -76,7 +101,7 @@ class Autogen(val c: Context) {
     }
   }
 
-  def generateChildren[T: c.WeakTypeTag, Children: c.WeakTypeTag]: Expr[Pickler[T]] = {
+  def doGenerateChildren[T: c.WeakTypeTag, Children: c.WeakTypeTag](implicit debug: Debug): Expr[Pickler[T]] = {
     val tag = implicitly[WeakTypeTag[T]]
     val symbol = tag.tpe.typeSymbol.asType
     checkInitialSymbol(symbol)
@@ -110,13 +135,13 @@ class Autogen(val c: Context) {
     }
   }
 
-  private def generateModulePickler[T](symbol: ModuleSymbol)(implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
+  private def generateModulePickler[T](symbol: ModuleSymbol)(implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     // A module is pickled by writing its non-qualified name as a string.
 
     val name = symbol.name.decodedName.toString
     val ttype = ttag.tpe
     val ret = q"new SingletonPickler[$ttype]($name, $symbol)"
-    //    info(s"Generated for module: $ret")
+    info(s"Generated for module: $ret")
     c.Expr[Pickler[T]](ret)
   }
 
@@ -132,7 +157,7 @@ class Autogen(val c: Context) {
     }
   }
 
-  private def generateClassPickler[T](clazz: ClassSymbol)(implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
+  private def generateClassPickler[T](clazz: ClassSymbol)(implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     val ctor = clazz.primaryConstructor.asMethod
     if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Cannot generate pickler for generic type $clazz")
 
@@ -144,14 +169,14 @@ class Autogen(val c: Context) {
     // Pickle 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
       val ret = q"new SingletonPickler[$ttype]($clazzName, new $clazz)"
-      //      info(s"Generated for class without param lists: $ret")
+      info(s"Generated for class without param lists: $ret")
       c.Expr[Pickler[T]](ret)
     }
     else {
       val params = ctor.paramLists.head
       if (params.isEmpty) {
         val ret = q"new SingletonPickler[$ttype]($clazzName, new $clazz())"
-        //        info(s"Generated for class with empty param list: $ret")
+        info(s"Generated for class with empty param list: $ret")
         c.Expr[Pickler[T]](ret)
       }
       else {
@@ -308,7 +333,7 @@ class Autogen(val c: Context) {
           }
          }"""
 
-        //               info(s"Generated for class: $ret")
+        info(s"Generated for class: $ret")
 
         c.Expr[Pickler[T]](ret)
       }
@@ -398,7 +423,7 @@ class Autogen(val c: Context) {
   }
 
   private def generateSealedPickler[T](sealedSym: ClassSymbol, children: Option[List[ClassSymbol]] = None)
-                                      (implicit ttag: WeakTypeTag[T]): Expr[Pickler[T]] = {
+                                      (implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     val ttype = ttag.tpe
 
     val traitName = sealedSym.name.decodedName.toString
@@ -539,7 +564,7 @@ class Autogen(val c: Context) {
           }
          }"""
 
-    //            info(s"Generated for trait: $ret")
+    info(s"Generated for trait: $ret")
 
     c.Expr[Pickler[T]](ret)
   }
@@ -560,6 +585,11 @@ object Autogen {
   /** Autogenerate a Pickler. See the documentation in the project's README.md. */
   def apply[T]: Pickler[T] = macro Autogen.generate[T]
 
+  /** As [[apply]], but prints the generated code as a compiler informational message.
+    * Useful for debugging if the macro-generated code does not compile.
+    */
+  def debug[T]: Pickler[T] = macro Autogen.generateDebug[T]
+
   /** A way to list two or more types, e.g. `String | Int | Foo`. */
   type |[A, B]
 
@@ -572,4 +602,8 @@ object Autogen {
     * @tparam Children should be either a concrete subtype of T, or several types chained with the `|` type, e.g. `A | B | C`.
     */
   def children[T, Children]: Pickler[T] = macro Autogen.generateChildren[T, Children]
+
+  /** As [[children]], but prints the generated code as a compiler informational message.
+    * Useful for debugging if the macro-generated code does not compile. */
+  def childrenDebug[T, Children]: Pickler[T] = macro Autogen.generateChildrenDebug[T, Children]
 }
