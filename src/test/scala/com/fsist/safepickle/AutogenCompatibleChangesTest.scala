@@ -2,8 +2,6 @@ package com.fsist.safepickle
 
 import org.scalatest.FunSuite
 
-import scala.reflect.runtime.universe._
-
 object AutogenCompatibleChangesTest {
 
   // Note: classes within objects have to live here in the companion object, and cannot be defined inside the test
@@ -160,11 +158,11 @@ class AutogenCompatibleChangesTest extends FunSuite with WrapperTester {
   }
 
   /** Pickles `orig` using `apickler`, unpickles it using `bpickler`, and checks that the result equals `expected`. */
-  def roundtrip2[A, B](orig: A, expected: B)(implicit apickler: Pickler[A], bpickler: Pickler[B], atag: TypeTag[A], btag: TypeTag[B]): Unit = {
+  def roundtrip2[A, B](orig: A, expected: B)(implicit apickler: Pickler[A], bpickler: Pickler[B]): Unit = {
     val writer = WrapperBackend.writer()
     writer.write(orig)(apickler)
     val areader = WrapperBackend.reader(writer.result())
-    val b = areader.readTagged[B]()
+    val b = areader.read[B]()
 
     assert(b == expected)
   }

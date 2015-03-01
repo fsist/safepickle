@@ -1,7 +1,5 @@
 package com.fsist.safepickle
 
-import scala.reflect.runtime.universe._
-
 import org.scalatest.FunSuiteLike
 
 /** Pickles to ordinary Scala objects. Used for testing. */
@@ -61,13 +59,13 @@ object WrapperParser extends TreeParser[Wrapper] {
 
 trait WrapperTester { self: FunSuiteLike =>
   def roundtrip[T](value: T, expectedWrapper: Wrapper, equalityTest: Option[(T, T) => Boolean] = None)
-                  (implicit pickler: Pickler[T], tag: TypeTag[T]): Unit = {
+                  (implicit pickler: Pickler[T]): Unit = {
     val writer = WrapperBackend.writer()
     writer.write(value)(pickler)
     val wrapper = writer.result()
     assert(wrapper == expectedWrapper)
     val reader = WrapperBackend.reader(wrapper)
-    val read = reader.readTagged[T]()
+    val read = reader.read[T]()
 
     equalityTest match {
       case Some(test) => assert(test(read, value))

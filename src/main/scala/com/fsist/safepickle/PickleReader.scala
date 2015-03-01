@@ -1,7 +1,5 @@
 package com.fsist.safepickle
 
-import scala.reflect.runtime.universe._
-
 /** Produces a stream of tokens. Counterpart of `Writer`.
   * 
   * This is patterned after the Jackson stream interface. At any given time, the Reader has a current token,
@@ -45,15 +43,8 @@ trait PickleReader {
     * the `typeName`, and read them in some backend-specific way without using the provided `pickler`.
     *
     * Otherwise, if the type is not being overridden, delegates to the `pickler` provided.
-    *
-    * @param typeName the full name of the concrete type. This is returned by Type.toString.
-    *                 This is used in place of a TypeTag to improve performance.
     */
-  def read[T](typeName: String, expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T =
+  def read[T](expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T =
     pickler.unpickle(this, expectObjectStart)
-
-  /** As `read`, but uses a TypeTag, which is slightly more expensive. */
-  def readTagged[T](expectObjectStart: Boolean = true)(implicit pickler: Pickler[T], tag: TypeTag[T]): T =
-    read(tag.tpe.toString, expectObjectStart)(pickler)
 }
 

@@ -1,7 +1,5 @@
 package com.fsist.safepickle
 
-import scala.reflect.runtime.universe._
-
 /** A marker trait for pickling backend implementations, allowing them to be distinguished at the type level.
   * Also serves as a factory for Reader and Writer instances.
   *
@@ -21,7 +19,7 @@ trait PicklerBackend {
 
   def write[T](t: T)(implicit pickler: Pickler[T]): Repr = writer().write(t).result()
 
-  def read[T](repr: Repr)(implicit pickler: Pickler[T], tag: TypeTag[T]): T = reader(repr).readTagged[T]()
+  def read[T](repr: Repr)(implicit pickler: Pickler[T]): T = reader(repr).read[T]()
 }
 
 /** The default picklers whose definitions should always be available. */

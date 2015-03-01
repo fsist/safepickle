@@ -1,16 +1,11 @@
 package com.fsist.safepickle
 
-import java.lang.reflect.InvocationTargetException
-
-import scala.language.implicitConversions
-import scala.language.higherKinds
-import scala.language.experimental.macros
-import scala.reflect.macros.blackbox.Context
-import scala.tools.reflect.ToolBoxError
+import com.fsist.safepickle.Autogen.|
 
 import scala.collection.mutable
-
-import com.fsist.safepickle.Autogen.|
+import scala.language.experimental.macros
+import scala.language.{higherKinds, implicitConversions}
+import scala.reflect.macros.blackbox.Context
 
 /** Entrypoint for the Pickler autogeneration macro. See the documentation in the project's README.md. */
 class Autogen(val c: Context) {
@@ -253,9 +248,9 @@ class Autogen(val c: Context) {
           val argInitDecl = q"var $argInit: Boolean = ${defaultValue.isDefined || isOption}"
 
           val argNameMatchClause = if (isOption) {
-            cq"$pickledArgName => $name = Some(reader.read[$tpe](${tpe.toString}, true)($paramPicklerName)) ; $argInit = true"
+            cq"$pickledArgName => $name = Some(reader.read[$tpe](true)($paramPicklerName)) ; $argInit = true"
           } else {
-            cq"$pickledArgName => $name = reader.read[$tpe](${tpe.toString}, true)($paramPicklerName) ; $argInit = true"
+            cq"$pickledArgName => $name = reader.read[$tpe](true)($paramPicklerName) ; $argInit = true"
           }
 
           val paramFullName = s"$clazzName.$name"
@@ -485,10 +480,10 @@ class Autogen(val c: Context) {
                   }
 
                   reader.nextInObject()
-                  reader.read[$tpe](${tpe.toString}, false)($paramPicklerName)
+                  reader.read[$tpe](false)($paramPicklerName)
           """
       } else {
-        cq"${name.toString} => reader.read[$tpe](${tpe.toString}, false)($paramPicklerName)"
+        cq"${name.toString} => reader.read[$tpe](false)($paramPicklerName)"
       }
 
       Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause)

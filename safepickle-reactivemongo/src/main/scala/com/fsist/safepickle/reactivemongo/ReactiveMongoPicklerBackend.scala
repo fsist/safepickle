@@ -71,8 +71,8 @@ object ReactiveMongoTreeParser extends TreeParser[BSONValue] {
 /** A TreeReader for the ReactiveMongo backend with support for the extra BSOn native types. */
 class BSONTreePickleReader(root: BSONValue) extends TreePickleReader[BSONValue](ReactiveMongoTreeParser, root) {
   // Override for specific values with primitive representation in BSON
-  override def read[T](typeName: String, expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T = {
-    val ret = typeName match {
+  override def read[T](expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T = {
+    val ret = pickler.typeName match {
       case "reactivemongo.bson.BSONObjectID" => currentNode.asInstanceOf[BSONObjectID]
       case "scala.Array[Byte]" | "akka.util.ByteString" =>
         val bin = currentNode.asInstanceOf[BSONBinary].value

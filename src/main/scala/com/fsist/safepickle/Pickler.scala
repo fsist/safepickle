@@ -32,6 +32,9 @@ trait Pickler[T] {
     * @throws UnpicklingException if the reader provides unexpected input
     */
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
+
+  /** The full name of the type `T`. */
+  val typeName: String = TypeNameMacro[T]
 }
 
 object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin {
