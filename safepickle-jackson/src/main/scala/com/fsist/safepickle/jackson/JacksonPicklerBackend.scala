@@ -51,7 +51,7 @@ object JacksonPicklerBackend {
 
 }
 
-class JacksonPickleReader[Backend <: PicklerBackend](parser: JsonParser) extends PickleReader {
+class JacksonPickleReader(parser: JsonParser) extends PickleReader {
 
   import com.fasterxml.jackson.core.JsonTokenId._
 

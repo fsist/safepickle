@@ -19,7 +19,7 @@ object ReactiveMongoPicklerBackend extends safepickle.PicklerBackend {
 
 object ReactiveMongoPicklers {
   /** Default way of writing a BSONObjectID as a string to backends other than ReactiveMongo. */
-  implicit def stringifiedObjectId[Backend <: PicklerBackend]: Pickler[BSONObjectID] = new Pickler[BSONObjectID] {
+  implicit object stringifiedObjectId extends Pickler[BSONObjectID] {
     override def ttag = typeTag[BSONObjectID]
     override def pickle(t: BSONObjectID, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeString(t.stringify)
