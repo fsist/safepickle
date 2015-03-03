@@ -136,7 +136,7 @@ class Autogen(val c: Context) {
 
     val name = symbol.name.decodedName.toString
     val ttype = ttag.tpe
-    val ret = q"new SingletonPickler[$ttype]($name, $symbol)"
+    val ret = q"new com.fsist.safepickle.SingletonPickler[$ttype]($name, $symbol)"
     info(s"Generated for module: $ret")
     c.Expr[Pickler[T]](ret)
   }
@@ -264,14 +264,14 @@ class Autogen(val c: Context) {
 
     // Pickle 0-parameter classes the same way as modules
     if (ctor.paramLists.isEmpty) {
-      val ret = q"new SingletonPickler[$ttype]($clazzName, new $clazz)"
+      val ret = q"new com.fsist.safepickle.SingletonPickler[$ttype]($clazzName, new $clazz)"
       info(s"Generated for class without param lists: $ret")
       c.Expr[Pickler[T]](ret)
     }
     else {
       val params = ctor.paramLists.head
       if (params.isEmpty) {
-        val ret = q"new SingletonPickler[$ttype]($clazzName, new $clazz())"
+        val ret = q"new com.fsist.safepickle.SingletonPickler[$ttype]($clazzName, new $clazz())"
         info(s"Generated for class with empty param list: $ret")
         c.Expr[Pickler[T]](ret)
       }
