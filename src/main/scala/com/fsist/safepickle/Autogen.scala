@@ -180,7 +180,10 @@ class Autogen(val c: Context) {
   private def implicitPicklerOf(tpe: Type)(implicit debug: Debug): Option[Tree] = {
     val picklerTpe = c.universe.appliedType(typeOf[Pickler[_]], List(tpe))
     c.inferImplicitValue(picklerTpe) match {
-      case tree if tree.nonEmpty => Some(tree)
+      case tree if tree.nonEmpty =>
+        // Don't return Some(tree) - that's the actual implicit value, which includes the compiler-generated code for
+        // typeTag creation, which doesn't compile if inlined this way
+        Some(q"implicitly[$picklerTpe]")
       case _ => None
     }
   }
@@ -396,9 +399,12 @@ class Autogen(val c: Context) {
               }"""
 
         val ret = q""" {
+          import scala.reflect.runtime.universe._
           import com.fsist.safepickle._
 
           new Pickler[$ttype] {
+            override val ttag: TypeTag[$ttype] = typeTag[$ttype]
+
             private implicit def $selfPickler: Pickler[$ttype] = this // For recursive types
 
             ..$implicitSubPicklers
@@ -607,11 +613,14 @@ class Autogen(val c: Context) {
     val tokenType = "$type"
 
     val ret = q"""{
+          import scala.reflect.runtime.universe._
           import com.fsist.safepickle._
 
           ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
 
           new Pickler[$ttype] {
+            override val ttag: TypeTag[$ttype] = typeTag[$ttype]
+
             override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
               tvalue match {
                 case ..$picklerMatchClauses
@@ -639,10 +648,10 @@ class Autogen(val c: Context) {
 
                   reader.nextInObject()
                   reader.assertTokenType(TokenType.String)
-                  val typeTag = reader.string
+                  val typeName = reader.string
                   reader.nextInObject()
 
-                  typeTag match {
+                  typeName match {
                     case ..$unpicklerMatchClauses
                     case other => throw new UnpicklingException(s"Unexpected (explicit) type tag $$other as descendant of sealed trait " + $traitName)
                   }
@@ -662,7 +671,7 @@ class Autogen(val c: Context) {
 }
 
 /** A pickler for a value T that pickles it to the fixed string `name`. */
-class SingletonPickler[T](name: String, value: T) extends Pickler[T] {
+class SingletonPickler[T](name: String, value: T)(implicit val ttag: scala.reflect.runtime.universe.TypeTag[T]) extends Pickler[T] {
   override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
     writer.writeString(name)
   }

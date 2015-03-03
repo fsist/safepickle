@@ -1,9 +1,13 @@
 package com.fsist.safepickle
 
+import scala.reflect.runtime.universe._
+
 /** Implicit definitions of picklers for tuples of all sizes. */
 trait TuplePicklers {
-  implicit def tuple1[T1](implicit tpickler1: Pickler[T1]): Pickler[Tuple1[T1]] =
+  implicit def tuple1[T1](implicit tpickler1: Pickler[T1], tag: TypeTag[Tuple1[T1]]): Pickler[Tuple1[T1]] =
     new Pickler[Tuple1[T1]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple1[T1], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -23,8 +27,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple2[T1, T2](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2]): Pickler[Tuple2[T1, T2]] =
+  implicit def tuple2[T1, T2](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tag: TypeTag[Tuple2[T1, T2]]): Pickler[Tuple2[T1, T2]] =
     new Pickler[Tuple2[T1, T2]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple2[T1, T2], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -46,8 +52,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple3[T1, T2, T3](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3]): Pickler[Tuple3[T1, T2, T3]] =
+  implicit def tuple3[T1, T2, T3](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tag: TypeTag[Tuple3[T1, T2, T3]]): Pickler[Tuple3[T1, T2, T3]] =
     new Pickler[Tuple3[T1, T2, T3]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple3[T1, T2, T3], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -71,8 +79,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple4[T1, T2, T3, T4](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4]): Pickler[Tuple4[T1, T2, T3, T4]] =
+  implicit def tuple4[T1, T2, T3, T4](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tag: TypeTag[Tuple4[T1, T2, T3, T4]]): Pickler[Tuple4[T1, T2, T3, T4]] =
     new Pickler[Tuple4[T1, T2, T3, T4]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple4[T1, T2, T3, T4], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -98,8 +108,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple5[T1, T2, T3, T4, T5](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5]): Pickler[Tuple5[T1, T2, T3, T4, T5]] =
+  implicit def tuple5[T1, T2, T3, T4, T5](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tag: TypeTag[Tuple5[T1, T2, T3, T4, T5]]): Pickler[Tuple5[T1, T2, T3, T4, T5]] =
     new Pickler[Tuple5[T1, T2, T3, T4, T5]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple5[T1, T2, T3, T4, T5], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -127,8 +139,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple6[T1, T2, T3, T4, T5, T6](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6]): Pickler[Tuple6[T1, T2, T3, T4, T5, T6]] =
+  implicit def tuple6[T1, T2, T3, T4, T5, T6](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tag: TypeTag[Tuple6[T1, T2, T3, T4, T5, T6]]): Pickler[Tuple6[T1, T2, T3, T4, T5, T6]] =
     new Pickler[Tuple6[T1, T2, T3, T4, T5, T6]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple6[T1, T2, T3, T4, T5, T6], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -158,8 +172,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple7[T1, T2, T3, T4, T5, T6, T7](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7]): Pickler[Tuple7[T1, T2, T3, T4, T5, T6, T7]] =
+  implicit def tuple7[T1, T2, T3, T4, T5, T6, T7](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tag: TypeTag[Tuple7[T1, T2, T3, T4, T5, T6, T7]]): Pickler[Tuple7[T1, T2, T3, T4, T5, T6, T7]] =
     new Pickler[Tuple7[T1, T2, T3, T4, T5, T6, T7]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple7[T1, T2, T3, T4, T5, T6, T7], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -191,8 +207,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple8[T1, T2, T3, T4, T5, T6, T7, T8](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8]): Pickler[Tuple8[T1, T2, T3, T4, T5, T6, T7, T8]] =
+  implicit def tuple8[T1, T2, T3, T4, T5, T6, T7, T8](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tag: TypeTag[Tuple8[T1, T2, T3, T4, T5, T6, T7, T8]]): Pickler[Tuple8[T1, T2, T3, T4, T5, T6, T7, T8]] =
     new Pickler[Tuple8[T1, T2, T3, T4, T5, T6, T7, T8]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple8[T1, T2, T3, T4, T5, T6, T7, T8], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -226,8 +244,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9]): Pickler[Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]] =
+  implicit def tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tag: TypeTag[Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]]): Pickler[Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]] =
     new Pickler[Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple9[T1, T2, T3, T4, T5, T6, T7, T8, T9], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -263,8 +283,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10]): Pickler[Tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]] =
+  implicit def tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tag: TypeTag[Tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]]): Pickler[Tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]] =
     new Pickler[Tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -302,8 +324,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11]): Pickler[Tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11]] =
+  implicit def tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tag: TypeTag[Tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11]]): Pickler[Tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11]] =
     new Pickler[Tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -343,8 +367,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12]): Pickler[Tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12]] =
+  implicit def tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tag: TypeTag[Tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12]]): Pickler[Tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12]] =
     new Pickler[Tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -386,8 +412,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13]): Pickler[Tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13]] =
+  implicit def tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tag: TypeTag[Tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13]]): Pickler[Tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13]] =
     new Pickler[Tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -431,8 +459,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14]): Pickler[Tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14]] =
+  implicit def tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tag: TypeTag[Tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14]]): Pickler[Tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14]] =
     new Pickler[Tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -478,8 +508,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15]): Pickler[Tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15]] =
+  implicit def tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tag: TypeTag[Tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15]]): Pickler[Tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15]] =
     new Pickler[Tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -527,8 +559,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16]): Pickler[Tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16]] =
+  implicit def tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tag: TypeTag[Tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16]]): Pickler[Tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16]] =
     new Pickler[Tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -578,8 +612,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17]): Pickler[Tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17]] =
+  implicit def tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tag: TypeTag[Tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17]]): Pickler[Tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17]] =
     new Pickler[Tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -631,8 +667,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18]): Pickler[Tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18]] =
+  implicit def tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tag: TypeTag[Tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18]]): Pickler[Tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18]] =
     new Pickler[Tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -686,8 +724,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19]): Pickler[Tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19]] =
+  implicit def tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tag: TypeTag[Tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19]]): Pickler[Tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19]] =
     new Pickler[Tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -743,8 +783,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tpickler20: Pickler[T20]): Pickler[Tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20]] =
+  implicit def tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tpickler20: Pickler[T20], tag: TypeTag[Tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20]]): Pickler[Tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20]] =
     new Pickler[Tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -802,8 +844,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tpickler20: Pickler[T20], tpickler21: Pickler[T21]): Pickler[Tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21]] =
+  implicit def tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tpickler20: Pickler[T20], tpickler21: Pickler[T21], tag: TypeTag[Tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21]]): Pickler[Tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21]] =
     new Pickler[Tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -863,8 +907,10 @@ trait TuplePicklers {
     }
 
 
-  implicit def tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tpickler20: Pickler[T20], tpickler21: Pickler[T21], tpickler22: Pickler[T22]): Pickler[Tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22]] =
+  implicit def tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](implicit tpickler1: Pickler[T1], tpickler2: Pickler[T2], tpickler3: Pickler[T3], tpickler4: Pickler[T4], tpickler5: Pickler[T5], tpickler6: Pickler[T6], tpickler7: Pickler[T7], tpickler8: Pickler[T8], tpickler9: Pickler[T9], tpickler10: Pickler[T10], tpickler11: Pickler[T11], tpickler12: Pickler[T12], tpickler13: Pickler[T13], tpickler14: Pickler[T14], tpickler15: Pickler[T15], tpickler16: Pickler[T16], tpickler17: Pickler[T17], tpickler18: Pickler[T18], tpickler19: Pickler[T19], tpickler20: Pickler[T20], tpickler21: Pickler[T21], tpickler22: Pickler[T22], tag: TypeTag[Tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22]]): Pickler[Tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22]] =
     new Pickler[Tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22]] {
+      final override val ttag = tag
+
       override def pickle(t: Tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeArrayStart()
         writer.write[T1](t._1)(tpickler1)
@@ -924,45 +970,4 @@ trait TuplePicklers {
         Tuple22(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22)
       }
     }
-
-
-
-}
-
-object TuplePicklersGen {
-  /** Generates the Scala code for all 22 tuple widths */
-  def generatePickler(size: Int): String = {
-    val ts = (1 to size) map (i => s"T$i") mkString (", ")
-    val picklerParams = (1 to size) map (i => s"tpickler$i: Pickler[T$i]") mkString (", ")
-    val tuple = s"Tuple$size[$ts]"
-
-    s"""implicit def tuple$size[$ts](implicit $picklerParams): Pickler[$tuple] =
-    new Pickler[$tuple] {
-      override def pickle(t: $tuple, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
-        writer.writeArrayStart()
-        ${(1 to size) map (i => s"writer.write[T$i](t._$i)(tpickler$i)") mkString ("\n        ")}
-        writer.writeArrayEnd()
-      }
-
-      override def unpickle(reader: PickleReader, expectObjectStart: Boolean): $tuple = {
-        if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
-        reader.nextInArray()
-
-        ${(1 to size) map (i => s"val t$i = reader.read[T$i]()(tpickler$i); reader.nextInArray") mkString ("\n        ")}
-
-        if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
-
-        Tuple$size(${(1 to size) map (i => s"t$i") mkString (", ")})
-      }
-    }
-    """
-  }
-
-  def main(args: Array[String]): Unit = {
-    for (i <- 1 to 22) {
-      val pickler = generatePickler(i)
-      println(pickler)
-      println()
-    }
-  }
 }

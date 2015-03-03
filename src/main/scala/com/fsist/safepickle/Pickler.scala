@@ -1,5 +1,6 @@
 package com.fsist.safepickle
 
+import scala.reflect.runtime.universe._
 import org.apache.commons.codec.binary.Base64
 
 import scala.annotation.implicitNotFound
@@ -7,6 +8,9 @@ import scala.annotation.implicitNotFound
 /** A way to pickle or unpickle a type. */
 @implicitNotFound("Implicit Pickler for ${T} not found")
 trait Pickler[T] {
+  /** A type tag for `T`. This is used only for implementing `typeName`; runtime reflection is never used. */
+  def ttag: TypeTag[T]
+
   /** Should write the value `t` to the `writer`. If the type `T` contains sub-types for which we have sub-picklers,
     * they should be used by calling `writer.write[T](pickler)` for those types.
     *
@@ -34,7 +38,7 @@ trait Pickler[T] {
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
 
   /** The full name of the type `T`. */
-  val typeName: String = TypeNameMacro[T]
+  lazy val typeName: String = typeTag.tpe.typeSymbol.fullName
 }
 
 object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin {
@@ -59,6 +63,7 @@ case class UnexpectedEofException(expected: String) extends UnpicklingException(
 trait PrimitivePicklersMixin {
 
   implicit object ShortPickler extends Pickler[Short] {
+    final override def ttag = typeTag[Short]
     final override def pickle(short: Short, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeInt(short)
 
@@ -67,6 +72,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object IntPickler extends Pickler[Int] {
+    final override def ttag = typeTag[Int]
     final override def pickle(int: Int, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeInt(int)
 
@@ -75,6 +81,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object LongPickler extends Pickler[Long] {
+    final override def ttag = typeTag[Long]
     final override def pickle(long: Long, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeLong(long)
 
@@ -83,6 +90,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object FloatPickler extends Pickler[Float] {
+    final override def ttag = typeTag[Float]
     final override def pickle(float: Float, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeFloat(float)
 
@@ -91,6 +99,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object DoublePickler extends Pickler[Double] {
+    final override def ttag = typeTag[Double]
     final override def pickle(double: Double, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeDouble(double)
 
@@ -99,6 +108,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object BooleanPickler extends Pickler[Boolean] {
+    final override def ttag = typeTag[Boolean]
     final override def pickle(boolean: Boolean, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeBoolean(boolean)
 
@@ -107,6 +117,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object StringPickler extends Pickler[String] {
+    final override def ttag = typeTag[String]
     final override def pickle(string: String, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeString(string)
 
@@ -115,6 +126,7 @@ trait PrimitivePicklersMixin {
   }
 
   implicit object NullPickler extends Pickler[Null] {
+    final override def ttag = typeTag[Null]
     final override def pickle(Null: Null, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeNull()
 
@@ -126,6 +138,7 @@ trait PrimitivePicklersMixin {
 
   /** Byte array pickler that writes the base64 value of the array as a string. */
   implicit object ByteArrayPickler extends Pickler[Array[Byte]] {
+    final override def ttag = typeTag[Array[Byte]]
     final override def pickle(t: Array[Byte], writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
       writer.writeString(Base64.encodeBase64String(t))
     }
@@ -140,7 +153,7 @@ trait PrimitivePicklersMixin {
 object PrimitivePicklers extends PrimitivePicklersMixin
 
 /** Pickles values of type `T` by converting them to values of type `Other`, which has an `otherPickler` provided. */
-abstract class ConvertPickler[T, Other](implicit val otherPickler: Pickler[Other]) extends Pickler[T]{
+abstract class ConvertPickler[T, Other](implicit val otherPickler: Pickler[Other], val ttag: TypeTag[T]) extends Pickler[T]{
   def convertTo(t: T): Other
   def convertFrom(other: Other): T
 
@@ -152,6 +165,6 @@ abstract class ConvertPickler[T, Other](implicit val otherPickler: Pickler[Other
 }
 
 /** A refining of [[ConvertPickler]] for converting types to Strings using their `toString` method. */
-abstract class ConvertToStringPickler[T] extends ConvertPickler[T, String]()(PrimitivePicklers.StringPickler) {
+abstract class ConvertToStringPickler[T](implicit ttag: TypeTag[T]) extends ConvertPickler[T, String]()(PrimitivePicklers.StringPickler, ttag) {
   def convertTo(t: T): String = t.toString
 }

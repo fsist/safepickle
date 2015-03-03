@@ -1,5 +1,6 @@
 package com.fsist.safepickle
 
+import scala.reflect.runtime.universe._
 import com.fsist.safepickle.Autogen.|
 import org.scalatest.FunSuite
 
@@ -90,6 +91,8 @@ object AutogenTest {
   case class C10(i: Int)
   object C10 {
     implicit val pickler = new Pickler[C10] {
+      override val ttag = typeTag[C10]
+
       override def pickle(t: C10, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         writer.writeInt(t.i)
       }

@@ -4,6 +4,7 @@ import scala.language.higherKinds
 
 import scala.language.experimental.macros
 
+import scala.reflect.runtime.universe._
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
@@ -14,7 +15,10 @@ import scala.reflect.ClassTag
   */
 trait CollectionPicklersMixin extends TuplePicklers {
   implicit def iterablePickler[T, Coll[T] <: Iterable[T]](implicit tpickler: Pickler[T],
-                                                          cbf: CanBuildFrom[Nothing, T, Coll[T]]): Pickler[Coll[T]] = new Pickler[Coll[T]] {
+                                                          cbf: CanBuildFrom[Nothing, T, Coll[T]],
+                                                          tag: TypeTag[Coll[T]]): Pickler[Coll[T]] = new Pickler[Coll[T]] {
+    final override val ttag = tag
+
     override def pickle(coll: Coll[T], writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
       writer.writeArrayStart()
       val iter = coll.iterator
@@ -38,7 +42,9 @@ trait CollectionPicklersMixin extends TuplePicklers {
   }
 
   /** An array is not natively an Iterable, and isn't picked up by `iterablePickler` above */
-  implicit def arrayPickler[T](implicit tpickler: Pickler[T], classTag: ClassTag[T]): Pickler[Array[T]] = new Pickler[Array[T]] {
+  implicit def arrayPickler[T](implicit tpickler: Pickler[T], tag: TypeTag[Array[T]], classTag: ClassTag[T]): Pickler[Array[T]] = new Pickler[Array[T]] {
+    final override val ttag = tag
+
     val cbf = Array.canBuildFrom[T]
 
     override def pickle(Array: Array[T], writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
@@ -64,8 +70,11 @@ trait CollectionPicklersMixin extends TuplePicklers {
   }
 
   implicit def stringMapPickler[T, Coll[String, T] <: collection.Map[String, T]](implicit tpickler: Pickler[T],
-                                                                                 cbf: CanBuildFrom[Nothing, (String, T), Coll[String, T]]): Pickler[Coll[String, T]] =
+                                                                                 cbf: CanBuildFrom[Nothing, (String, T), Coll[String, T]],
+                                                                                 tag: TypeTag[Coll[String, T]]): Pickler[Coll[String, T]] =
     new Pickler[Coll[String, T]] {
+      final override val ttag = tag
+
       override def pickle(coll: Coll[String, T], writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
         if (emitObjectStart) writer.writeObjectStart()
 
@@ -100,11 +109,15 @@ trait CollectionPicklersMixin extends TuplePicklers {
 
   implicit def anyMapPickler[K, V, Coll[K, V] <: collection.Map[K, V]](implicit kpickler: Pickler[K],
                                                                        vpickler: Pickler[V],
-                                                                       cbf: CanBuildFrom[Nothing, (K, V), Coll[K, V]]): Pickler[Coll[K, V]] = {
+                                                                       cbf: CanBuildFrom[Nothing, (K, V), Coll[K, V]],
+                                                                       tag: TypeTag[Coll[K, V]],
+                                                                       tupleTag: TypeTag[(K, V)]): Pickler[Coll[K, V]] = {
     implicit val tpickler = tuple2[K, V]
 
     // Can't figure out how to call iterablePickler here
     new Pickler[Coll[K, V]] {
+      final override def ttag = tag
+
       override def pickle(coll: Coll[K, V], writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
         writer.writeArrayStart()
         val iter = coll.iterator

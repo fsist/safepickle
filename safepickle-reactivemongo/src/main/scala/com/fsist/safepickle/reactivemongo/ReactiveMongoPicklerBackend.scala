@@ -1,5 +1,6 @@
 package com.fsist.safepickle.reactivemongo
 
+import scala.reflect.runtime.universe._
 import java.util.Date
 
 import akka.util.ByteString
@@ -19,6 +20,7 @@ object ReactiveMongoPicklerBackend extends safepickle.PicklerBackend {
 object ReactiveMongoPicklers {
   /** Default way of writing a BSONObjectID as a string to backends other than ReactiveMongo. */
   implicit def stringifiedObjectId[Backend <: PicklerBackend]: Pickler[BSONObjectID] = new Pickler[BSONObjectID] {
+    override def ttag = typeTag[BSONObjectID]
     override def pickle(t: BSONObjectID, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit =
       writer.writeString(t.stringify)
     override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): BSONObjectID =

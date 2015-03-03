@@ -9,7 +9,7 @@ class TypeNameMacro(val c: Context) {
 
   def make[T: c.WeakTypeTag]: Expr[String] = {
     val tag = implicitly[WeakTypeTag[T]]
-    val name = tag.tpe.typeSymbol.fullName
+    val name = tag.tpe.toString //typeSymbol.fullName
     c.Expr[String](q"$name")
   }
 }
