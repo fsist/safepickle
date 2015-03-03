@@ -109,6 +109,17 @@ object AutogenTest {
   object C12 {
     implicit val pickler = Autogen[C12]
   }
+
+  // These classes test Autogen just by compiling, as well as via the test below.
+  case class C13(foo: String)
+  case class C14(xs: Seq[C13], map: Map[String, C13], map2: Map[C13, C13], map3: Map[String, Map[String, C13]])
+  object C14 {
+    implicit val pickler = Autogen[C14]
+  }
+  case class C15(xs: (String, String, (Int, C13)))
+  object C15 {
+    implicit val pickler = Autogen[C15]
+  }
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
@@ -255,6 +266,55 @@ class AutogenTest extends FunSuite with WrapperTester {
       C12("x"),
       ObjectWrapper(Map(
         "bar" -> StringWrapper("x")
+      ))
+    )
+  }
+
+  test("Nested autogen") {
+    roundtrip(
+      C14(
+        List(C13("foo"), C13("bar")),
+        Map("foo" -> C13("foo")),
+        Map(C13("foo") -> C13("bar")),
+        Map("foo" -> Map("bar" -> C13("baz")))
+      ),
+      ObjectWrapper(Map(
+        "xs" -> ArrayWrapper(Seq(
+          ObjectWrapper(Map("foo" -> StringWrapper("foo"))),
+          ObjectWrapper(Map("foo" -> StringWrapper("bar")))
+        )),
+
+        "map" -> ObjectWrapper(Map(
+          "foo" -> ObjectWrapper(Map("foo" -> StringWrapper("foo")))
+        )),
+
+        "map2" -> ArrayWrapper(Seq(
+          ArrayWrapper(Seq(
+            ObjectWrapper(Map("foo" -> StringWrapper("foo"))),
+            ObjectWrapper(Map("foo" -> StringWrapper("bar")))
+          ))
+        )),
+
+        "map3" -> ObjectWrapper(Map(
+          "foo" -> ObjectWrapper(Map(
+            "bar" -> ObjectWrapper(Map("foo" -> StringWrapper("baz")))
+          ))
+        ))
+      ))
+    )
+
+    roundtrip(
+      C15(("foo", "bar", (1, C13("baz")))),
+      ObjectWrapper(Map(
+        "xs" ->
+          ArrayWrapper(Seq(
+            StringWrapper("foo"),
+            StringWrapper("bar"),
+            ArrayWrapper(Seq(
+              IntWrapper(1),
+              ObjectWrapper(Map("foo" -> StringWrapper("baz")))
+            ))
+          ))
       ))
     )
   }
