@@ -124,6 +124,13 @@ object AutogenTest {
   object C16 {
     implicit val pickler = Autogen[C16]
   }
+
+  // Regression test: class with default value declared in the same file and later then the point of usage with Autogen
+  case class C17(c: C18)
+  object C17 {
+    implicit val pickler = Autogen[C17]
+  }
+  case class C18(i: Int = 0)
 }
 
 class AutogenTest extends FunSuite with WrapperTester {

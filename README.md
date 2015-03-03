@@ -106,4 +106,5 @@ Extra TODOs (will be moved to tickets):
 - Also make sure user attribute names can't clash with our $special attributes
 - When Autogen (recursively) generates a pickler for the same type multiple times in the same call to Autogen,
   reuse the generated value
+- Find a way to get the declared default value without runtime reflection
   

@@ -452,36 +452,21 @@ class Autogen(val c: Context) {
     * Normally we can just generate a call to the compiler-generated method of the companion object which returns the
     * default value, and is named apply$default$index. See: http://stackoverflow.com/a/21970758/1314705
     *
-    * However, if the call to the macro itself is inside the companion object, then calling apply$default$index won't
-    * compile; scalac will insist this method doesn't exist. In this case we take advantage of the fact we're inside
-    * the companion object, and inspect the original constructor declaration to get a copy of the default parameter
-    * value Tree directly.
+    * However, if the call to the macro itself is inside the companion object, or is in the same compilation unit and
+    * before the companion object, then calling apply$default$index won't compile; scalac will insist this method
+    * doesn't exist. In this case we're forced (for now) to generate runtime reflection based code.
     */
-  private def paramDefaultValues(classSym: ClassSymbol, method: MethodSymbol): List[Option[Tree]] = {
+  private def paramDefaultValues(classSym: ClassSymbol, method: MethodSymbol)(implicit debug: Debug): List[Option[Tree]] = {
     val moduleSym = classSym.companion
-
-    val isInsideCompanionModule = {
-      val enclosing = mutable.Stack[Symbol](c.internal.enclosingOwner)
-      while (enclosing.top != NoSymbol) {
-        enclosing.push(enclosing.top.owner)
-      }
-
-      enclosing.exists { sym =>
-        if (sym.isModuleClass) {
-          val module = sym.asClass.companion.companion
-          if (module.isModule && module == moduleSym) true
-          else false
-        }
-        else false
-      }
-    }
 
     method.paramLists.head.map(_.asTerm).zipWithIndex.map { case (p, i) =>
       if (!p.isParamWithDefault) None
       else {
         val defaultMethodName = "apply$default$" + (i + 1)
 
-        if (isInsideCompanionModule) {
+        val hasMethod = moduleSym.typeSignature.decls.exists(decl => decl.isMethod && decl.name.toString == defaultMethodName)
+
+        if (! hasMethod) {
           Some(
             q"""{
                 import scala.tools.reflect._
