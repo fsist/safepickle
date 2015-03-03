@@ -63,8 +63,8 @@ trait CollectionPicklersMixin extends TuplePicklers {
     }
   }
 
-  implicit def stringMapPickler[T, Coll[String, T] <: Map[String, T]](implicit tpickler: Pickler[T],
-                                                                      cbf: CanBuildFrom[Nothing, (String, T), Coll[String, T]]): Pickler[Coll[String, T]] =
+  implicit def stringMapPickler[T, Coll[String, T] <: collection.Map[String, T]](implicit tpickler: Pickler[T],
+                                                                                 cbf: CanBuildFrom[Nothing, (String, T), Coll[String, T]]): Pickler[Coll[String, T]] =
     new Pickler[Coll[String, T]] {
       override def pickle(coll: Coll[String, T], writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
         if (emitObjectStart) writer.writeObjectStart()
@@ -98,9 +98,9 @@ trait CollectionPicklersMixin extends TuplePicklers {
       }
     }
 
-  implicit def anyMapPickler[K, V, Coll[K, V] <: Map[K, V]](implicit kpickler: Pickler[K],
-                                                            vpickler: Pickler[V],
-                                                            cbf: CanBuildFrom[Nothing, (K, V), Coll[K, V]]): Pickler[Coll[K, V]] = {
+  implicit def anyMapPickler[K, V, Coll[K, V] <: collection.Map[K, V]](implicit kpickler: Pickler[K],
+                                                                       vpickler: Pickler[V],
+                                                                       cbf: CanBuildFrom[Nothing, (K, V), Coll[K, V]]): Pickler[Coll[K, V]] = {
     implicit val tpickler = tuple2[K, V]
 
     // Can't figure out how to call iterablePickler here
