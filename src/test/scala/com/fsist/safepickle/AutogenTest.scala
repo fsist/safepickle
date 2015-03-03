@@ -1,5 +1,6 @@
 package com.fsist.safepickle
 
+import com.fsist.safepickle.Autogen.|
 import org.scalatest.FunSuite
 
 // NOTE: must come before the class, so that macros can see the knownDirectSubclasses of traits

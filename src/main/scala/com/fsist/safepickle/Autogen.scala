@@ -1,5 +1,7 @@
 package com.fsist.safepickle
 
+import com.fsist.safepickle.Autogen.|
+
 import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
@@ -101,7 +103,7 @@ class Autogen(val c: Context) {
     checkInitialSymbol(symbol)
 
     def collectChildTypes(tpe: Type): List[Type] = {
-      if (tpe <:< typeOf[|[_, _]]) {
+      if (tpe <:< typeOf[_ | _]) {
         val rest = tpe.typeArgs(0)
         val next = tpe.typeArgs(1)
         next :: collectChildTypes(rest)
@@ -679,6 +681,9 @@ object Autogen {
     */
   def debug[T]: Pickler[T] = macro Autogen.generateDebug[T]
 
+  /** A way to list two or more types, e.g. `String | Int | Foo`. */
+  type |[A, B]
+
   /** Works like `Autogen.apply[T]`. T must be a sealed trait or sealed abstract class.
     *
     * The type argument `Children` explicitly specifies the concrete sub-types of T that should be supported.
@@ -693,7 +698,4 @@ object Autogen {
     * Useful for debugging if the macro-generated code does not compile. */
   def childrenDebug[T, Children]: Pickler[T] = macro Autogen.generateChildrenDebug[T, Children]
 }
-
-/** A way to list two or more types, e.g. `String | Int | Foo`. */
-sealed trait |[A, B]
 
