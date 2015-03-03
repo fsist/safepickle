@@ -120,6 +120,11 @@ object AutogenTest {
   object C15 {
     implicit val pickler = Autogen[C15]
   }
+
+  case class C16(subs: List[C16], sub: Option[C16] = None)
+  object C16 {
+    implicit val pickler = Autogen[C16]
+  }
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
@@ -315,6 +320,29 @@ class AutogenTest extends FunSuite with WrapperTester {
               ObjectWrapper(Map("foo" -> StringWrapper("baz")))
             ))
           ))
+      ))
+    )
+  }
+
+  test("Recursive Autogen") {
+    roundtrip(
+      C16(List(C16(List.empty), C16(List(C16(List.empty)))), Some(C16(List.empty))),
+      ObjectWrapper(Map(
+        "subs" -> ArrayWrapper(Seq(
+          ObjectWrapper(Map(
+            "subs" -> ArrayWrapper(Seq())
+          )),
+          ObjectWrapper(Map(
+            "subs" -> ArrayWrapper(Seq(
+              ObjectWrapper(Map(
+                "subs" -> ArrayWrapper(Seq())
+              ))
+            ))
+          ))
+        )),
+        "sub" -> ObjectWrapper(Map(
+          "subs" -> ArrayWrapper(Seq())
+        ))
       ))
     )
   }

@@ -185,12 +185,20 @@ class Autogen(val c: Context) {
     }
   }
 
-  /** If an implicit pickler for tpe exists, returns a reference to it. Otherwise, returns an expression that creates
-    * a new pickler, as per `generatePicklerForType`. */
-  private def picklerOf(tpe: Type)(implicit debug: Debug): Tree = {
-    implicitPicklerOf(tpe).getOrElse(
-      generatePicklerOf(tpe, Set.empty).get
-    )
+  /** Returns an expression for Pickler[tpe], in this order:
+    *
+    * - The name given in `existingPicklers`
+    * - An implicit Pickler[tpe] from the scope
+    * - Creates a new Pickler by combining Autogen and CollectionPicklers recursively, using `generatePicklerOf`.
+    */
+  private def picklerOf(tpe: Type, existingPicklers: Map[EqType, TermName])(implicit debug: Debug): Tree = {
+    existingPicklers.get(tpe) match {
+      case Some(name) => q"$name"
+      case None =>
+        implicitPicklerOf(tpe).getOrElse(
+          generatePicklerOf(tpe, existingPicklers.keySet).get
+        )
+    }
   }
 
   /** Returns a Pickler[tpe] value. Uses the implicit Pickler for this type if one is in scope,
@@ -268,11 +276,14 @@ class Autogen(val c: Context) {
         c.Expr[Pickler[T]](ret)
       }
       else {
+        val selfPickler = TermName("selfPickler")
+
         case class ParamInfo(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, writeParam: Tree,
                              argDecl: Tree, argInit: TermName, argInitDecl: Tree, argNameMatchClause: Tree,
                              getArgValue: Tree, defaultArgValueName: TermName, defaultArgValueDecl: Option[Tree])
 
         val defaultValues = paramDefaultValues(clazz, ctor)
+        val existingPicklers = Map[EqType, TermName](new EqType(ttype) -> selfPickler)
         val paramInfos: List[ParamInfo] = for ((param, defaultValue) <- params.zip(defaultValues)) yield {
           val name = param.name.decodedName.toTermName
 
@@ -284,7 +295,12 @@ class Autogen(val c: Context) {
           }
 
           val paramPicklerName = TermName(name + "$paramPickler")
-          val paramPicklerDecl = q"val $paramPicklerName = ${picklerOf(tpe)}"
+          val paramPicklerDecl = if (tpe =:= ttype) {
+            q"def $paramPicklerName: Pickler[$tpe] = $selfPickler"
+          }
+          else {
+            q"val $paramPicklerName = ${picklerOf(tpe, existingPicklers)}"
+          }
 
           val defaultArgValueName = TermName(name + "$default")
           val defaultArgValueDecl = defaultValue map (tree => q"val $defaultArgValueName = $tree")
@@ -382,9 +398,11 @@ class Autogen(val c: Context) {
         val ret = q""" {
           import com.fsist.safepickle._
 
-          ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
-
           new Pickler[$ttype] {
+            private implicit def $selfPickler: Pickler[$ttype] = this // For recursive types
+
+            ..$implicitSubPicklers
+
             ..$defaultArgValues
 
             override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
@@ -525,7 +543,7 @@ class Autogen(val c: Context) {
       val tpe = subclass.toType
 
       val paramPicklerName = TermName(c.freshName(s"$name$$pickler"))
-      val paramPicklerDecl = q"val $paramPicklerName = ${picklerOf(tpe)}"
+      val paramPicklerDecl = q"val $paramPicklerName = ${picklerOf(tpe, Map.empty)}"
 
       val writtenAsDollarValue = subclass.isSealed && (subclass.isTrait || subclass.isAbstract)
 
