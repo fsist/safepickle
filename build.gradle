@@ -4,7 +4,7 @@ task wrapper(type: Wrapper) {
 
 allprojects {
   group = 'com.fsist'
-  version = '0.5.3'
+  version = '0.6.0'
 
   apply plugin: 'scala'
   apply plugin: 'maven'
@@ -128,10 +128,6 @@ allprojects {
     classpath testJar.archivePath
     args = [ '-o', '-w', 'com.fsist.safepickle', '-h', 'test-output-html', '-R', testJar.archivePath ]
   }
-}
-
-dependencies {
-  compile project(':safepickle-macros')
 }
 
 /* Tests for all projects, at once */
