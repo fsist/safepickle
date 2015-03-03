@@ -11,6 +11,10 @@ class ReactiveMongoPicklersTest extends FunSuite {
   import JodaTimePicklers._
   import ReactiveMongoPicklers._
 
+  test("typeName works") {
+    assert(ReactiveMongoPicklers.stringifiedObjectId.typeName == "reactivemongo.bson.BSONObjectID")
+  }
+
   test("Write ObjectId to different backends") {
     val oid = BSONObjectID.generate
     

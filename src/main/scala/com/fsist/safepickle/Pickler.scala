@@ -38,7 +38,7 @@ trait Pickler[T] {
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T
 
   /** The full name of the type `T`. */
-  lazy val typeName: String = typeTag.tpe.typeSymbol.fullName
+  lazy val typeName: String = ttag.tpe.typeSymbol.fullName
 }
 
 object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin {
