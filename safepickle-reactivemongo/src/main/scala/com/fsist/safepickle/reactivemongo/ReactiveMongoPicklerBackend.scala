@@ -76,9 +76,13 @@ class BSONTreePickleReader(root: BSONValue) extends TreePickleReader[BSONValue](
   override def read[T](expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T = {
     val ret = pickler.typeName match {
       case "reactivemongo.bson.BSONObjectID" => currentNode.asInstanceOf[BSONObjectID]
-      case "scala.Array[Byte]" | "akka.util.ByteString" =>
+      case "scala.Array[Byte]" =>
         val bin = currentNode.asInstanceOf[BSONBinary].value
         bin.readArray(bin.size)
+      case "akka.util.ByteString" =>
+        val bin = currentNode.asInstanceOf[BSONBinary].value
+        val arr = bin.readArray(bin.size)
+        ByteString(arr)
       case "org.joda.time.Instant" => new Instant(currentNode.asInstanceOf[BSONDateTime].value)
       case "org.joda.time.DateTime" => new DateTime(currentNode.asInstanceOf[BSONDateTime].value)
       case "java.util.Date" => new Date(currentNode.asInstanceOf[BSONDateTime].value)
