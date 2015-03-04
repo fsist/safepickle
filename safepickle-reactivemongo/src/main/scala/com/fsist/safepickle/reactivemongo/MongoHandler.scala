@@ -3,7 +3,7 @@ package com.fsist.safepickle.reactivemongo
 import com.fsist.safepickle.Pickler
 import reactivemongo.bson._
 
-object BsonHandler {
+object MongoHandler {
   /** Creates a ReactiveMongo BSONHandler based on the given Pickler. */
   def apply[T](implicit pickler: Pickler[T]): BSONHandler[BSONValue, T] = new BSONHandler[BSONValue, T] {
     override def read(bson: BSONValue): T = ReactiveMongoPicklerBackend.reader(bson).read[T]()
