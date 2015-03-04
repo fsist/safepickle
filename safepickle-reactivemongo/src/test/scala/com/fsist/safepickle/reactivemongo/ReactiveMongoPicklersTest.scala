@@ -1,15 +1,18 @@
 package com.fsist.safepickle.reactivemongo
 
+import _root_.akka.util.ByteString
+import com.fsist.safepickle.akka.AkkaPicklers
 import com.fsist.safepickle.joda.JodaTimePicklers
-import com.fsist.safepickle.{PrimitivePicklers, LongWrapper, StringWrapper, WrapperBackend}
+import com.fsist.safepickle._
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.Instant
 import org.scalatest.FunSuite
-import reactivemongo.bson.{BSONDateTime, BSONBinary, BSONObjectID}
+import _root_.reactivemongo.bson.{BSONDateTime, BSONBinary, BSONObjectID}
 
 class ReactiveMongoPicklersTest extends FunSuite {
   import JodaTimePicklers._
   import ReactiveMongoPicklers._
+  import AkkaPicklers._
 
   test("typeName works") {
     assert(ReactiveMongoPicklers.stringifiedObjectId.typeName == "reactivemongo.bson.BSONObjectID")
@@ -65,5 +68,13 @@ class ReactiveMongoPicklersTest extends FunSuite {
       writer.write(ts)
       assert(writer.result() == LongWrapper(12345))
     }
+  }
+
+  test("Write and read ByteString") {
+    val bytes = ByteString(Array[Byte](1,2,3,4,5))
+    val bson = ReactiveMongoPicklerBackend.write(bytes)
+    assert(bson.isInstanceOf[BSONBinary])
+    val bytes2 = ReactiveMongoPicklerBackend.read[ByteString](bson)
+    assert(bytes2.toIndexedSeq == bytes.toIndexedSeq)
   }
 }
