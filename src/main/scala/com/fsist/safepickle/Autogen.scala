@@ -2,7 +2,6 @@ package com.fsist.safepickle
 
 import com.fsist.safepickle.Autogen.|
 
-import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
 import scala.reflect.macros.blackbox.Context
@@ -62,7 +61,7 @@ class Autogen(val c: Context) {
       val cls = symbol.asClass
       if (cls.isTrait || cls.isAbstract) {
         if (cls.isSealed) {
-          generateSealedPickler(cls)
+          generatePicklerWithChildren(cls)
         }
         else c.abort(c.enclosingPosition, s"Cannot generate pickler for non-sealed $cls")
       }
@@ -118,15 +117,15 @@ class Autogen(val c: Context) {
     val childSymbols = childTypes.map(_.typeSymbol.asClass)
 
     if (!symbol.isClass) {
-      c.abort(c.enclosingPosition, s"Autogen.children can only be called on a sealed trait or abstract class, is not applicable to $symbol")
+      c.abort(c.enclosingPosition, s"Autogen.children can only be called on a trait or abstract class, is not applicable to $symbol")
     }
     else {
       val cls = symbol.asClass
       if (!(cls.isAbstract || cls.isTrait)) {
-        c.abort(c.enclosingPosition, s"Autogen.children can only be called on a sealed trait or abstract class, is not applicable to $symbol")
+        c.abort(c.enclosingPosition, s"Autogen.children can only be called on a trait or abstract class, is not applicable to $symbol")
       }
       else {
-        generateSealedPickler(cls, Some(childSymbols))
+        generatePicklerWithChildren(cls, Some(childSymbols))
       }
     }
   }
@@ -474,7 +473,7 @@ class Autogen(val c: Context) {
 
         val hasMethod = moduleSym.typeSignature.decls.exists(decl => decl.isMethod && decl.name.toString == defaultMethodName)
 
-        if (! hasMethod) {
+        if (!hasMethod) {
           Some(
             q"""{
                 import scala.tools.reflect._
@@ -519,16 +518,16 @@ class Autogen(val c: Context) {
     else Set(parent)
   }
 
-  private def generateSealedPickler[T](sealedSym: ClassSymbol, children: Option[List[ClassSymbol]] = None)
-                                      (implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
+  private def generatePicklerWithChildren[T](parentSym: ClassSymbol, children: Option[List[ClassSymbol]] = None)
+                                            (implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     val ttype = ttag.tpe
 
-    val traitName = sealedSym.name.decodedName.toString
+    val traitName = parentSym.name.decodedName.toString
 
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
                        unpicklerMatchClause: Tree)
 
-    val subtypes = for (subtype <- children.getOrElse(collectDescendantClasses(sealedSym))) yield {
+    val subtypes = for (subtype <- children.getOrElse(collectDescendantClasses(parentSym))) yield {
       val subclass = subtype.asClass
       val name = subclass.name.decodedName.toTermName
       val tpe = subclass.toType
@@ -536,10 +535,13 @@ class Autogen(val c: Context) {
       val paramPicklerName = TermName(c.freshName(s"$name$$pickler"))
       val paramPicklerDecl = q"val $paramPicklerName = ${picklerOf(tpe, Map.empty)}"
 
-      val writtenAsDollarValue = subclass.isSealed && (subclass.isTrait || subclass.isAbstract)
+      // A value is be written in one of three ways:
+      // - If an object or 0-parameters class, a simple string
+      // - If a class with parameters, an object
+      // - If a trait or abstract class with descendants, an object with only two attributes, $type = the concrete type
+      //   and $value = the value written by writer.write
 
-      // Analyze the subtype's primary ctor to determine if it has any parameters; if not, it will be written as a
-      // single string
+      val writtenAsDollarValue = subclass.isTrait || subclass.isAbstract
 
       val writtenAsObject = !writtenAsDollarValue && {
         val ctor = subclass.primaryConstructor.asMethod

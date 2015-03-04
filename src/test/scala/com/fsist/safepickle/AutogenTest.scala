@@ -135,6 +135,20 @@ object AutogenTest {
     implicit val pickler = Autogen[C17]
   }
   case class C18(i: Int = 0)
+
+  // Regression test: sealed trait extended by non-sealed trait with explicit pickler
+  trait T20 extends T19
+  object T20 {
+    implicit val pickler = Autogen.children[T20, C21]
+  }
+
+  sealed trait T19
+  object T19 {
+    implicit val pickler = Autogen.children[T19, T20]
+  }
+
+  case class C21() extends T20
+
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
