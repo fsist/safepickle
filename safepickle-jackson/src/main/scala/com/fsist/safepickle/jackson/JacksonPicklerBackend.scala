@@ -72,7 +72,7 @@ class JacksonPickleReader(parser: JsonParser) extends PickleReader {
 
   override def atEof(): Boolean = {
     val id = parser.getCurrentTokenId
-    id != ID_NO_TOKEN && id != ID_NOT_AVAILABLE
+    id == ID_NO_TOKEN || id == ID_NOT_AVAILABLE
   }
 
   override def tokenType: TokenType = parser.getCurrentTokenId match {
