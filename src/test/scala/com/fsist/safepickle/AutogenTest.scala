@@ -149,6 +149,13 @@ object AutogenTest {
 
   case class C21() extends T20
 
+  // Recursive use of the same pickler
+  sealed trait T22
+  object T22 {
+    implicit def recursivePickler: Pickler[T22] = thePickler
+    val thePickler = Autogen.childrenDebug[T22, C23]
+    case class C23(subs: Seq[T22]) extends T22
+  }
 }
 
 class AutogenTest extends FunSuite with WrapperTester {
