@@ -28,6 +28,34 @@ object ReactiveMongoPicklers {
   }
 }
 
+/** Maps object attribute names to valid Mongo object field names by escaping the $ and . characters. */
+object ReactiveMongoEscapes {
+  private val escape: String = "\\"
+  private val dot: Char = '.'
+  private val escapedDot: Char = '．'
+  private val dollar: Char = '$'
+  private val escapedDollar: Char = '＄'
+
+  def escapeChar(from: Char, to: Char, in: String): String =
+    in.replace(to.toString, escape + to).replace(from, to)
+
+  def escapeAttributeName(in: String): String = {
+    val withoutEscape = in.replace(escape, escape + escape)
+    val withoutDot = escapeChar(dot, escapedDot, withoutEscape)
+    val withoutDollar = escapeChar(dollar, escapedDollar, withoutDot)
+    withoutDollar
+  }
+
+  def unescapeChar(from: Char, to: Char, in: String): String =
+    in.replace(from, to).replace(escape + from, from.toString)
+
+  def unescapeAttributeName(in: String): String = {
+    val withDollar = unescapeChar(escapedDollar, dollar, in)
+    val withDot = unescapeChar(escapedDot, dot, withDollar)
+    withDot.replace(escape + escape, escape)
+  }
+}
+
 object ReactiveMongoTreeParser extends TreeParser[BSONValue] {
 
   override def nodeType(node: BSONValue): TreeNodeType = node.code match {
@@ -67,10 +95,14 @@ object ReactiveMongoTreeParser extends TreeParser[BSONValue] {
   override def float(node: BSONValue): Float = node.asInstanceOf[BSONDouble].value.toFloat
   override def double(node: BSONValue): Double = node.asInstanceOf[BSONDouble].value.toFloat
   override def array(node: BSONValue): Iterator[BSONValue] = node.asInstanceOf[BSONArray].values.iterator
-  override def obj(node: BSONValue): Iterator[(String, BSONValue)] = node.asInstanceOf[BSONDocument].elements.iterator
+
+  override def obj(node: BSONValue): Iterator[(String, BSONValue)] =
+    node.asInstanceOf[BSONDocument].elements.iterator.map {
+      case (name, value) => (ReactiveMongoEscapes.unescapeAttributeName(name), value)
+    }
 }
 
-/** A TreeReader for the ReactiveMongo backend with support for the extra BSOn native types. */
+/** A TreeReader for the ReactiveMongo backend with support for the extra BSON native types. */
 class BSONTreePickleReader(root: BSONValue) extends TreePickleReader[BSONValue](ReactiveMongoTreeParser, root) {
   // Override for specific values with primitive representation in BSON
   override def read[T](expectObjectStart: Boolean = true)(implicit pickler: Pickler[T]): T = {
@@ -102,7 +134,12 @@ object ReactiveMongoTreeBuilder extends TreeBuilder[BSONValue] {
   override def nul: BSONValue = BSONNull
   override def long(long: Long): BSONValue = BSONLong(long)
   override def array(array: Iterable[BSONValue]): BSONValue = BSONArray(array)
-  override def obj(obj: Map[String, BSONValue]): BSONValue = BSONDocument(obj)
+
+  override def obj(obj: Map[String, BSONValue]): BSONValue = BSONDocument(
+    obj.map{
+      case (key, value) => (ReactiveMongoEscapes.escapeAttributeName(key), value)
+    }
+  )
 }
 
 /** A TreeWriter for the ReactiveMongo backend with support for the extra BSON native types. */

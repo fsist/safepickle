@@ -102,8 +102,7 @@ Extra TODOs (will be moved to tickets):
 - Versioning support
 - Create @Specialized versions of Pickler trait?
 - Make Autogen use the concrete PickleReader/Writer methods for primitive types to improve performance
-- Escape attribute names that are otherwise illegal in JSON and in BSON (separately for each)
-- Also make sure user attribute names can't clash with our $special attributes
+- Add tests in Autogen to make sure user attribute names can't clash with our $special attributes
 - When Autogen (recursively) generates a pickler for the same type multiple times in the same call to Autogen,
   reuse the generated value
 - Find a way to get the declared default value without runtime reflection
