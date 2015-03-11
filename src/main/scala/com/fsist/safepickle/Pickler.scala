@@ -42,6 +42,29 @@ trait Pickler[T] {
 }
 
 object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin {
+
+  /** Returns a Pickler[T] that delegates to the pickler returned by `getPickler`.
+    *
+    * This helps resolve loops in indirectly self-referential types. If you have this hierarchy:
+    *
+    * case class A(b: B)
+    * case class B(a: Option[A])
+    *
+    * Then Autogen[A] will call Autogen[B] which will call Autogen[A] again. The solution looks like this:
+    *
+    * object A {
+    *   implicit val pickler = Pickler.delegate(thePickler)
+    *   private val thePickler = Autogen[A]
+    * }
+    */
+  def delegate[T](getPickler: => Pickler[T]): Pickler[T] = new Pickler[T] {
+    private lazy val pickler = getPickler
+    override def ttag: TypeTag[T] = pickler.ttag
+    override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean): Unit =
+      pickler.pickle(t, writer, emitObjectStart)
+    override def unpickle(reader: PickleReader, expectObjectStart: Boolean): T =
+      pickler.unpickle(reader, expectObjectStart)
+  }
 }
 
 class UnpicklingException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
