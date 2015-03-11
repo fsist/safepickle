@@ -637,7 +637,7 @@ class Autogen(val c: Context) {
                   // String value indicates the type of a no-arg subtype, possibly using default arguments
                   reader.string match {
                     case ..$unpicklerMatchClauses
-                    case other => throw new UnpicklingException(s"Unexpected (primitive) type tag $$other as descendant of sealed trait " + $traitName)
+                    case other => throw new UnpicklingException("Error unpickling " + $traitName + s": unexpected (primitive) descendant type tag $$other")
                   }
 
                 case TokenType.ObjectStart =>
@@ -646,7 +646,7 @@ class Autogen(val c: Context) {
 
                   reader.assertTokenType(TokenType.AttributeName)
                   if (reader.attributeName != $tokenType) {
-                    throw new UnpicklingException(s"Expected an attribute name (" + $tokenType + s"), found $${reader.attributeName}")
+                    throw new UnpicklingException("Error unpickling " + $traitName + ": expected attribute name " + $tokenType + s", found $${reader.attributeName}")
                   }
 
                   reader.nextInObject()
@@ -656,10 +656,10 @@ class Autogen(val c: Context) {
 
                   typeName match {
                     case ..$unpicklerMatchClauses
-                    case other => throw new UnpicklingException(s"Unexpected (explicit) type tag $$other as descendant of sealed trait " + $traitName)
+                    case other => throw new UnpicklingException("Error unpickling " + $traitName + s": unexpected (explicit) descendant type tag $$other")
                   }
 
-                case other => throw new IllegalStateException("Unexpected next token type $$other")
+                case other => throw new IllegalStateException("Error unpickling " + $traitName + ": unexpected next token type $$other")
               }
             }
 
