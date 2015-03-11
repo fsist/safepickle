@@ -39,7 +39,22 @@ class TreePickleReader[Node](parser: TreeParser[Node], root: Node) extends Pickl
   }
 
   private def enterObject(node: Node): Unit = {
-    stack.push(new ObjectState(parser.obj(node)))
+    // An object, or associative array, usually doesn't guarantee it will preserve field order.
+    // However, for Autogen unpickling, we need to guarantee that the special fields $type, etc. will always come first.
+
+    var tpe : Option[(String, Node)] = None
+    val dollars = Vector.newBuilder[(String, Node)]
+    val others = Vector.newBuilder[(String, Node)]
+
+    for (tuple @ (key, value) <- parser.obj(node)) {
+      if (key == "$type") tpe = Some(tuple)
+      else if (key.startsWith("$")) dollars += tuple
+      else others += tuple
+    }
+
+    val ordered = tpe.toVector ++ dollars.result() ++ others.result()
+    
+    stack.push(new ObjectState(ordered.iterator))
   }
 
   /** Called whenever we encounter a new node, which should at this point be stored in the `node` field.
