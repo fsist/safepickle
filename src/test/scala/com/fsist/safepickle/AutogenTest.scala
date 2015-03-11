@@ -153,8 +153,13 @@ object AutogenTest {
   sealed trait T22
   object T22 {
     implicit def recursivePickler: Pickler[T22] = thePickler
-    val thePickler = Autogen.childrenDebug[T22, C23]
+    val thePickler = Autogen.children[T22, C23]
     case class C23(subs: Seq[T22]) extends T22
+  }
+
+  case class C24(foo: String = "foo", @WriteDefault bar: String = "bar")
+  object C24 {
+    implicit val pickler = Autogen[C24]
   }
 }
 
@@ -374,6 +379,15 @@ class AutogenTest extends FunSuite with WrapperTester {
         "sub" -> ObjectWrapper(Map(
           "subs" -> ArrayWrapper(Seq())
         ))
+      ))
+    )
+  }
+
+  test("@WriteDefault") {
+    roundtrip(
+      C24(),
+      ObjectWrapper(Map(
+        "bar" -> StringWrapper("bar")
       ))
     )
   }

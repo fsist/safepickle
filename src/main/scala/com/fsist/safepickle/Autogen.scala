@@ -331,7 +331,8 @@ class Autogen(val c: Context) {
                """
           }
 
-          val writeParam = if (defaultValue.isDefined) {
+          val writeDefault = param.annotations.exists(_.tree.tpe =:= typeOf[WriteDefault])
+          val writeParam = if (defaultValue.isDefined && ! writeDefault) {
             q"""{
                 val paramValue = tvalue.$name
                 if (paramValue != $defaultArgValueName) $doWriteParam

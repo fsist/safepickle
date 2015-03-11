@@ -6,3 +6,7 @@ import scala.annotation.StaticAnnotation
   * instead of the parameter's name.
   */
 case class Name(value: String) extends StaticAnnotation
+
+/** Place this annotation on a class parameter to make the Autogen pickler write it out even if its value equals
+  * the default value. */
+case class WriteDefault() extends StaticAnnotation
