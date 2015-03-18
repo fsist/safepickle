@@ -25,6 +25,16 @@ class Autogen(val c: Context) {
     doGenerate[T]
   }
 
+  def generateVersioned[T: c.WeakTypeTag, TOld <: OldVersion[_] : c.WeakTypeTag]: Expr[Pickler[T]] = {
+    implicit val debug = Debug(false)
+    doGenerateVersioned[T, TOld]
+  }
+
+  def generateVersionedDebug[T: c.WeakTypeTag, TOld <: OldVersion[_] : c.WeakTypeTag]: Expr[Pickler[T]] = {
+    implicit val debug = Debug(true)
+    doGenerateVersioned[T, TOld]
+  }
+
   def generateChildren[T: c.WeakTypeTag, Children: c.WeakTypeTag]: Expr[Pickler[T]] = {
     implicit val debug = Debug(false)
     doGenerateChildren[T, Children]
@@ -332,7 +342,7 @@ class Autogen(val c: Context) {
           }
 
           val writeDefault = param.annotations.exists(_.tree.tpe =:= typeOf[WriteDefault])
-          val writeParam = if (defaultValue.isDefined && ! writeDefault) {
+          val writeParam = if (defaultValue.isDefined && !writeDefault) {
             q"""{
                 val paramValue = tvalue.$name
                 if (paramValue != $defaultArgValueName) $doWriteParam
@@ -671,16 +681,107 @@ class Autogen(val c: Context) {
 
     c.Expr[Pickler[T]](ret)
   }
-}
 
-/** A pickler for a value T that pickles it to the fixed string `name`. */
-class SingletonPickler[T](name: String, value: T)(implicit val ttag: scala.reflect.runtime.universe.TypeTag[T]) extends Pickler[T] {
-  override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
-    writer.writeString(name)
-  }
-  override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T = {
-    val read = reader.string
-    if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
+  private def doGenerateVersioned[T: c.WeakTypeTag, TOld <: OldVersion[_] : c.WeakTypeTag](implicit debug: Debug): Expr[Pickler[T]] = {
+    val ttag = implicitly[WeakTypeTag[T]]
+    val ttype = ttag.tpe
+    val symbol = ttype.typeSymbol.asType
+    val clazzName = symbol.name.decodedName.toString
+    checkInitialSymbol(symbol)
+
+    val oldTag = implicitly[WeakTypeTag[TOld]]
+    val oldSymbol = ttype.typeSymbol.asType
+    checkInitialSymbol(oldSymbol)
+
+    if (ttype =:= oldTag.tpe) c.abort(c.enclosingPosition, "The T and TOld type parameters must be different")
+
+    def collectTypes(tpe: Type): List[Type] = {
+      if (tpe <:< typeOf[OldVersion[_]]) {
+        val next = tpe.baseType(typeOf[OldVersion[_]].typeSymbol).typeArgs.head
+        tpe :: collectTypes(next)
+      }
+      else List(tpe)
+    }
+
+    val versionTypes: Seq[Type] = collectTypes(oldTag.tpe)
+    if (!(versionTypes.last =:= ttype))
+      c.abort(c.enclosingPosition, s"The OldVersion-guided type chain starting at $ttag doesn't reach $oldTag: ${versionTypes.mkString(", ")}")
+
+    case class SubPickler(version: Int, pickler: Tree) {
+      def name = TermName(s"pickler$version")
+    }
+
+    val subpicklers = for ((tpe, version) <- versionTypes.zipWithIndex) yield {
+      val pickler = if (version == versionTypes.size - 1) q"Autogen[$tpe]" else picklerOf(tpe, Map.empty)
+      SubPickler(version + 1, pickler)
+    }
+
+    val currentVersion = subpicklers.size
+
+    val picklerDecls = for (subpickler <- subpicklers) yield {
+      q"val ${subpickler.name} = ${subpickler.pickler}"
+    }
+
+    val picklerCases = for (subpickler <- subpicklers) yield {
+      val converters = subpicklers.drop(subpickler.version - 1).dropRight(1)
+
+      val convert = converters.foldLeft(q"${subpickler.name}.unpickle(reader, false)") {
+        case (tree, converter) => q"$tree.toNewVersion"
+      }
+
+      cq"${subpickler.version} => $convert"
+    }
+
+    val newPicklerName = subpicklers.last.name
+
+    val tokenVersion = "$version"
+
+    val ret = q""" {
+          import scala.reflect.runtime.universe._
+          import com.fsist.safepickle._
+
+          new Pickler[$ttype] {
+            override val ttag: TypeTag[$ttype] = typeTag[$ttype]
+
+            ..$picklerDecls
+
+            override def pickle(tvalue: $ttype, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
+              if (emitObjectStart) writer.writeObjectStart()
+
+              writer.writeAttributeName("$$version")
+              writer.writeInt($currentVersion)
+
+              $newPicklerName.pickle(tvalue, writer, false)
+            }
+
+            override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): $ttype = {
+              if (expectObjectStart) {
+                reader.assertTokenType(TokenType.ObjectStart)
+                reader.nextInObject()
+              }
+
+              reader.assertTokenType(TokenType.AttributeName)
+              if (reader.attributeName != $tokenVersion) {
+                throw new UnpicklingException("Error unpickling " + $clazzName + ": expected attribute name " + $tokenVersion + s", found $${reader.attributeName}")
+              }
+              reader.nextInObject()
+
+              val version = reader.int
+              reader.nextInObject()
+
+              version match {
+                case ..$picklerCases
+                case other => throw new UnpicklingException("Error unpickling " + $clazzName + s": unsupported schema version $$version (highest supported version is " + $currentVersion)
+              }
+            }
+
+            override def toString(): String = "Autogenerated versioned pickler for " + $clazzName + " version " + $currentVersion
+          }
+         }"""
+
+    info(s"Generated for class: $ret")
+
+    c.Expr[Pickler[T]](ret)
   }
 }
 
@@ -692,6 +793,43 @@ object Autogen {
     * Useful for debugging if the macro-generated code does not compile.
     */
   def debug[T]: Pickler[T] = macro Autogen.generateDebug[T]
+
+  /** Generates a version compatibility bridge from the old version `TOld` to the current version `T` of the same type.
+    *
+    * Suppose you want to make a backward-incompatible change to the type Foo. You should keep an unmodified copy of
+    * the declaration of Foo; it doesn't have to include methods, just the fields necessary for pickling. Call this
+    * unmodified copy `OldFoo`.
+    *
+    * Both OldFoo and Foo should have picklers defined, whether using Autogen or manually. The pickler for OldFoo
+    * must be the same as that which existed for Foo before it was modified.
+    *
+    * Make OldFoo extend `OldVersion[Foo]`, and implement the `OldVersion.toNewVersion` method, which will convert an
+    * OldFoo to the updated Foo.
+    *
+    * Now change Foo's pickler definition to be `Autogen.versioned[Foo, Foo, OldFoo]`.
+    *
+    * The end result will be that the Pickler[Foo] generated by Autogen.versioned will be able to read pickled OldFoo
+    * values as well as pickled Foo values. Application code will always transparently receive Foo values. The pickler
+    * will only write Foo values, not OldFoo ones.
+    *
+    * If you have more than old version of the same type, they should implemented the OldVersion trait in sequence,
+    * like so:
+    *
+    * case class FooV1 extends OldVersion[FooV2]
+    * case class FooV2 extends OldVersion[FooV3]
+    * case class FooV3 extends OldVersion[Foo]
+    *
+    * Autogen.versioned[Foo, FooV1]
+    *
+    * The `TOld` type parameter passed to Autogen.versioned should be the oldest version available. The macro will
+    * follow the chain of OldVersion implementations until it reaches Foo.
+    */
+  def versioned[T, TOld <: OldVersion[_]]: Pickler[T] = macro Autogen.generateVersioned[T, TOld]
+
+  /** As [[versioned]], but prints the generated code as a compiler informational message.
+    * Useful for debugging if the macro-generated code does not compile.
+    */
+  def versionedDebug[T, TOld <: OldVersion[_]]: Pickler[T] = macro Autogen.generateVersionedDebug[T, TOld]
 
   /** A way to list two or more types, e.g. `String | Int | Foo`. */
   type |[A, B]
@@ -709,5 +847,24 @@ object Autogen {
   /** As [[children]], but prints the generated code as a compiler informational message.
     * Useful for debugging if the macro-generated code does not compile. */
   def childrenDebug[T, Children]: Pickler[T] = macro Autogen.generateChildrenDebug[T, Children]
+}
+
+/** A type which can be converted to the different type `TNew` which is a newer schema version of the same semantic entity.
+  *
+  * Should be extended by the `TOld` type passed to `Autogen.versioned`.
+  */
+trait OldVersion[TNew] {
+  def toNewVersion: TNew
+}
+
+/** A pickler for a value T that pickles it to the fixed string `name`. */
+class SingletonPickler[T](name: String, value: T)(implicit val ttag: scala.reflect.runtime.universe.TypeTag[T]) extends Pickler[T] {
+  override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean = true): Unit = {
+    writer.writeString(name)
+  }
+  override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T = {
+    val read = reader.string
+    if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
+  }
 }
 
