@@ -761,13 +761,19 @@ class Autogen(val c: Context) {
               }
 
               reader.assertTokenType(TokenType.AttributeName)
-              if (reader.attributeName != $tokenVersion) {
-                throw new UnpicklingException("Error unpickling " + $clazzName + ": expected attribute name " + $tokenVersion + s", found $${reader.attributeName}")
-              }
-              reader.nextInObject()
+              val version =
+                if (reader.attributeName != $tokenVersion) {
+                  // No version tag, assume this is the first version
+                  1
+                }
+                else {
+                  // Found version tag
+                  reader.nextInObject()
 
-              val version = reader.int
-              reader.nextInObject()
+                  val version = reader.int
+                  reader.nextInObject()
+                  version
+                }
 
               version match {
                 case ..$picklerCases

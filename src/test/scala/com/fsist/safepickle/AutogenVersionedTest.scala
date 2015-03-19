@@ -98,4 +98,14 @@ class AutogenVersionedTest extends FunSuite with WrapperTester {
       New(123)
     )
   }
+
+  test("Become versioned") {
+    import Scope1._
+    testReading[New](
+      ObjectWrapper(Map(
+        "s" -> StringWrapper("4")
+      )),
+      New(4)
+    )
+  }
 }
