@@ -30,6 +30,7 @@ A deliberately restricted pickling library for Scala. It has certain features, a
  2. Certain changes to the definitions of pickled types are guaranteed to be backward and forward compatible, so different versions of the program can communicate, and pickled data can be used for long term storage.
  3. Backward incompatible changes can be managed explicitly, with version numbers and conversion code, allowing new code to read data written by old code, and old code to fail on encountering data written by new code.
  4. Pickled classes correspond directly to the pickled form (at least for JSON and BSON), making it easy to write classes to represent data whose main schema definition is written in terms of the pickled format.
+ 5. Pluggable backends for JSON, BSON and other similar formats.
 
 The library is also small enough to understand and validate by hand, and to make sure its performance is driven by that of the backend used (e.g. Jackson for JSON).
 
