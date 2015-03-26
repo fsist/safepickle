@@ -315,12 +315,3 @@ object Foo {
 `Autogen.versioned` will notice that the type `FooV1` implements `OldVersion[FooV2]` and not `OldVersion[Foo]`. It will walk down the chain of `OldVersion` implementations, until it finds an `OldVersion[Foo]`. 
 
 The version numbers will be assigned automatically: the first type passed to `Autogen.versioned` is always at version 1, the next one at version 2, and so on. In this example, `Foo` will be assigned version 4.
-
-Extra TODOs (will be moved to tickets):
-- Create @Specialized versions of Pickler trait?
-- Make Autogen use the concrete PickleReader/Writer methods for primitive types to improve performance
-- Add tests in Autogen to make sure user attribute names can't clash with our $special attributes
-- When Autogen (recursively) generates a pickler for the same type multiple times in the same call to Autogen,
-  reuse the generated value
-- Find a way to get the declared default value without runtime reflection
-
