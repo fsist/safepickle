@@ -29,7 +29,7 @@ object AutogenVersionedTest {
 
     case class New(i: Int)
     object New {
-      implicit val pickler : Pickler[New] = Autogen.versionedDebug[New, V1]
+      implicit val pickler : Pickler[New] = Autogen.versioned[New, V1]
     }
   }
 }
