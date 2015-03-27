@@ -305,8 +305,8 @@ object Foo {
   implicit val pickler: Pickler[Foo] = Autogen.versioned[Foo, Foo.Old.FooV1]
   
   object Old {  
-    case class FooV1(s: String) extends OldVersion[FooV1] // Implementation and pickler omitted
-    case class FooV2(s: String, i: Int) extends OldVersion[FooV2] // Implementation and pickler omitted
+    case class FooV1(s: String) extends OldVersion[FooV2] // Implementation and pickler omitted
+    case class FooV2(s: String, i: Int) extends OldVersion[FooV3] // Implementation and pickler omitted
     case class FooV3(s: String, l: Long) extends OldVersion[Foo] // Implementation and pickler omitted
   }
 }
@@ -314,4 +314,4 @@ object Foo {
 
 `Autogen.versioned` will notice that the type `FooV1` implements `OldVersion[FooV2]` and not `OldVersion[Foo]`. It will walk down the chain of `OldVersion` implementations, until it finds an `OldVersion[Foo]`. 
 
-The version numbers will be assigned automatically: the first type passed to `Autogen.versioned` is always at version 1, the next one at version 2, and so on. In this example, `Foo` will be assigned version 4.
+The version numbers will be assigned automatically: the oldest type (that is, the second parameter of `Autogen.versioned`) is always at version 1, the next one at version 2, and so on. In this example, `Foo` will be assigned version 4.
