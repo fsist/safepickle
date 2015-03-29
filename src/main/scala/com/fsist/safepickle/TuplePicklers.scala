@@ -18,12 +18,18 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple1(t1)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema)
+      )
     }
 
 
@@ -42,13 +48,20 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple2(t1, t2)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema)
+      )
     }
 
 
@@ -68,14 +81,22 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple3(t1, t2, t3)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema)
+      )
     }
 
 
@@ -96,15 +117,24 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple4(t1, t2, t3, t4)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema)
+      )
     }
 
 
@@ -126,16 +156,26 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple5(t1, t2, t3, t4, t5)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema)
+      )
     }
 
 
@@ -158,17 +198,28 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple6(t1, t2, t3, t4, t5, t6)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema)
+      )
     }
 
 
@@ -192,18 +243,30 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple7(t1, t2, t3, t4, t5, t6, t7)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema)
+      )
     }
 
 
@@ -228,19 +291,32 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple8(t1, t2, t3, t4, t5, t6, t7, t8)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema)
+      )
     }
 
 
@@ -266,20 +342,34 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple9(t1, t2, t3, t4, t5, t6, t7, t8, t9)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema)
+      )
     }
 
 
@@ -306,21 +396,36 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema)
+      )
     }
 
 
@@ -348,22 +453,38 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple11(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema)
+      )
     }
 
 
@@ -392,23 +513,40 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple12(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema)
+      )
     }
 
 
@@ -438,24 +576,42 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple13(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema)
+      )
     }
 
 
@@ -486,25 +642,44 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple14(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema)
+      )
     }
 
 
@@ -536,26 +711,46 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple15(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema)
+      )
     }
 
 
@@ -588,27 +783,48 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple16(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema)
+      )
     }
 
 
@@ -642,28 +858,50 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
-        val t17 = reader.read[T17]()(tpickler17); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
+        val t17 = reader.read[T17]()(tpickler17);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple17(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema, tpickler17.schema)
+      )
     }
 
 
@@ -698,29 +936,52 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
-        val t17 = reader.read[T17]()(tpickler17); reader.nextInArray
-        val t18 = reader.read[T18]()(tpickler18); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
+        val t17 = reader.read[T17]()(tpickler17);
+        reader.nextInArray
+        val t18 = reader.read[T18]()(tpickler18);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple18(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema, tpickler17.schema, tpickler18.schema)
+      )
     }
 
 
@@ -756,30 +1017,54 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
-        val t17 = reader.read[T17]()(tpickler17); reader.nextInArray
-        val t18 = reader.read[T18]()(tpickler18); reader.nextInArray
-        val t19 = reader.read[T19]()(tpickler19); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
+        val t17 = reader.read[T17]()(tpickler17);
+        reader.nextInArray
+        val t18 = reader.read[T18]()(tpickler18);
+        reader.nextInArray
+        val t19 = reader.read[T19]()(tpickler19);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple19(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema, tpickler17.schema, tpickler18.schema, tpickler19.schema)
+      )
     }
 
 
@@ -816,31 +1101,56 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
-        val t17 = reader.read[T17]()(tpickler17); reader.nextInArray
-        val t18 = reader.read[T18]()(tpickler18); reader.nextInArray
-        val t19 = reader.read[T19]()(tpickler19); reader.nextInArray
-        val t20 = reader.read[T20]()(tpickler20); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
+        val t17 = reader.read[T17]()(tpickler17);
+        reader.nextInArray
+        val t18 = reader.read[T18]()(tpickler18);
+        reader.nextInArray
+        val t19 = reader.read[T19]()(tpickler19);
+        reader.nextInArray
+        val t20 = reader.read[T20]()(tpickler20);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple20(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema, tpickler17.schema, tpickler18.schema, tpickler19.schema, tpickler20.schema)
+      )
     }
 
 
@@ -878,32 +1188,58 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
-        val t17 = reader.read[T17]()(tpickler17); reader.nextInArray
-        val t18 = reader.read[T18]()(tpickler18); reader.nextInArray
-        val t19 = reader.read[T19]()(tpickler19); reader.nextInArray
-        val t20 = reader.read[T20]()(tpickler20); reader.nextInArray
-        val t21 = reader.read[T21]()(tpickler21); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
+        val t17 = reader.read[T17]()(tpickler17);
+        reader.nextInArray
+        val t18 = reader.read[T18]()(tpickler18);
+        reader.nextInArray
+        val t19 = reader.read[T19]()(tpickler19);
+        reader.nextInArray
+        val t20 = reader.read[T20]()(tpickler20);
+        reader.nextInArray
+        val t21 = reader.read[T21]()(tpickler21);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple21(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema, tpickler17.schema, tpickler18.schema, tpickler19.schema, tpickler20.schema, tpickler21.schema)
+      )
     }
 
 
@@ -942,32 +1278,60 @@ trait TuplePicklers {
         if (reader.tokenType != TokenType.ArrayStart) throw new UnexpectedEofException("array start")
         reader.nextInArray()
 
-        val t1 = reader.read[T1]()(tpickler1); reader.nextInArray
-        val t2 = reader.read[T2]()(tpickler2); reader.nextInArray
-        val t3 = reader.read[T3]()(tpickler3); reader.nextInArray
-        val t4 = reader.read[T4]()(tpickler4); reader.nextInArray
-        val t5 = reader.read[T5]()(tpickler5); reader.nextInArray
-        val t6 = reader.read[T6]()(tpickler6); reader.nextInArray
-        val t7 = reader.read[T7]()(tpickler7); reader.nextInArray
-        val t8 = reader.read[T8]()(tpickler8); reader.nextInArray
-        val t9 = reader.read[T9]()(tpickler9); reader.nextInArray
-        val t10 = reader.read[T10]()(tpickler10); reader.nextInArray
-        val t11 = reader.read[T11]()(tpickler11); reader.nextInArray
-        val t12 = reader.read[T12]()(tpickler12); reader.nextInArray
-        val t13 = reader.read[T13]()(tpickler13); reader.nextInArray
-        val t14 = reader.read[T14]()(tpickler14); reader.nextInArray
-        val t15 = reader.read[T15]()(tpickler15); reader.nextInArray
-        val t16 = reader.read[T16]()(tpickler16); reader.nextInArray
-        val t17 = reader.read[T17]()(tpickler17); reader.nextInArray
-        val t18 = reader.read[T18]()(tpickler18); reader.nextInArray
-        val t19 = reader.read[T19]()(tpickler19); reader.nextInArray
-        val t20 = reader.read[T20]()(tpickler20); reader.nextInArray
-        val t21 = reader.read[T21]()(tpickler21); reader.nextInArray
-        val t22 = reader.read[T22]()(tpickler22); reader.nextInArray
+        val t1 = reader.read[T1]()(tpickler1);
+        reader.nextInArray
+        val t2 = reader.read[T2]()(tpickler2);
+        reader.nextInArray
+        val t3 = reader.read[T3]()(tpickler3);
+        reader.nextInArray
+        val t4 = reader.read[T4]()(tpickler4);
+        reader.nextInArray
+        val t5 = reader.read[T5]()(tpickler5);
+        reader.nextInArray
+        val t6 = reader.read[T6]()(tpickler6);
+        reader.nextInArray
+        val t7 = reader.read[T7]()(tpickler7);
+        reader.nextInArray
+        val t8 = reader.read[T8]()(tpickler8);
+        reader.nextInArray
+        val t9 = reader.read[T9]()(tpickler9);
+        reader.nextInArray
+        val t10 = reader.read[T10]()(tpickler10);
+        reader.nextInArray
+        val t11 = reader.read[T11]()(tpickler11);
+        reader.nextInArray
+        val t12 = reader.read[T12]()(tpickler12);
+        reader.nextInArray
+        val t13 = reader.read[T13]()(tpickler13);
+        reader.nextInArray
+        val t14 = reader.read[T14]()(tpickler14);
+        reader.nextInArray
+        val t15 = reader.read[T15]()(tpickler15);
+        reader.nextInArray
+        val t16 = reader.read[T16]()(tpickler16);
+        reader.nextInArray
+        val t17 = reader.read[T17]()(tpickler17);
+        reader.nextInArray
+        val t18 = reader.read[T18]()(tpickler18);
+        reader.nextInArray
+        val t19 = reader.read[T19]()(tpickler19);
+        reader.nextInArray
+        val t20 = reader.read[T20]()(tpickler20);
+        reader.nextInArray
+        val t21 = reader.read[T21]()(tpickler21);
+        reader.nextInArray
+        val t22 = reader.read[T22]()(tpickler22);
+        reader.nextInArray
 
         if (reader.tokenType != TokenType.ArrayEnd) throw new UnexpectedEofException("array end")
 
         Tuple22(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22)
       }
+
+      override val schema: Schema = Schema.STuple(
+
+        List(tpickler1.schema, tpickler2.schema, tpickler3.schema, tpickler4.schema, tpickler5.schema, tpickler6.schema, tpickler7.schema, tpickler8.schema, tpickler9.schema, tpickler10.schema, tpickler11.schema, tpickler12.schema, tpickler13.schema, tpickler14.schema, tpickler15.schema, tpickler16.schema, tpickler17.schema, tpickler18.schema, tpickler19.schema, tpickler20.schema, tpickler21.schema, tpickler22.schema)
+      )
     }
+
 }
