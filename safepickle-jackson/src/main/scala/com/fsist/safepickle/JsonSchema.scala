@@ -396,7 +396,8 @@ object JsonSchema {
         JSString(desc.name, desc.description, enum = JSEnum(List(Pickleable(value))), readOnly = true)
 
       case SString(desc, minLength, maxLength, pattern) =>
-        JSString(desc.name, desc.description, minLength, maxLength, pattern)
+        val format = if (desc.name != "") Some(desc.name) else None
+        JSString(desc.name, desc.description, minLength, maxLength, pattern, format)
 
       case SArray(member, desc, minLength, maxLength) =>
         JSArray(desc.name, desc.description, Items.WithSchema(reference(member)), minLength, maxLength)

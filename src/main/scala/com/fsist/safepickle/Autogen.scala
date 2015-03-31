@@ -903,6 +903,6 @@ class SingletonPickler[T](name: String, value: T)(implicit val ttag: scala.refle
     val read = reader.string
     if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
   }
-  override val schema: Schema = Schema.SConst(name, Desc(name, typeHint = Some(name)))
+  override val schema: Schema = Schema.SConst(name, Desc(name, typeHint = Some(ttag.tpe.toString)))
 }
 

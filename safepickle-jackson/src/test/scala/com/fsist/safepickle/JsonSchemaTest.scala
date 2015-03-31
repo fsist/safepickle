@@ -65,9 +65,9 @@ class JsonSchemaTest extends FunSuite {
     assert(jss[C1] ==
       JsonSchema.JSRef(
         title = "C1",
-        ref = "#/definitions/C1",
+        ref = "#/definitions/com.fsist.safepickle.JsonSchemaTest.C1",
         definitions = Map(
-          "C1" -> JsonSchema.JSObject(
+          "com.fsist.safepickle.JsonSchemaTest.C1" -> JsonSchema.JSObject(
             title = "C1",
             properties = Map(
               "i" -> jss[Int],
@@ -84,15 +84,15 @@ class JsonSchemaTest extends FunSuite {
   test("Class with reference") {
     assert(jss[C2] == JSRef(
       title = "C2",
-      ref = "#/definitions/C2",
+      ref = "#/definitions/com.fsist.safepickle.JsonSchemaTest.C2",
       definitions = Map(
-        "C2" -> JsonSchema.JSObject(
+        "com.fsist.safepickle.JsonSchemaTest.C2" -> JsonSchema.JSObject(
           title = "C2",
           properties = Map(
-            "c1" -> JsonSchema.JSRef("#/definitions/C1", "C1")
+            "c1" -> JsonSchema.JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.C1", "C1")
           ),
           required = Set("c1")),
-        "C1" -> JsonSchema.JSObject(
+        "com.fsist.safepickle.JsonSchemaTest.C1" -> JsonSchema.JSObject(
           title = "C1",
           properties = Map(
             "i" -> jss[Int],
@@ -108,36 +108,36 @@ class JsonSchemaTest extends FunSuite {
   test("Trait with descendants") {
     assert(jss[T] == JsonSchema.JSRef(
       title = "T",
-      ref = "#/definitions/T",
+      ref = "#/definitions/com.fsist.safepickle.JsonSchemaTest.T",
       definitions = Map(
-        "O" -> JsonSchema.JSString(
+        "com.fsist.safepickle.JsonSchemaTest.T.O.type" -> JsonSchema.JSString(
           title = "O",
           enum = JSEnum(List(Pickleable("O"))),
           readOnly = true
         ),
-        "C1" -> JsonSchema.JSObject(
+        "com.fsist.safepickle.JsonSchemaTest.T.C1" -> JsonSchema.JSObject(
           title = "C1",
           properties = Map(
             "i" -> jss[String],
-            "o" -> JSRef("#/definitions/O", "O")
+            "o" -> JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.O.type", "O")
           ),
           required = Set("i")
         ),
-        "C2" -> JsonSchema.JSObject(
+        "com.fsist.safepickle.JsonSchemaTest.T.C2" -> JsonSchema.JSObject(
           title = "C2",
           properties = Map(
             "c1s" -> JsonSchema.JSArray(
               items = JsonSchema.Items.WithSchema(
-                JSRef("#/definitions/T", "T")
+                JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T", "T")
               )
             )
           ),
           required = Set("c1s")
         ),
-        "T" -> JsonSchema.JSOneOf(title = "T", options = Set(
-          JSRef("#/definitions/O", "O"),
-          JSRef("#/definitions/C1", "C1"),
-          JSRef("#/definitions/C2", "C2")
+        "com.fsist.safepickle.JsonSchemaTest.T" -> JsonSchema.JSOneOf(title = "T", options = Set(
+          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.O.type", "O"),
+          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C1", "C1"),
+          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C2", "C2")
         ))
       )
     ))
