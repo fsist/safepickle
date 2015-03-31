@@ -32,6 +32,7 @@ object JsonSchema {
                       pattern: Option[String] = None, format: Option[String] = None,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
+                      readOnly: Boolean = false,
                       @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     require(schemaType == "string", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -391,7 +392,7 @@ object JsonSchema {
         JSNull(desc.name, desc.description)
 
       case SConst(value, desc) =>
-        JSString(desc.name, desc.description, enum = JSEnum(List(Pickleable(value))))
+        JSString(desc.name, desc.description, enum = JSEnum(List(Pickleable(value))), readOnly = true)
 
       case SString(desc, minLength, maxLength, pattern) =>
         JSString(desc.name, desc.description, minLength, maxLength, pattern)
