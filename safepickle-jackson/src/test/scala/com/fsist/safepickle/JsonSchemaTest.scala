@@ -2,6 +2,7 @@ package com.fsist.safepickle
 
 import com.fsist.safepickle.Autogen.|
 import com.fsist.safepickle.JsonSchema._
+import com.fsist.safepickle.jackson.JacksonPicklerBackend
 import org.scalatest.FunSuite
 
 object JsonSchemaTest {
@@ -109,7 +110,11 @@ class JsonSchemaTest extends FunSuite {
       title = "T",
       ref = "#/definitions/T",
       definitions = Map(
-        "O" -> JsonSchema.JSString(title = "O", enum = JSEnum(List(Pickleable("O")))),
+        "O" -> JsonSchema.JSString(
+          title = "O",
+          enum = JSEnum(List(Pickleable("O"))),
+          readOnly = true
+        ),
         "C1" -> JsonSchema.JSObject(
           title = "C1",
           properties = Map(
