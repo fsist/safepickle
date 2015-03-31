@@ -327,9 +327,16 @@ object JsonSchema {
       case (schema, jsonSchema) if schema.desc.typeHint.isDefined =>
         val key = schema.desc.typeHint.get
         if (definitions.contains(key)) {
-          throw new IllegalArgumentException(s"Two different types have the typeHint $key: $jsonSchema and ${definitions(key)}")
+          if (definitions(key) == jsonSchema) {
+            // Let's hope this is OK....
+          }
+          else {
+            throw new IllegalArgumentException(s"Two different types have the typeHint $key: $jsonSchema and ${definitions(key)}")
+          }
         }
-        definitions = definitions.updated(schema.desc.typeHint.get, jsonSchema)
+        else {
+          definitions = definitions.updated(schema.desc.typeHint.get, jsonSchema)
+        }
       case _ =>
     }
 
