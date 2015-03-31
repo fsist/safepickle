@@ -465,7 +465,7 @@ class Autogen(val c: Context) {
               members = List(..$schemaMembers),
               desc = Schema.Desc(
                 name = $clazzName,
-                typeHint = Some($clazzName)
+                typeHint = Some(${clazz.toType.toString})
               )
             )
           }
@@ -698,7 +698,7 @@ class Autogen(val c: Context) {
               Set(..$schemas),
               Schema.Desc(
                 name = $traitName,
-                typeHint = Some($traitName)
+                typeHint = Some(${parentSym.toType.toString})
               )
             )
 
