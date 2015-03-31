@@ -465,7 +465,7 @@ class Autogen(val c: Context) {
               members = List(..$schemaMembers),
               desc = Schema.Desc(
                 name = $clazzName,
-                typeHint = Some(${clazz.toType.toString})
+                typeHint = Some(${ttype.toString})
               )
             )
           }
@@ -548,7 +548,6 @@ class Autogen(val c: Context) {
   private def generatePicklerWithChildren[T](parentSym: ClassSymbol, children: Option[List[ClassSymbol]] = None)
                                             (implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     val ttype = ttag.tpe
-
     val traitName = parentSym.name.decodedName.toString
 
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
@@ -698,7 +697,7 @@ class Autogen(val c: Context) {
               Set(..$schemas),
               Schema.Desc(
                 name = $traitName,
-                typeHint = Some(${parentSym.toType.toString})
+                typeHint = Some(${ttype.toString})
               )
             )
 
