@@ -277,7 +277,7 @@ object JsonSchema {
     override def keyword: String = "allOf"
   }
   object JSAllOf {
-    implicit val pickler = new Combinator.CombinatorPickler[JSAllOf] {
+    implicit val pickler: Pickler[JSAllOf] = new Combinator.CombinatorPickler[JSAllOf] {
       override def ttag: TypeTag[JSAllOf] = typeTag[JSAllOf]
     }
   }
@@ -289,7 +289,7 @@ object JsonSchema {
     override def keyword: String = "anyOf"
   }
   object JSAnyOf {
-    implicit val pickler = new Combinator.CombinatorPickler[JSAnyOf] {
+    implicit val pickler: Pickler[JSAnyOf] = new Combinator.CombinatorPickler[JSAnyOf] {
       override def ttag: TypeTag[JSAnyOf] = typeTag[JSAnyOf]
     }
   }
@@ -301,7 +301,7 @@ object JsonSchema {
     override def keyword: String = "oneOf"
   }
   object JSOneOf {
-    implicit val pickler = new Combinator.CombinatorPickler[JSOneOf] {
+    implicit val pickler: Pickler[JSOneOf] = new Combinator.CombinatorPickler[JSOneOf] {
       override def ttag: TypeTag[JSOneOf] = typeTag[JSOneOf]
     }
   }
