@@ -32,7 +32,7 @@ object JsonSchema {
                       pattern: Option[String] = None, format: Option[String] = None,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
-                      readOnly: Boolean = false,
+                      readOnly: Boolean = false, default: String = "",
                       @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     require(schemaType == "string", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -382,6 +382,9 @@ object JsonSchema {
     }
   }
 
+  private def dollarTypeMember(value: String): JsonSchema =
+    JSString("$type", default = value, readOnly = true)
+
   private def convert(schema: Schema): JsonSchema = {
     schema match {
       case SShort(desc, min, max) =>
@@ -400,7 +403,7 @@ object JsonSchema {
         JSNull(desc.name, desc.description)
 
       case SConst(value, desc) =>
-        JSString(desc.name, desc.description, enum = JSEnum(List(Pickleable(value))), readOnly = true)
+        JSString(desc.name, desc.description, default = value, readOnly = true)
 
       case SString(desc, minLength, maxLength, pattern) =>
         val format = if (desc.name != "") Some(desc.name) else None
