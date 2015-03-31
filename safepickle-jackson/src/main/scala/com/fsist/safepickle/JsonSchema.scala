@@ -263,6 +263,9 @@ object JsonSchema {
         if (t.common.isDefined) {
           writer.write(t.common.get, false)
         }
+        else {
+          writer.writeObjectEnd()
+        }
       }
 
       override def unpickle(reader: PickleReader, expectObjectStart: Boolean): T = ???
