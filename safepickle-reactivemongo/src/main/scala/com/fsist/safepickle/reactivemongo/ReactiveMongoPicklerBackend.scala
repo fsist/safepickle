@@ -27,7 +27,7 @@ object ReactiveMongoPicklers {
       writer.writeString(t.stringify)
     override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): BSONObjectID =
       BSONObjectID(reader.string)
-    override def schema: Schema = SString(Desc(typeHint = Some("ObjectId")))
+    override val schema: Schema = SString(Desc(typeHint = Some("ObjectId")))
   }
 }
 

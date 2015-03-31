@@ -1,5 +1,7 @@
 package com.fsist.safepickle
 
+import com.fsist.safepickle.Schema.Desc
+
 import scala.reflect.runtime.universe._
 import org.apache.commons.codec.binary.Base64
 
@@ -67,7 +69,7 @@ object Pickler extends PrimitivePicklersMixin with CollectionPicklersMixin {
       pickler.pickle(t, writer, emitObjectStart)
     override def unpickle(reader: PickleReader, expectObjectStart: Boolean): T =
       pickler.unpickle(reader, expectObjectStart)
-    override def schema: Schema = pickler.schema
+    override val schema: Schema = pickler.schema
   }
 }
 
@@ -96,7 +98,7 @@ trait PrimitivePicklersMixin {
 
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Short =
       reader.int.toShort
-    override def schema: Schema = Schema.short
+    override val schema: Schema = Schema.short
   }
 
   implicit object IntPickler extends Pickler[Int] {
@@ -107,7 +109,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Int =
       reader.int
 
-    override def schema: Schema = Schema.int
+    override val schema: Schema = Schema.int
   }
 
   implicit object LongPickler extends Pickler[Long] {
@@ -118,7 +120,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Long =
       reader.long
 
-    override def schema: Schema = Schema.long
+    override val schema: Schema = Schema.long
   }
 
   implicit object FloatPickler extends Pickler[Float] {
@@ -129,7 +131,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Float =
       reader.float
 
-    override def schema: Schema = Schema.float
+    override val schema: Schema = Schema.float
   }
 
   implicit object DoublePickler extends Pickler[Double] {
@@ -140,7 +142,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Double =
       reader.double
 
-    override def schema: Schema = Schema.double
+    override val schema: Schema = Schema.double
   }
 
   implicit object BooleanPickler extends Pickler[Boolean] {
@@ -151,7 +153,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Boolean =
       reader.boolean
 
-    override def schema: Schema = Schema.boolean
+    override val schema: Schema = Schema.boolean
   }
 
   implicit object StringPickler extends Pickler[String] {
@@ -162,7 +164,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): String =
       reader.string
 
-    override def schema: Schema = Schema.string
+    override val schema: Schema = Schema.string
   }
 
   implicit object NullPickler extends Pickler[Null] {
@@ -175,7 +177,7 @@ trait PrimitivePicklersMixin {
       null
     }
 
-    override def schema: Schema = Schema.nul
+    override val schema: Schema = Schema.nul
   }
 
   /** Byte array pickler that writes the base64 value of the array as a string. */
@@ -189,7 +191,7 @@ trait PrimitivePicklersMixin {
       Base64.decodeBase64(reader.string)
     }
 
-    override def schema: Schema = Schema.string
+    override val schema: Schema = Schema.string
   }
 }
 

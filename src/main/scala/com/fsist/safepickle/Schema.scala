@@ -1,14 +1,13 @@
 package com.fsist.safepickle
 
-import com.fsist.safepickle.Schema.{OneOf, Desc}
+import com.fsist.safepickle.Schema._
+import com.typesafe.scalalogging.LazyLogging
+import scala.collection.mutable
 
-sealed trait Schema {
+sealed trait Schema extends LazyLogging {
   def desc: Desc
 
-  def or(other: Schema): Schema = other match {
-    case OneOf(schemas, _) => OneOf(this :: schemas, desc)
-    case _ => OneOf(List(this, other), desc)
-  }
+  override def toString: String = s"${desc.name} (${getClass.getSimpleName}) #${System.identityHashCode(this)}"
 }
 
 object Schema {
@@ -57,10 +56,10 @@ object Schema {
 
   case class SDict(members: Schema, desc: Desc = Desc.none) extends Schema
 
-  case class OneOf(schemas: List[Schema], desc: Desc = Desc.none) extends Schema {
-    override def or(other: Schema): Schema = other match {
-      case OneOf(otherSchemas, _) => OneOf(schemas ++ otherSchemas, desc)
-      case _ => OneOf(schemas :+ other, desc)
-    }
+  case class SOneOf(schemas: Set[Schema], desc: Desc = Desc.none) extends Schema
+
+  case class Reference(target: () => Schema, name: String = "") extends Schema {
+    override def desc: Desc = Desc(s"Reference to $name")
+    override def toString: String = s"Reference to $name"
   }
 }

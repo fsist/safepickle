@@ -7,7 +7,7 @@ object TuplePicklersGen {
     val ts = (1 to size) map (i => s"T$i") mkString (", ")
     val picklerParams = (1 to size) map (i => s"tpickler$i: Pickler[T$i]") mkString (", ")
     val tuple = s"Tuple$size[$ts]"
-    val schemas = (1 to size) map (i => s"tpickler$i.schema") mkString (", ")
+    val schemas = (1 to size) map (i => s"Schema.Reference(() => tpickler$i.schema)") mkString (", ")
 
     s"""implicit def tuple$size[$ts](implicit $picklerParams, tag: TypeTag[$tuple]): Pickler[$tuple] =
     new Pickler[$tuple] {

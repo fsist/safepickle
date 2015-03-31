@@ -1,5 +1,6 @@
 package com.fsist.safepickle.joda
 
+import com.fsist.safepickle.Schema.Desc
 import com.fsist.safepickle._
 import org.joda.time._
 
@@ -8,11 +9,13 @@ object JodaTimePicklers {
   implicit object InstantPickler extends ConvertPickler[Instant, Long] {
     override def convertFrom(other: Long): Instant = new Instant(other)
     override def convertTo(t: Instant): Long = t.getMillis
+    override val schema: Schema = Schema.SLong(Desc(typeHint = Some("date-time")))
   }
 
   implicit object DateTimePickler extends ConvertPickler[DateTime, Long] {
     override def convertFrom(other: Long): DateTime = new DateTime(other)
     override def convertTo(t: DateTime): Long = t.getMillis
+    override val schema: Schema = Schema.SLong(Desc(typeHint = Some("date-time")))
   }
 
   implicit object DurationPickler extends ConvertPickler[Duration, Long] {

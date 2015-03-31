@@ -40,7 +40,7 @@ trait CollectionPicklersMixin extends TuplePicklers {
       builder.result()
     }
 
-    override def schema: Schema = Schema.SArray(tpickler.schema)
+    override val schema: Schema = Schema.SArray(Schema.Reference(() => tpickler.schema, tag.tpe.toString))
   }
 
   /** An array is not natively an Iterable, and isn't picked up by `iterablePickler` above */
@@ -70,7 +70,7 @@ trait CollectionPicklersMixin extends TuplePicklers {
       builder.result()
     }
 
-    override def schema: Schema = Schema.SArray(tpickler.schema)
+    override val schema: Schema = Schema.SArray(Schema.Reference(() => tpickler.schema, tag.tpe.toString))
   }
 
   implicit def stringMapPickler[T, Coll[String, T] <: collection.Map[String, T]](implicit tpickler: Pickler[T],
@@ -110,7 +110,7 @@ trait CollectionPicklersMixin extends TuplePicklers {
         builder.result()
       }
 
-      override def schema: Schema = Schema.SDict(tpickler.schema)
+      override val schema: Schema = Schema.SDict(Schema.Reference(() => tpickler.schema, tag.tpe.toString))
     }
 
   implicit def anyMapPickler[K, V, Coll[K, V] <: collection.Map[K, V]](implicit kpickler: Pickler[K],
@@ -144,7 +144,7 @@ trait CollectionPicklersMixin extends TuplePicklers {
         // Leave the array end token as the current token
         builder.result()
       }
-      override def schema: Schema = Schema.SDict(tpickler.schema)
+      override val schema: Schema = Schema.SDict(Schema.Reference(() => tpickler.schema, tag.tpe.toString))
     }
   }
 }

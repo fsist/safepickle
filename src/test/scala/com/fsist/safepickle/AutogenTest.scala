@@ -100,7 +100,7 @@ object AutogenTest {
         C10(reader.int)
       }
       override def toString(): String = "C10 custom pickler"
-      override def schema: Schema = Schema.int
+      override val schema: Schema = Schema.int
     }
   }
 
