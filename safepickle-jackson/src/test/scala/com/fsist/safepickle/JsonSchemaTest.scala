@@ -27,7 +27,7 @@ object JsonSchemaTest {
 
     case class C2(c1s: List[T]) extends T
     object C2 {
-      implicit val pickler = Autogen.debug[C2]
+      implicit val pickler = Autogen[C2]
     }
   }
 }
