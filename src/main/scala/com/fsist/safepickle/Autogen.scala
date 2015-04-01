@@ -583,7 +583,7 @@ class Autogen(val c: Context) {
 
       val picklerMatchClause = if (writtenAsDollarValue) {
         cq"""value: $tpe =>
-                 writer.writeObjectStart()
+                 if (emitObjectStart) writer.writeObjectStart()
                  writer.writeAttributeName("$$type")
                  writer.writeString(${name.toString})
                  writer.writeAttributeName($dollarValue)
@@ -592,7 +592,7 @@ class Autogen(val c: Context) {
       }
       else if (writtenAsObject) {
         cq"""value: $tpe =>
-                 writer.writeObjectStart()
+                 if (emitObjectStart) writer.writeObjectStart()
                  writer.writeAttributeName("$$type")
                  writer.writeString(${name.toString})
                  writer.write[$tpe](value, false)($paramPicklerName)
