@@ -33,8 +33,7 @@ object JsonSchema {
                       pattern: Option[String] = None, format: Option[String] = None,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
-                      readOnly: Boolean = false, default: String = "",
-                      hidden: Boolean = false,
+                      readOnly: Boolean = false, default: Option[String] = None, hidden: Boolean = false,
                       @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     require(schemaType == "string", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -46,6 +45,9 @@ object JsonSchema {
     def exclusiveMinimum: Boolean
     def maximum: Option[T]
     def exclusiveMaximum: Boolean
+    def readOnly: Boolean
+    def default: Option[T]
+    def hidden: Boolean
   }
 
   case class JSInteger(title: String = "", description: String = "",
@@ -54,6 +56,7 @@ object JsonSchema {
                        maximum: Option[Long] = None, exclusiveMaximum: Boolean = false,
                        definitions: Map[String, JsonSchema] = Map.empty,
                        enum: JSEnum = JSEnum.nil,
+                       readOnly: Boolean = false, default: Option[Long] = None, hidden: Boolean = false,
                        @WriteDefault @Name("type") schemaType: String = "integer") extends JSNumeric[Long] {
     require(schemaType == "integer", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -65,6 +68,7 @@ object JsonSchema {
                       maximum: Option[Double] = None, exclusiveMaximum: Boolean = false,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
+                      readOnly: Boolean = false, default: Option[Double] = None, hidden: Boolean = false,
                       @WriteDefault @Name("type") schemaType: String = "number") extends JSNumeric[Double] {
     require(schemaType == "number", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -73,6 +77,7 @@ object JsonSchema {
 
   case class JSBoolean(title: String = "", description: String = "",
                        definitions: Map[String, JsonSchema] = Map.empty,
+                       readOnly: Boolean = false, default: Option[Boolean] = None, hidden: Boolean = false,
                        @WriteDefault @Name("type") schemaType: String = "boolean") extends JsonSchema {
     require(schemaType == "boolean", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -384,32 +389,36 @@ object JsonSchema {
     }
   }
 
-  private def dollarTypeMember(value: String): JsonSchema =
-    JSString("$type", default = value, readOnly = true)
-
   private def convert(schema: Schema): JsonSchema = {
     schema match {
-      case SShort(desc, min, max) =>
-        JSInteger(desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong))
-      case SInt(desc, min, max) =>
-        JSInteger(desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong))
-      case SLong(desc, min, max) =>
-        JSInteger(desc.name, desc.description, minimum = min, maximum = max)
-      case SFloat(desc, min, max) =>
-        JSNumber(desc.name, desc.description, minimum = min.map(_.toDouble), maximum = max.map(_.toDouble))
-      case SDouble(desc, min, max) =>
-        JSNumber(desc.name, desc.description, minimum = min, maximum = max)
-      case SBoolean(desc) =>
-        JSBoolean(desc.name, desc.description)
+      case SShort(desc, min, max, readOnly, default, hidden) =>
+        JSInteger(
+          desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong),
+          readOnly = readOnly, default = default.map(_.toLong), hidden = hidden)
+      case SInt(desc, min, max, readOnly, default, hidden) =>
+        JSInteger(
+          desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong),
+          readOnly = readOnly, default = default.map(_.toLong), hidden = hidden)
+      case SLong(desc, min, max, readOnly, default, hidden) =>
+        JSInteger(
+          desc.name, desc.description, minimum = min, maximum = max,
+          readOnly = readOnly, default = default, hidden = hidden)
+      case SFloat(desc, min, max, readOnly, default, hidden) =>
+        JSNumber(desc.name, desc.description, minimum = min.map(_.toDouble), maximum = max.map(_.toDouble),
+          readOnly = readOnly, default = default.map(_.toFloat), hidden = hidden)
+      case SDouble(desc, min, max, readOnly, default, hidden) =>
+        JSNumber(desc.name, desc.description, minimum = min, maximum = max,
+          readOnly = readOnly, default = default, hidden = hidden)
+      case SBoolean(desc, readOnly, default, hidden) =>
+        JSBoolean(
+          desc.name, desc.description,
+          readOnly = readOnly, default = default, hidden = hidden)
       case SNull(desc) =>
         JSNull(desc.name, desc.description)
 
-      case SConst(value, desc) =>
-        JSString(desc.name, desc.description, default = value, readOnly = true)
-
-      case SString(desc, minLength, maxLength, pattern) =>
-        val format = if (desc.name != "") Some(desc.name) else None
-        JSString(desc.name, desc.description, minLength, maxLength, pattern, format)
+      case SString(desc, minLength, maxLength, pattern, readOnly, default, hidden) =>
+        JSString(desc.name, desc.description, minLength, maxLength, pattern,
+          readOnly = readOnly, default = default, hidden = hidden)
 
       case SArray(member, desc, minLength, maxLength) =>
         JSArray(desc.name, desc.description, Items.WithSchema(reference(member)), minLength, maxLength)
@@ -433,11 +442,11 @@ object JsonSchema {
 
       case SOneOf(options, desc) =>
         val jsSchemas = options.map { _ match {
-          case SchemaOption(schema, Some(typeName)) =>
+          case SchemaOption(schema, Some(typeHint)) =>
             JSAllOf(
               common = Some(JSObject(
                 properties = Map(
-                  "$type" -> JSString(readOnly = true, default = typeName, hidden = true)
+                  "$type" -> JSString(readOnly = true, default = Some(typeHint), hidden = true)
                 ),
                 required = Set("$type")
               )),
