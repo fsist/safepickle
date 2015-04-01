@@ -265,6 +265,16 @@ object JsonSchema {
       override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
         if (emitObjectStart) writer.writeObjectStart()
 
+        if (t.title != "") {
+          writer.writeAttributeName("title")
+          writer.writeString(t.title)
+        }
+
+        if (t.description != "") {
+          writer.writeAttributeName("description")
+          writer.writeString(t.description)
+        }
+
         writer.writeAttributeName(t.keyword)
         writer.writeArrayStart()
         for (schema <- t.options) writer.write(schema)
@@ -437,7 +447,7 @@ object JsonSchema {
           properties = (members map (member => member.name -> reference(member.schema, Some(member.name)))).toMap,
           additionalProperties = AdditionalProperties.disallowed,
           required = defaultProps,
-          defaultProperties = if (members.find(! _.required).isDefined) defaultProps else Set.empty
+          defaultProperties = defaultProps
         )
 
       case SDict(members, desc) =>
@@ -449,16 +459,25 @@ object JsonSchema {
       case SOneOf(options, desc) =>
         val jsSchemas = options.map { _ match {
           case SchemaOption(schema, Some(typeHint)) =>
-            val converted = convert(schema)
+            val title = schema match {
+              case Schema.Reference(target, "") => target().desc.name
+              case Schema.Reference(target, name) => name
+              case other => other.desc.name
+            }
+            val description = (schema match {
+              case Schema.Reference(target, _) => target().desc
+              case other => other.desc
+            }).description
+
             JSAllOf(
-              title = converted.title, description = converted.description,
+              title = title, description = description,
               common = Some(JSObject(
                 properties = Map(
                   "$type" -> JSString(readOnly = true, default = Some(typeHint), options = JSEditorOptions(hidden = true))
                 ),
                 required = Set("$type")
               )),
-              options = Set(converted)
+              options = Set(convert(schema))
             )
 
           case SchemaOption(schema, None) => convert(schema)
