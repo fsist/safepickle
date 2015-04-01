@@ -47,7 +47,7 @@ object Schema {
 
   case class SString(desc: Desc = Desc.none,
                      minLength: Option[Int] = None, maxLength: Option[Int] = None,
-                     pattern: Option[String] = None,
+                     pattern: Option[String] = None, enum: List[String] = Nil,
                      readOnly: Boolean = false, default: Option[String] = None, hidden: Boolean = false) extends Schema
   val string = SString()
 

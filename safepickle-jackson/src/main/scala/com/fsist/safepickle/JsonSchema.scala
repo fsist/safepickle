@@ -28,12 +28,14 @@ object JsonSchema {
   private val thePickler: Pickler[JsonSchema] = Autogen.children[JsonSchema,
     JSString | JSInteger | JSNumber | JSBoolean | JSNull | JSRef | JSObject | JSArray | JSAllOf | JSAnyOf | JSOneOf | JSNot]
 
+  case class JSEditorOptions(hidden: Boolean = false)
+
   case class JSString(title: String = "", description: String = "",
                       minLength: Option[Int] = None, maxLength: Option[Int] = None,
                       pattern: Option[String] = None, format: Option[String] = None,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
-                      readOnly: Boolean = false, default: Option[String] = None, hidden: Boolean = false,
+                      readOnly: Boolean = false, default: Option[String] = None, options: JSEditorOptions = JSEditorOptions(),
                       @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     require(schemaType == "string", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -47,7 +49,6 @@ object JsonSchema {
     def exclusiveMaximum: Boolean
     def readOnly: Boolean
     def default: Option[T]
-    def hidden: Boolean
   }
 
   case class JSInteger(title: String = "", description: String = "",
@@ -56,7 +57,7 @@ object JsonSchema {
                        maximum: Option[Long] = None, exclusiveMaximum: Boolean = false,
                        definitions: Map[String, JsonSchema] = Map.empty,
                        enum: JSEnum = JSEnum.nil,
-                       readOnly: Boolean = false, default: Option[Long] = None, hidden: Boolean = false,
+                       readOnly: Boolean = false, default: Option[Long] = None, options: JSEditorOptions = JSEditorOptions(),
                        @WriteDefault @Name("type") schemaType: String = "integer") extends JSNumeric[Long] {
     require(schemaType == "integer", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -68,7 +69,7 @@ object JsonSchema {
                       maximum: Option[Double] = None, exclusiveMaximum: Boolean = false,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
-                      readOnly: Boolean = false, default: Option[Double] = None, hidden: Boolean = false,
+                      readOnly: Boolean = false, default: Option[Double] = None, options: JSEditorOptions = JSEditorOptions(),
                       @WriteDefault @Name("type") schemaType: String = "number") extends JSNumeric[Double] {
     require(schemaType == "number", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -77,7 +78,7 @@ object JsonSchema {
 
   case class JSBoolean(title: String = "", description: String = "",
                        definitions: Map[String, JsonSchema] = Map.empty,
-                       readOnly: Boolean = false, default: Option[Boolean] = None, hidden: Boolean = false,
+                       readOnly: Boolean = false, default: Option[Boolean] = None, options: JSEditorOptions = JSEditorOptions(),
                        @WriteDefault @Name("type") schemaType: String = "boolean") extends JsonSchema {
     require(schemaType == "boolean", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -100,7 +101,7 @@ object JsonSchema {
                       properties: Map[PropertyName, JsonSchema] = Map.empty,
                       additionalProperties: AdditionalProperties = AdditionalProperties.disallowed,
                       required: Set[PropertyName] = Set.empty,
-                      defaultProperties: Set[PropertyName] = Set.empty,
+                      @WriteDefault defaultProperties: Set[PropertyName] = Set.empty,
                       dependencies: Map[PropertyName, Dependency] = Map.empty,
                       minProperties: Option[Int] = None, maxProperties: Option[Int] = None,
                       patternProperties: Map[String, JsonSchema] = Map.empty,
@@ -395,31 +396,33 @@ object JsonSchema {
       case SShort(desc, min, max, readOnly, default, hidden) =>
         JSInteger(
           desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong),
-          readOnly = readOnly, default = default.map(_.toLong), hidden = hidden)
+          readOnly = readOnly, default = default.map(_.toLong), options = JSEditorOptions(hidden))
       case SInt(desc, min, max, readOnly, default, hidden) =>
         JSInteger(
           desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong),
-          readOnly = readOnly, default = default.map(_.toLong), hidden = hidden)
+          readOnly = readOnly, default = default.map(_.toLong), options = JSEditorOptions(hidden))
       case SLong(desc, min, max, readOnly, default, hidden) =>
         JSInteger(
           desc.name, desc.description, minimum = min, maximum = max,
-          readOnly = readOnly, default = default, hidden = hidden)
+          readOnly = readOnly, default = default, options = JSEditorOptions(hidden))
       case SFloat(desc, min, max, readOnly, default, hidden) =>
         JSNumber(desc.name, desc.description, minimum = min.map(_.toDouble), maximum = max.map(_.toDouble),
-          readOnly = readOnly, default = default.map(_.toFloat), hidden = hidden)
+          readOnly = readOnly, default = default.map(_.toFloat), options = JSEditorOptions(hidden))
       case SDouble(desc, min, max, readOnly, default, hidden) =>
         JSNumber(desc.name, desc.description, minimum = min, maximum = max,
-          readOnly = readOnly, default = default, hidden = hidden)
+          readOnly = readOnly, default = default, options = JSEditorOptions(hidden))
       case SBoolean(desc, readOnly, default, hidden) =>
         JSBoolean(
           desc.name, desc.description,
-          readOnly = readOnly, default = default, hidden = hidden)
+          readOnly = readOnly, default = default, options = JSEditorOptions(hidden))
       case SNull(desc) =>
         JSNull(desc.name, desc.description)
 
-      case SString(desc, minLength, maxLength, pattern, readOnly, default, hidden) =>
+      case SString(desc, minLength, maxLength, pattern, enum, readOnly, default, hidden) =>
+        val jsEnum = JSEnum(enum.map(Pickleable(_)))
         JSString(desc.name, desc.description, minLength, maxLength, pattern,
-          readOnly = readOnly, default = default, hidden = hidden)
+          readOnly = readOnly, default = default, options = JSEditorOptions(hidden),
+          enum = jsEnum)
 
       case SArray(member, desc, minLength, maxLength) =>
         JSArray(desc.name, desc.description, Items.WithSchema(reference(member)), minLength, maxLength)
@@ -451,7 +454,7 @@ object JsonSchema {
               title = converted.title, description = converted.description,
               common = Some(JSObject(
                 properties = Map(
-                  "$type" -> JSString(readOnly = true, default = Some(typeHint), hidden = true)
+                  "$type" -> JSString(readOnly = true, default = Some(typeHint), options = JSEditorOptions(hidden = true))
                 ),
                 required = Set("$type")
               )),

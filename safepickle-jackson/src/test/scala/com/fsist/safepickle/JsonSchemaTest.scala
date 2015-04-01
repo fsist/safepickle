@@ -120,7 +120,7 @@ class JsonSchemaTest extends FunSuite {
       JSAllOf(
         common = Some(JSObject(
           properties = Map(
-            "$type" -> JSString(readOnly = true, default = Some(typeName), hidden = true)
+            "$type" -> JSString(readOnly = true, default = Some(typeName), options = JSEditorOptions(hidden = true))
           ),
           required = Set("$type")
         )),
@@ -134,6 +134,7 @@ class JsonSchemaTest extends FunSuite {
         "com.fsist.safepickle.JsonSchemaTest.T.O.type" -> JsonSchema.JSString(
           title = "O",
           default = Some("O"),
+          enum = JSEnum(List(Pickleable("O"))),
           readOnly = true
         ),
         "com.fsist.safepickle.JsonSchemaTest.T.C1" -> JsonSchema.JSObject(
@@ -154,10 +155,16 @@ class JsonSchemaTest extends FunSuite {
               )
             )
           ),
-          required = Set("c1s")
+          required = Set("c1s"),
+          defaultProperties = Set("c1s")
         ),
         "com.fsist.safepickle.JsonSchemaTest.T" -> JsonSchema.JSOneOf(title = "T", options = Set(
-          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.O.type"),
+          JsonSchema.JSString(
+            title = "O",
+            default = Some("O"),
+            enum = JSEnum(List(Pickleable("O"))),
+            readOnly = true
+          ),
           withTypeName("C1", JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C1")),
           withTypeName("C2", JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C2"))
         ))
@@ -172,7 +179,7 @@ class JsonSchemaTest extends FunSuite {
         "com.fsist.safepickle.JsonSchemaTest.C3" -> JSObject(
           "C3",
           properties = Map(
-            "$version" -> JSInteger(readOnly = true, hidden = true, default = Some(2)),
+            "$version" -> JSInteger(readOnly = true, options = JSEditorOptions(hidden = true), default = Some(2)),
             "s" -> JSString()
           ),
           required = Set("$version", "s")

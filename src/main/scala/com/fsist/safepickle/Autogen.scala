@@ -587,7 +587,7 @@ class Autogen(val c: Context) {
                  writer.writeAttributeName("$$type")
                  writer.writeString(${name.toString})
                  writer.writeAttributeName($dollarValue)
-                 writer.write[$tpe](value, false)($paramPicklerName)
+                 writer.write[$tpe](value, true)($paramPicklerName)
           """
       }
       else if (writtenAsObject) {
@@ -618,7 +618,7 @@ class Autogen(val c: Context) {
         cq"${name.toString} => reader.read[$tpe](false)($paramPicklerName)"
       }
 
-      val typeHint = if (writtenAsObject) Some(name.toString) else None
+      val typeHint = if (writtenAsObject || writtenAsDollarValue) Some(name.toString) else None
 
       Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause, typeHint)
     }
@@ -645,12 +645,11 @@ class Autogen(val c: Context) {
     val schemas = q"..${
       for (sub <- subtypes) yield {
         val typeName = sub.name.toString
-        val schemaRef = q"Schema.Reference(() => ${sub.picklerName}.schema, $typeName)"
         sub.typeHint match {
           case Some(hint) =>
-            q"Schema.SOneOf.SchemaOption($schemaRef, Some($hint))"
+            q"Schema.SOneOf.SchemaOption(Schema.Reference(() => ${sub.picklerName}.schema, $typeName), Some($hint))"
           case None =>
-            q"Schema.SOneOf.SchemaOption($schemaRef, None)"
+            q"Schema.SOneOf.SchemaOption(${sub.picklerName}.schema, None)"
         }
 
       }
@@ -921,6 +920,7 @@ class SingletonPickler[T](name: String, value: T)(implicit val ttag: scala.refle
     val read = reader.string
     if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
   }
-  override val schema: Schema = Schema.SString(desc = Desc(name, typeHint = Some(ttag.tpe.toString)), readOnly = true, default = Some(name))
+  override val schema: Schema = Schema.SString(desc = Desc(name, typeHint = Some(ttag.tpe.toString)), readOnly = true,
+    default = Some(name), enum = List(name))
 }
 
