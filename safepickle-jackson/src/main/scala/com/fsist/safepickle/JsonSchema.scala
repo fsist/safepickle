@@ -379,12 +379,12 @@ object JsonSchema {
     }
   }
 
-  private def reference(schema: Schema): JsonSchema = {
+  private def reference(schema: Schema, name: Option[String] = None): JsonSchema = {
     schema match {
-      case Reference(target, _) => reference(target())
+      case Reference(target, _) => reference(target(), name)
       case _ =>
         referenceKey(schema) match {
-          case Some(hint) => JSRef(s"#/definitions/$hint", title = schema.desc.name, description = schema.desc.description)
+          case Some(hint) => JSRef(s"#/definitions/$hint", title = name.getOrElse(schema.desc.name), description = schema.desc.description)
           case None => convert(schema)
         }
     }
@@ -425,13 +425,13 @@ object JsonSchema {
         JSArray(desc.name, desc.description, Items.WithSchema(reference(member)), minLength, maxLength)
 
       case STuple(members, desc) =>
-        JSArray(desc.name, desc.description, Items.WithSchemas(members map reference))
+        JSArray(desc.name, desc.description, Items.WithSchemas(members.map(reference(_))))
 
       case SObject(members, desc) =>
         val defaultProps = (members.filter(_.required).map(_.name)).toSet
         JSObject(
           desc.name, desc.description,
-          properties = (members map (member => member.name -> reference(member.schema))).toMap,
+          properties = (members map (member => member.name -> reference(member.schema, Some(member.name)))).toMap,
           additionalProperties = AdditionalProperties.disallowed,
           required = defaultProps,
           defaultProperties = if (members.find(! _.required).isDefined) defaultProps else Set.empty
@@ -446,14 +446,16 @@ object JsonSchema {
       case SOneOf(options, desc) =>
         val jsSchemas = options.map { _ match {
           case SchemaOption(schema, Some(typeHint)) =>
+            val converted = convert(schema)
             JSAllOf(
+              title = converted.title, description = converted.description,
               common = Some(JSObject(
                 properties = Map(
                   "$type" -> JSString(readOnly = true, default = Some(typeHint), hidden = true)
                 ),
                 required = Set("$type")
               )),
-              options = Set(convert(schema))
+              options = Set(converted)
             )
 
           case SchemaOption(schema, None) => convert(schema)
