@@ -106,13 +106,24 @@ class JsonSchemaTest extends FunSuite {
   }
 
   test("Trait with descendants") {
+    def withTypeName(typeName: String, ref: JSRef): JSAllOf =
+      JSAllOf(
+        common = Some(JSObject(
+          properties = Map(
+            "$type" -> JSString(readOnly = true, default = typeName, hidden = true)
+          ),
+          required = Set("$type")
+        )),
+        options = Set(ref)
+      )
+
     assert(jss[T] == JsonSchema.JSRef(
       title = "T",
       ref = "#/definitions/com.fsist.safepickle.JsonSchemaTest.T",
       definitions = Map(
         "com.fsist.safepickle.JsonSchemaTest.T.O.type" -> JsonSchema.JSString(
           title = "O",
-          enum = JSEnum(List(Pickleable("O"))),
+          default = "O",
           readOnly = true
         ),
         "com.fsist.safepickle.JsonSchemaTest.T.C1" -> JsonSchema.JSObject(
@@ -135,9 +146,9 @@ class JsonSchemaTest extends FunSuite {
           required = Set("c1s")
         ),
         "com.fsist.safepickle.JsonSchemaTest.T" -> JsonSchema.JSOneOf(title = "T", options = Set(
-          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.O.type", "O"),
-          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C1", "C1"),
-          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C2", "C2")
+          JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.O.type"),
+          withTypeName("C1", JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C1")),
+          withTypeName("C2", JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.C2"))
         ))
       )
     ))

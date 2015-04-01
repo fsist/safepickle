@@ -551,7 +551,7 @@ class Autogen(val c: Context) {
     val traitName = parentSym.name.decodedName.toString
 
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
-                       unpicklerMatchClause: Tree)
+                       unpicklerMatchClause: Tree, typeHint: Option[String])
 
     val subtypes = for (subtype <- children.getOrElse(collectDescendantClasses(parentSym))) yield {
       val subclass = subtype.asClass
@@ -616,7 +616,9 @@ class Autogen(val c: Context) {
         cq"${name.toString} => reader.read[$tpe](false)($paramPicklerName)"
       }
 
-      Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause)
+      val typeHint = if (writtenAsObject) Some(name.toString) else None
+
+      Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause, typeHint)
     }
 
     for (subtype <- subtypes;
@@ -640,7 +642,14 @@ class Autogen(val c: Context) {
 
     val schemas = q"..${for (sub <- subtypes) yield {
       val typeName = sub.name.toString
-      q"Schema.Reference(() => ${sub.picklerName}.schema, $typeName)"
+      val schemaRef = q"Schema.Reference(() => ${sub.picklerName}.schema, $typeName)"
+      sub.typeHint match {
+        case Some(hint) =>
+          q"Schema.SOneOf.SchemaOption($schemaRef, Some($hint))"
+        case None =>
+          q"Schema.SOneOf.SchemaOption($schemaRef, None)"
+      }
+
     }}"
 
     val tokenType = "$type"

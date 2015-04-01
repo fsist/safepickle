@@ -1,5 +1,6 @@
 package com.fsist.safepickle
 
+import com.fsist.safepickle.Schema.SOneOf.SchemaOption
 import com.fsist.safepickle.Schema._
 import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable
@@ -56,7 +57,11 @@ object Schema {
 
   case class SDict(members: Schema, desc: Desc = Desc.none) extends Schema
 
-  case class SOneOf(schemas: Set[Schema], desc: Desc = Desc.none) extends Schema
+  case class SOneOf(options: Set[SchemaOption], desc: Desc = Desc.none) extends Schema
+
+  object SOneOf {
+    case class SchemaOption(schema: Schema, typeField: Option[String])
+  }
 
   case class Reference(target: () => Schema, name: String = "") extends Schema {
     override def desc: Desc = Desc(s"Reference to $name")

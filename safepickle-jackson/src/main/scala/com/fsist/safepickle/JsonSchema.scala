@@ -2,6 +2,7 @@ package com.fsist.safepickle
 
 import com.fsist.safepickle.Autogen.|
 import com.fsist.safepickle.JsonSchema.JSEnum
+import com.fsist.safepickle.Schema.SOneOf.SchemaOption
 import com.fsist.safepickle.Schema._
 import com.typesafe.scalalogging.LazyLogging
 
@@ -33,6 +34,7 @@ object JsonSchema {
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
                       readOnly: Boolean = false, default: String = "",
+                      hidden: Boolean = false,
                       @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     require(schemaType == "string", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
@@ -362,8 +364,8 @@ object JsonSchema {
           case (set, member) => collectSchemas(member.schema, set)
         }
         case dict: SDict => collectSchemas(dict.members, set)
-        case oneOf: SOneOf => oneOf.schemas.foldLeft(set) {
-          case (set, schema) => collectSchemas(schema, set)
+        case oneOf: SOneOf => oneOf.options.foldLeft(set) {
+          case (set, option) => collectSchemas(option.schema, set)
         }
         case ref: Reference => collectSchemas(ref.target(), set)
         case _ => set
@@ -429,10 +431,31 @@ object JsonSchema {
           additionalProperties = AdditionalProperties.WithSchema(reference(members))
         )
 
-      case SOneOf(schemas, desc) =>
-        JSOneOf(desc.name, desc.description, options = schemas map reference)
+      case SOneOf(options, desc) =>
+        val jsSchemas = options.map { _ match {
+          case SchemaOption(schema, Some(typeName)) =>
+            JSAllOf(
+              common = Some(JSObject(
+                properties = Map(
+                  "$type" -> JSString(readOnly = true, default = typeName, hidden = true)
+                ),
+                required = Set("$type")
+              )),
+              options = Set(convert(schema))
+            )
 
-      case Reference(target, _) => convert(target())
+          case SchemaOption(schema, None) => convert(schema)
+        }}
+
+        JSOneOf(desc.name, desc.description, options = jsSchemas)
+
+      case Reference(target, name) =>
+        val resolved = target()
+        resolved.desc.typeHint match {
+          case Some(hint) => JSRef(s"#/definitions/$hint")
+          case None => convert(resolved)
+        }
+
     }
   }
 }
