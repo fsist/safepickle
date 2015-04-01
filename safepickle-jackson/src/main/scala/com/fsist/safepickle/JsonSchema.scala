@@ -457,31 +457,60 @@ object JsonSchema {
         )
 
       case SOneOf(options, desc) =>
-        val jsSchemas = options.map { _ match {
-          case SchemaOption(schema, Some(typeHint)) =>
-            val title = schema match {
-              case Schema.Reference(target, "") => target().desc.name
-              case Schema.Reference(target, name) => name
-              case other => other.desc.name
-            }
-            val description = (schema match {
-              case Schema.Reference(target, _) => target().desc
-              case other => other.desc
-            }).description
+        val jsSchemas = options.map {
+          _ match {
+            case SchemaOption(schema, Some(typeHint)) =>
+              val title = schema match {
+                case Schema.Reference(target, "") => target().desc.name
+                case Schema.Reference(target, name) => name
+                case other => other.desc.name
+              }
 
-            JSAllOf(
-              title = title, description = description,
-              common = Some(JSObject(
-                properties = Map(
-                  "$type" -> JSString(readOnly = true, default = Some(typeHint), options = JSEditorOptions(hidden = true))
-                ),
-                required = Set("$type")
-              )),
-              options = Set(convert(schema))
-            )
+              val typeProp = JSString(
+                readOnly = true, default = Some(typeHint), options = JSEditorOptions(hidden = true),
+                enum = JSEnum(List(Pickleable(typeHint)))
+              )
 
-          case SchemaOption(schema, None) => convert(schema)
-        }}
+              // Due to an apparent bug in the JsonEditor, if I use something like JSAllOf of a JSRef to the target type
+              // and a JSObject specifying the $type property, the editor doesn't generate the default value of the
+              // combined object correctly when a new object is added to a list.
+              //
+              // Instead, I inline a combined object. TODO: remove all unused top level type definitions from the final schema.
+
+              /*
+              val description = (schema match {
+                case Schema.Reference(target, _) => target().desc
+                case other => other.desc
+              }).description
+              JSAllOf(
+                title = title, description = description,
+                common = Some(JSObject(
+                  properties = Map(
+                    "$type" -> typeProp,
+                  required = Set("$type")
+                )),
+                options = Set(convert(schema))
+              )*/
+
+              val realSchema = schema match {
+                case Schema.Reference(target, _) => target()
+                case other => other
+              }
+              val converted = convert(realSchema)
+              converted match {
+                case obj: JSObject =>
+                  obj.copy(
+                    title = title,
+                    properties = obj.properties.updated("$type", typeProp),
+                    required = obj.required + "$type",
+                    defaultProperties = obj.defaultProperties + "$type"
+                  )
+                case other => other
+              }
+
+            case SchemaOption(schema, None) => convert(schema)
+          }
+        }
 
         JSOneOf(desc.name, desc.description, options = jsSchemas)
 
