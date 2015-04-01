@@ -82,7 +82,8 @@ class JsonSchemaTest extends FunSuite {
               "s" -> jss[String],
               "b" -> jss[Boolean]
             ),
-            required = Set("i", "s")
+            required = Set("i", "s"),
+            defaultProperties = Set("i", "s")
           )
         )
       )
@@ -107,7 +108,8 @@ class JsonSchemaTest extends FunSuite {
             "s" -> jss[String],
             "b" -> jss[Boolean]
           ),
-          required = Set("i", "s")
+          required = Set("i", "s"),
+          defaultProperties = Set("i", "s")
         )
       )
     ))
@@ -140,7 +142,8 @@ class JsonSchemaTest extends FunSuite {
             "i" -> jss[String],
             "o" -> JSRef("#/definitions/com.fsist.safepickle.JsonSchemaTest.T.O.type", "O")
           ),
-          required = Set("i")
+          required = Set("i"),
+          defaultProperties = Set("i")
         ),
         "com.fsist.safepickle.JsonSchemaTest.T.C2" -> JsonSchema.JSObject(
           title = "C2",

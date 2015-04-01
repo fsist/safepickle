@@ -100,6 +100,7 @@ object JsonSchema {
                       properties: Map[PropertyName, JsonSchema] = Map.empty,
                       additionalProperties: AdditionalProperties = AdditionalProperties.disallowed,
                       required: Set[PropertyName] = Set.empty,
+                      defaultProperties: Set[PropertyName] = Set.empty,
                       dependencies: Map[PropertyName, Dependency] = Map.empty,
                       minProperties: Option[Int] = None, maxProperties: Option[Int] = None,
                       patternProperties: Map[String, JsonSchema] = Map.empty,
@@ -427,11 +428,13 @@ object JsonSchema {
         JSArray(desc.name, desc.description, Items.WithSchemas(members map reference))
 
       case SObject(members, desc) =>
+        val defaultProps = (members.filter(_.required).map(_.name)).toSet
         JSObject(
           desc.name, desc.description,
-          (members map (member => member.name -> reference(member.schema))).toMap,
-          AdditionalProperties.disallowed,
-          (members.filter(_.required).map(_.name)).toSet
+          properties = (members map (member => member.name -> reference(member.schema))).toMap,
+          additionalProperties = AdditionalProperties.disallowed,
+          required = defaultProps,
+          defaultProperties = if (members.find(! _.required).isDefined) defaultProps else Set.empty
         )
 
       case SDict(members, desc) =>
