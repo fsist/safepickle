@@ -11,8 +11,11 @@ import scala.reflect.runtime.universe._
 sealed trait JsonSchema {
   def title: String
   def description: String
-  def definitions: Map[String, JsonSchema]
 
+  def propertyOrder: Option[Int]
+  def withPropertyOrder(order: Option[Int]): JsonSchema
+
+  def definitions: Map[String, JsonSchema]
   def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema
 }
 
@@ -36,9 +39,11 @@ object JsonSchema {
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
                       readOnly: Boolean = false, default: Option[String] = None, options: JSEditorOptions = JSEditorOptions(),
+                      propertyOrder: Option[Int] = None,
                       @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     require(schemaType == "string", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   sealed trait JSNumeric[T] extends JsonSchema {
@@ -58,9 +63,11 @@ object JsonSchema {
                        definitions: Map[String, JsonSchema] = Map.empty,
                        enum: JSEnum = JSEnum.nil,
                        readOnly: Boolean = false, default: Option[Long] = None, options: JSEditorOptions = JSEditorOptions(),
+                       propertyOrder: Option[Int] = None,
                        @WriteDefault @Name("type") schemaType: String = "integer") extends JSNumeric[Long] {
     require(schemaType == "integer", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   case class JSNumber(title: String = "", description: String = "",
@@ -70,31 +77,39 @@ object JsonSchema {
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
                       readOnly: Boolean = false, default: Option[Double] = None, options: JSEditorOptions = JSEditorOptions(),
+                      propertyOrder: Option[Int] = None,
                       @WriteDefault @Name("type") schemaType: String = "number") extends JSNumeric[Double] {
     require(schemaType == "number", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
 
   case class JSBoolean(title: String = "", description: String = "",
                        definitions: Map[String, JsonSchema] = Map.empty,
                        readOnly: Boolean = false, default: Option[Boolean] = None, options: JSEditorOptions = JSEditorOptions(),
+                       propertyOrder: Option[Int] = None,
                        @WriteDefault @Name("type") schemaType: String = "boolean") extends JsonSchema {
     require(schemaType == "boolean", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   case class JSNull(title: String = "", description: String = "",
                     definitions: Map[String, JsonSchema] = Map.empty,
+                    propertyOrder: Option[Int] = None,
                     @WriteDefault @Name("type") schemaType: String = "null") extends JsonSchema {
     require(schemaType == "null", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   case class JSRef(@Name("$ref") ref: String,
                    title: String = "", description: String = "",
+                   propertyOrder: Option[Int] = None,
                    definitions: Map[String, JsonSchema] = Map.empty) extends JsonSchema {
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   case class JSObject(title: String = "", description: String = "",
@@ -107,9 +122,11 @@ object JsonSchema {
                       patternProperties: Map[String, JsonSchema] = Map.empty,
                       definitions: Map[String, JsonSchema] = Map.empty,
                       enum: JSEnum = JSEnum.nil,
+                      propertyOrder: Option[Int] = None,
                       @WriteDefault @Name("type") schemaType: String = "object") extends JsonSchema {
     require(schemaType == "object", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   sealed trait AdditionalProperties
@@ -189,9 +206,11 @@ object JsonSchema {
                      uniqueItems: Boolean = false,
                      definitions: Map[String, JsonSchema] = Map.empty,
                      enum: JSEnum = JSEnum.nil,
+                     propertyOrder: Option[Int] = None,
                      @WriteDefault @Name("type") schemaType: String = "array") extends JsonSchema {
     require(schemaType == "array", "Do not change the schemaType")
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   case class Pickleable[T](t: T)(implicit val pickler: Pickler[T]) {
@@ -295,9 +314,11 @@ object JsonSchema {
 
   case class JSAllOf(title: String = "", description: String = "",
                      common: Option[JsonSchema] = None, options: Set[JsonSchema],
-                     definitions: Map[String, JsonSchema] = Map.empty) extends Combinator {
+                     definitions: Map[String, JsonSchema] = Map.empty,
+                     propertyOrder: Option[Int] = None) extends Combinator {
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def keyword: String = "allOf"
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
   object JSAllOf {
     implicit val pickler: Pickler[JSAllOf] = new Combinator.CombinatorPickler[JSAllOf] {
@@ -307,9 +328,11 @@ object JsonSchema {
 
   case class JSAnyOf(title: String = "", description: String = "",
                      common: Option[JsonSchema] = None, options: Set[JsonSchema],
-                     definitions: Map[String, JsonSchema] = Map.empty) extends Combinator {
+                     definitions: Map[String, JsonSchema] = Map.empty,
+                     propertyOrder: Option[Int] = None) extends Combinator {
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def keyword: String = "anyOf"
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
   object JSAnyOf {
     implicit val pickler: Pickler[JSAnyOf] = new Combinator.CombinatorPickler[JSAnyOf] {
@@ -319,9 +342,11 @@ object JsonSchema {
 
   case class JSOneOf(title: String = "", description: String = "",
                      common: Option[JsonSchema] = None, options: Set[JsonSchema],
-                     definitions: Map[String, JsonSchema] = Map.empty) extends Combinator {
+                     definitions: Map[String, JsonSchema] = Map.empty,
+                     propertyOrder: Option[Int] = None) extends Combinator {
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def keyword: String = "oneOf"
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
   object JSOneOf {
     implicit val pickler: Pickler[JSOneOf] = new Combinator.CombinatorPickler[JSOneOf] {
@@ -330,8 +355,10 @@ object JsonSchema {
   }
 
   case class JSNot(title: String = "", description: String = "", not: JsonSchema,
-                   definitions: Map[String, JsonSchema] = Map.empty) extends JsonSchema {
+                   definitions: Map[String, JsonSchema] = Map.empty,
+                   propertyOrder: Option[Int] = None) extends JsonSchema {
     override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
   }
 
   // =============================================
@@ -442,9 +469,14 @@ object JsonSchema {
 
       case SObject(members, desc) =>
         val defaultProps = (members.filter(_.required).map(_.name)).toSet
+        val properties =
+          for ((member, index) <- members.zipWithIndex) yield {
+            member.name -> reference(member.schema, Some(member.name)).withPropertyOrder(Some(index + 1))
+          }
+
         JSObject(
           desc.name, desc.description,
-          properties = (members map (member => member.name -> reference(member.schema, Some(member.name)))).toMap,
+          properties = properties.toMap,
           additionalProperties = AdditionalProperties.disallowed,
           required = defaultProps,
           defaultProperties = defaultProps
