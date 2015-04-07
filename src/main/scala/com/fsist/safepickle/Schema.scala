@@ -103,13 +103,19 @@ object Schema {
   }
 
   /** A reference is equivalent to the schema returned by `target`, but prevents loops in recursive or mutually recursive
-    * schema definitions. */
-  case class SRef(toTpe: () => Type, target: () => Schema) extends Schema {
-    override def tpe: Type = toTpe()
+    * schema definitions.
+    *
+    * `tpe` and `resolve` are lazy vals to prevent cases where `toTpe` or `target` return different values on subsequent
+    * calls; this interferes with e.g. code in JsonSchema that wants to compare Schemas for equality.
+    *
+    * The attributes are private to prevent them from being called directly, bypassing the lazy vals.
+    */
+  case class SRef(private val toTpe: () => Type, private val target: () => Schema) extends Schema {
+    override lazy val tpe: Type = toTpe()
     override def withTpe(tpe: Type): Schema = copy(toTpe = () => tpe)
 
-    def resolve(): Schema = target() match {
-      case ref: SRef => ref.resolve()
+    lazy val resolve: Schema = target() match {
+      case ref: SRef => ref.resolve
       case other => other
     }
   }

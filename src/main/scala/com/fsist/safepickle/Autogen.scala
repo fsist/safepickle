@@ -706,7 +706,7 @@ class Autogen(val c: Context) {
             }
 
             private def addMemberToSchema(schema: Schema, member: SObjectMember): Schema = schema match {
-              case ref: SRef => addMemberToSchema(ref.resolve(), member)
+              case ref: SRef => addMemberToSchema(ref.resolve, member)
               case obj: SObject => obj.copy(members = member :: obj.members)
               case oneOf: SOneOf => oneOf.copy(options = oneOf.options.map(addMemberToSchema(_, member)))
               case other => throw new IllegalArgumentException("Cannot add declaration of $$version member to target schema: $$other")
@@ -826,7 +826,7 @@ class Autogen(val c: Context) {
             override val schema: Schema = {
               val target = $newPicklerName.schema match {
                 case obj: SObject => obj
-                case ref: SRef => ref.resolve() match {
+                case ref: SRef => ref.resolve match {
                   case obj: SObject => obj
                   case other => throw new IllegalArgumentException("Expected schema of " + $clazzName + s" to be an SObject or an SRef to an SObject, but got: $$other")
                 }

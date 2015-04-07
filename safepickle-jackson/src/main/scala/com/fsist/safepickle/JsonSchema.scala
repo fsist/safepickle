@@ -3,6 +3,7 @@ package com.fsist.safepickle
 import com.fsist.safepickle.Autogen.|
 import com.fsist.safepickle.JsonSchema.JSEditorOptions
 import com.fsist.safepickle.Schema._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.reflect.runtime.universe._
 
@@ -24,6 +25,8 @@ sealed trait JsonSchema {
   def title: String
   def withTitle(title: String): JsonSchema
 
+  def schemaType: String
+
   def description: String
   def withDescription(description: String): JsonSchema
 
@@ -41,7 +44,7 @@ object JsonSchema {
   private implicit def somePickleablePickler: Pickler[Pickleable[_]] = Pickleable.pickler[Any].asInstanceOf[Pickler[Pickleable[_]]]
 
   implicit def pickler: Pickler[JsonSchema] = thePickler
-  private val thePickler: Pickler[JsonSchema] = Autogen.children[JsonSchema,
+  private lazy val thePickler: Pickler[JsonSchema] = Autogen.children[JsonSchema,
     JSString | JSInteger | JSNumber | JSBoolean | JSNull | JSRef | JSObject | JSArray | JSTuple]
 
   /** Non-standard options implemented by the jdorn/json-editor project.
@@ -66,7 +69,8 @@ object JsonSchema {
                       enum: List[String] = Nil,
                       readOnly: Boolean = false, default: Option[String] = None,
                       options: JSEditorOptions = JSEditorOptions(),
-                      propertyOrder: Option[Int] = None) extends JsonSchema {
+                      propertyOrder: Option[Int] = None,
+                      @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
     override def withTitle(title: String): JsonSchema = copy(title = title)
     override def withDescription(description: String): JsonSchema = copy(description = description)
@@ -131,6 +135,7 @@ object JsonSchema {
 
   case class JSBoolean(title: String = "", description: String = "",
                        format: Option[String] = None,
+                       enum: List[Boolean] = Nil, // Used for constants
                        readOnly: Boolean = false, default: Option[Boolean] = None,
                        options: JSEditorOptions = JSEditorOptions(),
                        propertyOrder: Option[Int] = None,
@@ -157,7 +162,8 @@ object JsonSchema {
                    @Name("$ref") ref: String, description: String = "",
                    definitions: Map[String, JsonSchema] = Map.empty,
                    options: JSEditorOptions = JSEditorOptions(),
-                   propertyOrder: Option[Int] = None) extends JsonSchema {
+                   propertyOrder: Option[Int] = None,
+                   @Name("type") schemaType: String = "object") extends JsonSchema {
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
     override def withTitle(title: String): JsonSchema = copy(title = title)
     override def withDescription(description: String): JsonSchema = copy(description = description)
@@ -219,7 +225,7 @@ object JsonSchema {
         }
       }
 
-      override def schema: Schema = SOneOf(ttag.tpe, List(SBoolean(typeOf[Any]), JsonSchema.pickler.schema))
+      override val schema: Schema = SOneOf(ttag.tpe, List(SBoolean(typeOf[Any]), JsonSchema.pickler.schema))
     }
   }
 
@@ -253,6 +259,13 @@ object JsonSchema {
 
   // =============================================
 
+  /** Wraps a Type and overrides equality to be based on =:= */
+  private[safepickle] implicit class EqType(val tpe: Type) {
+    override def equals(other: Any): Boolean = other.isInstanceOf[EqType] && tpe =:= other.asInstanceOf[EqType].tpe
+    override def hashCode: Int = tpe.toString.hashCode
+    override def toString: String = tpe.toString
+  }
+
   def apply(root: Schema): JsonSchema = {
     val schemas = collectSchemas(root)
     val canUseDefinitions = root.isInstanceOf[SObject] || root.isInstanceOf[SOneOf]
@@ -273,7 +286,7 @@ object JsonSchema {
 
       val referenceKeys: Map[Schema, String] =
         (for (schema <- schemas if useReference(schema)) yield {
-          val keyBase = schema.tpe.typeSymbol.fullName
+          val keyBase = schema.tpe.toString
           val key =
             if (!usedKeys.contains(keyBase)) keyBase
             else {
@@ -312,7 +325,7 @@ object JsonSchema {
       case obj: SObject => obj.members.exists(member => hasCycles(member.schema, seen + schema))
       case arr: SArray => hasCycles(arr.member, seen + schema)
       case tup: STuple => tup.members.exists(member => hasCycles(member, seen + schema))
-      case ref: SRef => hasCycles(ref.target(), seen + schema)
+      case ref: SRef => hasCycles(ref.resolve, seen + schema)
       case oneOf: SOneOf => oneOf.options.exists(option => hasCycles(option, seen + schema))
       case _ => false
     }
@@ -335,7 +348,7 @@ object JsonSchema {
         case oneOf: SOneOf => oneOf.options.foldLeft(set) {
           case (set, option) => collectSchemas(option, set)
         }
-        case ref: SRef => collectSchemas(ref.target(), set)
+        case ref: SRef => collectSchemas(ref.resolve, set)
         case _ => set
       }
     }
@@ -383,7 +396,7 @@ object JsonSchema {
       case SDoubleConst(tpe, constant) => JSNumber(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
 
       case SBoolean(tpe) => JSBoolean(title(schema), format = Some("checkbox"))
-      case SBooleanConst(tpe, constant) => JSBoolean(title(schema), readOnly = true, default = Some(constant))
+      case SBooleanConst(tpe, constant) => JSBoolean(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
 
       case SString(tpe) => JSString(title(schema))
       case SStringConst(tpe, constant) => JSString(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
@@ -488,9 +501,11 @@ object JsonSchema {
           )
         }
 
-      case SRef(tpe, target) =>
-        val resolved = target()
-        if (useReferences && useReference(resolved)) JSRef(title(resolved), ref = referencePaths(resolved))
+      case ref: SRef =>
+        val resolved = ref.resolve
+        if (useReferences && useReference(resolved)) JSRef(title(resolved), ref = referencePaths.get(resolved).getOrElse(
+          throw new IllegalStateException(s"Reference path for schema not found: $resolved")
+        ))
         else convertOrReference(resolved)
     }
   }
