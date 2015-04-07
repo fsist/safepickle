@@ -1,7 +1,5 @@
 package com.fsist.safepickle
 
-import com.fsist.safepickle.Schema.Desc
-
 import scala.reflect.runtime.universe._
 import org.apache.commons.codec.binary.Base64
 
@@ -98,7 +96,7 @@ trait PrimitivePicklersMixin {
 
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Short =
       reader.int.toShort
-    override val schema: Schema = Schema.short
+    override val schema: Schema = Schema.SShort(ttag.tpe)
   }
 
   implicit object IntPickler extends Pickler[Int] {
@@ -109,7 +107,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Int =
       reader.int
 
-    override val schema: Schema = Schema.int
+    override val schema: Schema = Schema.SInt(ttag.tpe)
   }
 
   implicit object LongPickler extends Pickler[Long] {
@@ -120,7 +118,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Long =
       reader.long
 
-    override val schema: Schema = Schema.long
+    override val schema: Schema = Schema.SLong(ttag.tpe)
   }
 
   implicit object FloatPickler extends Pickler[Float] {
@@ -131,7 +129,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Float =
       reader.float
 
-    override val schema: Schema = Schema.float
+    override val schema: Schema = Schema.SFloat(ttag.tpe)
   }
 
   implicit object DoublePickler extends Pickler[Double] {
@@ -142,7 +140,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Double =
       reader.double
 
-    override val schema: Schema = Schema.double
+    override val schema: Schema = Schema.SDouble(ttag.tpe)
   }
 
   implicit object BooleanPickler extends Pickler[Boolean] {
@@ -153,7 +151,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): Boolean =
       reader.boolean
 
-    override val schema: Schema = Schema.boolean
+    override val schema: Schema = Schema.SBoolean(ttag.tpe)
   }
 
   implicit object StringPickler extends Pickler[String] {
@@ -164,7 +162,7 @@ trait PrimitivePicklersMixin {
     final override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): String =
       reader.string
 
-    override val schema: Schema = Schema.string
+    override val schema: Schema = Schema.SString(ttag.tpe)
   }
 
   implicit object NullPickler extends Pickler[Null] {
@@ -177,7 +175,7 @@ trait PrimitivePicklersMixin {
       null
     }
 
-    override val schema: Schema = Schema.nul
+    override val schema: Schema = Schema.SNull(ttag.tpe)
   }
 
   /** Byte array pickler that writes the base64 value of the array as a string. */
@@ -191,7 +189,7 @@ trait PrimitivePicklersMixin {
       Base64.decodeBase64(reader.string)
     }
 
-    override val schema: Schema = Schema.string
+    override val schema: Schema = Schema.SString(ttag.tpe)
   }
 }
 
@@ -209,7 +207,7 @@ abstract class ConvertPickler[T, Other](implicit val otherPickler: Pickler[Other
   def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): T =
     convertFrom(otherPickler.unpickle(reader, expectObjectStart))
 
-  override def schema: Schema = otherPickler.schema
+  override val schema: Schema = otherPickler.schema.withTpe(ttag.tpe)
 }
 
 /** A refining of [[ConvertPickler]] for converting types to Strings using their `toString` method. */

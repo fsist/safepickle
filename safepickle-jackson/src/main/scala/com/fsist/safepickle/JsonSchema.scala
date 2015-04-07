@@ -1,52 +1,80 @@
 package com.fsist.safepickle
 
 import com.fsist.safepickle.Autogen.|
-import com.fsist.safepickle.JsonSchema.JSEnum
-import com.fsist.safepickle.Schema.SOneOf.SchemaOption
+import com.fsist.safepickle.JsonSchema.JSEditorOptions
 import com.fsist.safepickle.Schema._
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.reflect.runtime.universe._
 
+case class Pickleable[T](t: T)(implicit val pickler: Pickler[T]) {
+  def write(writer: PickleWriter[_]): Unit = writer.write(t)(pickler)
+}
+object Pickleable {
+  implicit def pickler[T](implicit tag: TypeTag[Pickleable[T]]): Pickler[Pickleable[T]] = new Pickler[Pickleable[T]] {
+    override val ttag: TypeTag[Pickleable[T]] = tag
+    override def pickle(t: Pickleable[T], writer: PickleWriter[_], emitObjectStart: Boolean): Unit =
+      writer.write(t.t, emitObjectStart)(t.pickler)
+    override def unpickle(reader: PickleReader, expectObjectStart: Boolean): Pickleable[T] =
+      throw new NotImplementedError(s"This type cannot support unpickling")
+    override val schema: Schema = throw new NotImplementedError(s"This type cannot support unpickling")
+  }
+}
+
 sealed trait JsonSchema {
   def title: String
+  def withTitle(title: String): JsonSchema
+
   def description: String
+  def withDescription(description: String): JsonSchema
 
   def propertyOrder: Option[Int]
   def withPropertyOrder(order: Option[Int]): JsonSchema
 
-  def definitions: Map[String, JsonSchema]
-  def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema
+  def options: JSEditorOptions
+  def mapOptions(func: JSEditorOptions => JSEditorOptions): JsonSchema
 }
 
 object JsonSchema {
   type PropertyName = String
 
   private implicit def additionalPropertiesPickler = AdditionalProperties.pickler
-  private implicit def dependencyPickler = Dependency.pickler
-  private implicit def itemsPicklers = Items.pickler
-  private implicit def enumPickler = JSEnum.pickler
+  private implicit def somePickleablePickler: Pickler[Pickleable[_]] = Pickleable.pickler[Any].asInstanceOf[Pickler[Pickleable[_]]]
 
   implicit def pickler: Pickler[JsonSchema] = thePickler
   private val thePickler: Pickler[JsonSchema] = Autogen.children[JsonSchema,
-    JSString | JSInteger | JSNumber | JSBoolean | JSNull | JSRef | JSObject | JSArray | JSAllOf | JSAnyOf | JSOneOf | JSNot]
+    JSString | JSInteger | JSNumber | JSBoolean | JSNull | JSRef | JSObject | JSArray | JSTuple]
 
-  case class JSEditorOptions(hidden: Boolean = false)
+  /** Non-standard options implemented by the jdorn/json-editor project.
+    * See: https://github.com/jdorn/json-editor
+    */
+  case class JSEditorOptions(@Name("disable_collapse") disableCollapse: Boolean = false,
+                             collapsed: Boolean = false,
+                             @Name("disable_array_add") disableArrayAdd: Boolean = false,
+                             @Name("disable_array_delete") disableArrayDelete: Boolean = false,
+                             @Name("disable_array_reorder") disableArrayReorder: Boolean = false,
+                             @Name("enum_titles") enumTitles: List[String] = Nil,
+                             @Name("expand_height") expandHeight: Boolean = false,
+                             @Name("grid_columns") gridColumns: Option[Int] = None,
+                             hidden: Boolean = false,
+                             @Name("input_height") inputHeight: Option[String] = None,
+                             @Name("input_width") inputWidth: Option[String] = None,
+                             @Name("remove_empty_properties") removeEmptyProperties: Boolean = false)
 
   case class JSString(title: String = "", description: String = "",
                       minLength: Option[Int] = None, maxLength: Option[Int] = None,
                       pattern: Option[String] = None, format: Option[String] = None,
-                      definitions: Map[String, JsonSchema] = Map.empty,
-                      enum: JSEnum = JSEnum.nil,
-                      readOnly: Boolean = false, default: Option[String] = None, options: JSEditorOptions = JSEditorOptions(),
-                      propertyOrder: Option[Int] = None,
-                      @WriteDefault @Name("type") schemaType: String = "string") extends JsonSchema {
-    require(schemaType == "string", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+                      enum: List[String] = Nil,
+                      readOnly: Boolean = false, default: Option[String] = None,
+                      options: JSEditorOptions = JSEditorOptions(),
+                      propertyOrder: Option[Int] = None) extends JsonSchema {
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
   sealed trait JSNumeric[T] extends JsonSchema {
+    def format: Option[String]
     def multipleOf: Option[T]
     def minimum: Option[T]
     def exclusiveMinimum: Boolean
@@ -57,76 +85,105 @@ object JsonSchema {
   }
 
   case class JSInteger(title: String = "", description: String = "",
+                       format: Option[String] = None,
                        multipleOf: Option[Long] = None,
                        minimum: Option[Long] = None, exclusiveMinimum: Boolean = false,
                        maximum: Option[Long] = None, exclusiveMaximum: Boolean = false,
-                       definitions: Map[String, JsonSchema] = Map.empty,
-                       enum: JSEnum = JSEnum.nil,
-                       readOnly: Boolean = false, default: Option[Long] = None, options: JSEditorOptions = JSEditorOptions(),
+                       enum: List[Long] = Nil,
+                       readOnly: Boolean = false, default: Option[Long] = None,
+                       options: JSEditorOptions = JSEditorOptions(),
                        propertyOrder: Option[Int] = None,
                        @WriteDefault @Name("type") schemaType: String = "integer") extends JSNumeric[Long] {
     require(schemaType == "integer", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
+  }
+
+  object JSInteger {
+    def short(title: String = "") = JSInteger(title, minimum = Some(Short.MinValue), maximum = Some(Short.MaxValue))
+    def int(title: String = "") = JSInteger(title, minimum = Some(Int.MinValue), maximum = Some(Int.MaxValue))
+    def long(title: String = "") = JSInteger(title, minimum = Some(Long.MinValue), maximum = Some(Long.MaxValue))
   }
 
   case class JSNumber(title: String = "", description: String = "",
+                      format: Option[String] = None,
                       multipleOf: Option[Double] = None,
                       minimum: Option[Double] = None, exclusiveMinimum: Boolean = false,
                       maximum: Option[Double] = None, exclusiveMaximum: Boolean = false,
-                      definitions: Map[String, JsonSchema] = Map.empty,
-                      enum: JSEnum = JSEnum.nil,
-                      readOnly: Boolean = false, default: Option[Double] = None, options: JSEditorOptions = JSEditorOptions(),
+                      enum: List[Double] = Nil,
+                      readOnly: Boolean = false, default: Option[Double] = None,
+                      options: JSEditorOptions = JSEditorOptions(),
                       propertyOrder: Option[Int] = None,
                       @WriteDefault @Name("type") schemaType: String = "number") extends JSNumeric[Double] {
     require(schemaType == "number", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
+  object JSNumber {
+    def float(title: String = "") = JSNumber(title, minimum = Some(Float.MinValue), maximum = Some(Float.MaxValue))
+    def double(title: String = "") = JSNumber(title, minimum = Some(Double.MinValue), maximum = Some(Double.MaxValue))
+  }
 
   case class JSBoolean(title: String = "", description: String = "",
-                       definitions: Map[String, JsonSchema] = Map.empty,
-                       readOnly: Boolean = false, default: Option[Boolean] = None, options: JSEditorOptions = JSEditorOptions(),
+                       format: Option[String] = None,
+                       readOnly: Boolean = false, default: Option[Boolean] = None,
+                       options: JSEditorOptions = JSEditorOptions(),
                        propertyOrder: Option[Int] = None,
                        @WriteDefault @Name("type") schemaType: String = "boolean") extends JsonSchema {
     require(schemaType == "boolean", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
   case class JSNull(title: String = "", description: String = "",
-                    definitions: Map[String, JsonSchema] = Map.empty,
                     propertyOrder: Option[Int] = None,
+                    options: JSEditorOptions = JSEditorOptions(),
                     @WriteDefault @Name("type") schemaType: String = "null") extends JsonSchema {
     require(schemaType == "null", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
-  case class JSRef(@Name("$ref") ref: String,
-                   title: String = "", description: String = "",
-                   propertyOrder: Option[Int] = None,
-                   definitions: Map[String, JsonSchema] = Map.empty) extends JsonSchema {
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+  case class JSRef(title: String = "",
+                   @Name("$ref") ref: String, description: String = "",
+                   definitions: Map[String, JsonSchema] = Map.empty,
+                   options: JSEditorOptions = JSEditorOptions(),
+                   propertyOrder: Option[Int] = None) extends JsonSchema {
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
   case class JSObject(title: String = "", description: String = "",
+                      definitions: Map[String, JsonSchema] = Map.empty,
                       properties: Map[PropertyName, JsonSchema] = Map.empty,
                       additionalProperties: AdditionalProperties = AdditionalProperties.disallowed,
-                      required: Set[PropertyName] = Set.empty,
-                      @WriteDefault defaultProperties: Set[PropertyName] = Set.empty,
-                      dependencies: Map[PropertyName, Dependency] = Map.empty,
+                      required: List[PropertyName] = Nil,
+                      @WriteDefault defaultProperties: List[PropertyName] = Nil,
                       minProperties: Option[Int] = None, maxProperties: Option[Int] = None,
                       patternProperties: Map[String, JsonSchema] = Map.empty,
-                      definitions: Map[String, JsonSchema] = Map.empty,
-                      enum: JSEnum = JSEnum.nil,
+                      enum: List[Pickleable[_]] = Nil,
                       propertyOrder: Option[Int] = None,
+                      allOf: List[JsonSchema] = Nil, anyOf: List[JsonSchema] = Nil, oneOf: List[JsonSchema] = Nil,
+                      not: Option[JsonSchema] = None,
+                      options: JSEditorOptions = JSEditorOptions(),
                       @WriteDefault @Name("type") schemaType: String = "object") extends JsonSchema {
     require(schemaType == "object", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
+
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
   sealed trait AdditionalProperties
@@ -162,239 +219,106 @@ object JsonSchema {
         }
       }
 
-      override def schema: Schema = ???
-    }
-  }
-
-  sealed trait Dependency
-
-  object Dependency {
-
-    case class Properties(properties: Set[PropertyName]) extends Dependency
-
-    case class WithSchema(schema: JsonSchema) extends Dependency
-
-    // Custom pickling: must write the `properties` or `schema` directly
-    implicit val pickler = new Pickler[Dependency] {
-      override val ttag: TypeTag[Dependency] = typeTag[Dependency]
-
-      override def pickle(dep: Dependency, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
-        dep match {
-          case Properties(properties) => writer.write(properties)
-          case WithSchema(schema) => writer.write(schema)
-        }
-      }
-
-      override def unpickle(reader: PickleReader, expectObjectStart: Boolean): Dependency = {
-        reader.tokenType match {
-          case TokenType.ArrayStart =>
-            val properties = reader.read[Set[PropertyName]](expectObjectStart)
-            Properties(properties)
-          case _ =>
-            val schema = reader.read[JsonSchema](expectObjectStart)
-            WithSchema(schema)
-        }
-      }
-
-      override def schema: Schema = ???
+      override def schema: Schema = SOneOf(ttag.tpe, List(SBoolean(typeOf[Any]), JsonSchema.pickler.schema))
     }
   }
 
   case class JSArray(title: String = "", description: String = "",
-                     items: Items,
+                     items: Option[JsonSchema] = None,
                      minItems: Option[Int] = None, maxItems: Option[Int] = None,
                      uniqueItems: Boolean = false,
-                     definitions: Map[String, JsonSchema] = Map.empty,
-                     enum: JSEnum = JSEnum.nil,
                      propertyOrder: Option[Int] = None,
+                     options: JSEditorOptions = JSEditorOptions(),
                      @WriteDefault @Name("type") schemaType: String = "array") extends JsonSchema {
     require(schemaType == "array", "Do not change the schemaType")
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
-  case class Pickleable[T](t: T)(implicit val pickler: Pickler[T]) {
-    def write(writer: PickleWriter[_]): Unit = writer.write(t)(pickler)
-  }
-
-  case class JSEnum(values: List[Pickleable[_]])
-  object JSEnum {
-    val nil = JSEnum(Nil)
-
-    implicit val pickler = new Pickler[JSEnum] {
-      override val ttag: TypeTag[JSEnum] = typeTag[JSEnum]
-
-      override def pickle(enum: JSEnum, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
-        writer.writeArrayStart()
-        for (value <- enum.values) {
-          value.write(writer)
-        }
-        writer.writeArrayEnd()
-      }
-
-      override def unpickle(reader: PickleReader, expectObjectStart: Boolean): JSEnum = ???
-
-      override def schema: Schema = ???
-    }
-  }
-
-  sealed trait Items
-
-  object Items {
-    case class WithSchema(schema: JsonSchema) extends Items
-    case class WithSchemas(schemas: List[JsonSchema]) extends Items
-
-    // Custom pickling: must write the `schema` or `schemas` directly
-    implicit val pickler = new Pickler[Items] {
-      override val ttag: TypeTag[Items] = typeTag[Items]
-
-      override def pickle(it: Items, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
-        it match {
-          case WithSchema(schema) => writer.write(schema)
-          case WithSchemas(schemas) => writer.write(schemas)
-        }
-      }
-
-      override def unpickle(reader: PickleReader, expectObjectStart: Boolean): Items = {
-        reader.tokenType match {
-          case TokenType.ArrayStart =>
-            val schemas = reader.read[List[JsonSchema]](expectObjectStart)
-            WithSchemas(schemas)
-          case _ =>
-            val schema = reader.read[JsonSchema](expectObjectStart)
-            WithSchema(schema)
-        }
-      }
-
-      override def schema: Schema = ???
-    }
-  }
-
-  sealed trait Combinator extends JsonSchema {
-    def title: String
-    def description: String
-    def common: Option[JsonSchema]
-    def options: Set[JsonSchema]
-    def keyword: String
-  }
-
-  object Combinator {
-    /** A pickler that writes the common part inline, then writes the `keyword` mapped to an array of `options` */
-    sealed trait CombinatorPickler[T <: Combinator] extends Pickler[T] {
-      override def pickle(t: T, writer: PickleWriter[_], emitObjectStart: Boolean): Unit = {
-        if (emitObjectStart) writer.writeObjectStart()
-
-        if (t.title != "") {
-          writer.writeAttributeName("title")
-          writer.writeString(t.title)
-        }
-
-        if (t.description != "") {
-          writer.writeAttributeName("description")
-          writer.writeString(t.description)
-        }
-
-        writer.writeAttributeName(t.keyword)
-        writer.writeArrayStart()
-        for (schema <- t.options) writer.write(schema)
-        writer.writeArrayEnd()
-
-        if (t.common.isDefined) {
-          writer.write(t.common.get, false)
-        }
-        else {
-          writer.writeObjectEnd()
-        }
-      }
-
-      override def unpickle(reader: PickleReader, expectObjectStart: Boolean): T = ???
-      override def schema: Schema = ???
-    }
-  }
-
-  case class JSAllOf(title: String = "", description: String = "",
-                     common: Option[JsonSchema] = None, options: Set[JsonSchema],
-                     definitions: Map[String, JsonSchema] = Map.empty,
-                     propertyOrder: Option[Int] = None) extends Combinator {
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
-    override def keyword: String = "allOf"
+  case class JSTuple(title: String = "", description: String = "",
+                     items: List[JsonSchema] = Nil,
+                     minItems: Option[Int] = None, maxItems: Option[Int] = None,
+                     uniqueItems: Boolean = false,
+                     propertyOrder: Option[Int] = None,
+                     options: JSEditorOptions = JSEditorOptions(),
+                     @WriteDefault @Name("type") schemaType: String = "array") extends JsonSchema {
+    require(schemaType == "array", "Do not change the schemaType")
     override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
-  }
-  object JSAllOf {
-    implicit val pickler: Pickler[JSAllOf] = new Combinator.CombinatorPickler[JSAllOf] {
-      override def ttag: TypeTag[JSAllOf] = typeTag[JSAllOf]
-    }
-  }
-
-  case class JSAnyOf(title: String = "", description: String = "",
-                     common: Option[JsonSchema] = None, options: Set[JsonSchema],
-                     definitions: Map[String, JsonSchema] = Map.empty,
-                     propertyOrder: Option[Int] = None) extends Combinator {
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
-    override def keyword: String = "anyOf"
-    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
-  }
-  object JSAnyOf {
-    implicit val pickler: Pickler[JSAnyOf] = new Combinator.CombinatorPickler[JSAnyOf] {
-      override def ttag: TypeTag[JSAnyOf] = typeTag[JSAnyOf]
-    }
-  }
-
-  case class JSOneOf(title: String = "", description: String = "",
-                     common: Option[JsonSchema] = None, options: Set[JsonSchema],
-                     definitions: Map[String, JsonSchema] = Map.empty,
-                     propertyOrder: Option[Int] = None) extends Combinator {
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
-    override def keyword: String = "oneOf"
-    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
-  }
-  object JSOneOf {
-    implicit val pickler: Pickler[JSOneOf] = new Combinator.CombinatorPickler[JSOneOf] {
-      override def ttag: TypeTag[JSOneOf] = typeTag[JSOneOf]
-    }
-  }
-
-  case class JSNot(title: String = "", description: String = "", not: JsonSchema,
-                   definitions: Map[String, JsonSchema] = Map.empty,
-                   propertyOrder: Option[Int] = None) extends JsonSchema {
-    override def withDefinitions(definitions: Map[String, JsonSchema]): JsonSchema = copy(definitions = definitions)
-    override def withPropertyOrder(order: Option[Int]): JsonSchema = copy(propertyOrder = order)
+    override def withTitle(title: String): JsonSchema = copy(title = title)
+    override def withDescription(description: String): JsonSchema = copy(description = description)
+    override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
   // =============================================
 
   def apply(root: Schema): JsonSchema = {
     val schemas = collectSchemas(root)
-    val jsonSchemas = (for (schema <- schemas) yield schema -> convert(schema)).toMap
-    val topLevel = jsonSchemas(root)
+    val canUseDefinitions = root.isInstanceOf[SObject] || root.isInstanceOf[SOneOf]
+    val needsDefinitions = hasCycles(root)
 
-    var definitions = Map[String, JsonSchema]()
-    jsonSchemas.map {
-      case (schema, jsonSchema) if schema.desc.typeHint.isDefined =>
-        val key = schema.desc.typeHint.get
-        if (definitions.contains(key)) {
-          if (definitions(key) == jsonSchema) {
-            // Let's hope this is OK....
-          }
-          else {
-            throw new IllegalArgumentException(s"Two different types have the typeHint $key: $jsonSchema and ${definitions(key)}")
-          }
-        }
-        else {
-          definitions = definitions.updated(schema.desc.typeHint.get, jsonSchema)
-        }
-      case _ =>
+    if (!needsDefinitions) {
+      convert(root, false, Map.empty)
     }
+    else {
+      if (!canUseDefinitions) {
+        throw new IllegalArgumentException(
+          "Schema with circular references must have a top-level SOjbect where we can define the common types. " +
+            s"This is an implementation restriction. Instead found: $root")
+      }
 
-    referenceKey(root) match {
-      case Some(key) => reference(root).withDefinitions(definitions)
-      case None => topLevel.withDefinitions(definitions)
+      var usedKeys = Set.empty[String]
+      var keyIndex = 0
+
+      val referenceKeys: Map[Schema, String] =
+        (for (schema <- schemas if useReference(schema)) yield {
+          val keyBase = schema.tpe.typeSymbol.fullName
+          val key =
+            if (!usedKeys.contains(keyBase)) keyBase
+            else {
+              keyIndex += 1
+              keyBase + keyIndex
+            }
+          usedKeys += key
+          schema -> key
+        }).toMap
+
+      val referencePaths = referenceKeys.mapValues("#/definitions/" + _)
+
+      val definitions =
+        (for (schema <- schemas if useReference(schema))
+          yield referenceKeys(schema) -> convert(schema, true, referencePaths, false)).toMap
+
+      convert(root, true, referencePaths) match {
+        case obj: JSObject => obj.copy(definitions = definitions)
+        case ref: JSRef => ref.copy(definitions = definitions)
+        case other => throw new IllegalStateException("Bug")
+      }
     }
   }
 
-  private def referenceKey(schema: Schema): Option[String] = schema.desc.typeHint
+  /** Whether this schema should be stored in the top-level definitions and referred to using JSRef. */
+  private def useReference(schema: Schema): Boolean = schema match {
+    case obj: SObject => true
+    case oneOf: SOneOf => true
+    case _ => false
+  }
 
-  /** Collect all Schema instances referenced from this root  */
+  /** Whether this schema has circular references that require the use of JSRef and shared definitions. */
+  private def hasCycles(schema: Schema, seen: Set[Schema] = Set.empty): Boolean = {
+    if (seen.contains(schema)) true
+    else schema match {
+      case obj: SObject => obj.members.exists(member => hasCycles(member.schema, seen + schema))
+      case arr: SArray => hasCycles(arr.member, seen + schema)
+      case tup: STuple => tup.members.exists(member => hasCycles(member, seen + schema))
+      case ref: SRef => hasCycles(ref.target(), seen + schema)
+      case oneOf: SOneOf => oneOf.options.exists(option => hasCycles(option, seen + schema))
+      case _ => false
+    }
+  }
+
+  /** Collect all Schema instances referenced from this root, dereferencing all references.  */
   private def collectSchemas(schema: Schema, seen: Set[Schema] = Set.empty): Set[Schema] = {
     if (seen.contains(schema)) seen
     else {
@@ -409,150 +333,165 @@ object JsonSchema {
         }
         case dict: SDict => collectSchemas(dict.members, set)
         case oneOf: SOneOf => oneOf.options.foldLeft(set) {
-          case (set, option) => collectSchemas(option.schema, set)
+          case (set, option) => collectSchemas(option, set)
         }
-        case ref: Reference => collectSchemas(ref.target(), set)
+        case ref: SRef => collectSchemas(ref.target(), set)
         case _ => set
       }
     }
   }
 
-  private def reference(schema: Schema, name: Option[String] = None): JsonSchema = {
-    schema match {
-      case Reference(target, _) => reference(target(), name)
-      case _ =>
-        referenceKey(schema) match {
-          case Some(hint) => JSRef(s"#/definitions/$hint", title = name.getOrElse(schema.desc.name), description = schema.desc.description)
-          case None => convert(schema)
-        }
-    }
+  private def title(schema: Schema): String = schema match {
+    case _: SObject | _: SOneOf => schema.tpe.typeSymbol.name.decodedName.toString
+    case SShortConst(tpe, constant) => constant.toString
+    case SIntConst(tpe, constant) => constant.toString
+    case SLongConst(tpe, constant) => constant.toString
+    case SFloatConst(tpe, constant) => constant.toString
+    case SDoubleConst(tpe, constant) => constant.toString
+    case SBooleanConst(tpe, constant) => constant.toString
+    case SStringConst(tpe, constant) => constant
+    case _ => ""
   }
 
-  private def convert(schema: Schema): JsonSchema = {
+  /** Convert a Schema to a JsonSchema, recursively.
+    *
+    * @param useReferences If true, JSRefs to #/definition/xxx are generated for all schemas where `useReference` is true.
+    *                      If false, all schemas are inlined.
+    * @param referencePaths Maps schemas (for which `useReference` is true) to the keys that can be used with JSRef.
+    * @param allowTopLevelReference If true, the original `schema` itself can be converted to a JSRef (`useReferences` and
+    *                               `useReference` permitting). If false, the top-level schema does not become a reference.
+    */
+  private def convert(schema: Schema, useReferences: Boolean, referencePaths: Map[Schema, String],
+                      allowTopLevelReference: Boolean = true): JsonSchema = {
+
+
+    def convertOrReference(schema: Schema): JsonSchema =
+      if (!useReferences || !useReference(schema)) convert(schema, useReferences, referencePaths)
+      else JSRef(title(schema), ref = referencePaths(schema))
+
     schema match {
-      case SShort(desc, min, max, readOnly, default, hidden) =>
-        JSInteger(
-          desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong),
-          readOnly = readOnly, default = default.map(_.toLong), options = JSEditorOptions(hidden))
-      case SInt(desc, min, max, readOnly, default, hidden) =>
-        JSInteger(
-          desc.name, desc.description, minimum = min.map(_.toLong), maximum = max.map(_.toLong),
-          readOnly = readOnly, default = default.map(_.toLong), options = JSEditorOptions(hidden))
-      case SLong(desc, min, max, readOnly, default, hidden) =>
-        JSInteger(
-          desc.name, desc.description, minimum = min, maximum = max,
-          readOnly = readOnly, default = default, options = JSEditorOptions(hidden))
-      case SFloat(desc, min, max, readOnly, default, hidden) =>
-        JSNumber(desc.name, desc.description, minimum = min.map(_.toDouble), maximum = max.map(_.toDouble),
-          readOnly = readOnly, default = default.map(_.toFloat), options = JSEditorOptions(hidden))
-      case SDouble(desc, min, max, readOnly, default, hidden) =>
-        JSNumber(desc.name, desc.description, minimum = min, maximum = max,
-          readOnly = readOnly, default = default, options = JSEditorOptions(hidden))
-      case SBoolean(desc, readOnly, default, hidden) =>
-        JSBoolean(
-          desc.name, desc.description,
-          readOnly = readOnly, default = default, options = JSEditorOptions(hidden))
-      case SNull(desc) =>
-        JSNull(desc.name, desc.description)
+      case SShort(tpe) => JSInteger.short(title(schema))
+      case SInt(tpe) => JSInteger.int(title(schema))
+      case SLong(tpe) => JSInteger.long(title(schema))
+      case SFloat(tpe) => JSNumber.float(title(schema))
+      case SDouble(tpe) => JSNumber.double(title(schema))
 
-      case SString(desc, minLength, maxLength, pattern, enum, readOnly, default, hidden) =>
-        val jsEnum = JSEnum(enum.map(Pickleable(_)))
-        JSString(desc.name, desc.description, minLength, maxLength, pattern,
-          readOnly = readOnly, default = default, options = JSEditorOptions(hidden),
-          enum = jsEnum)
+      case SShortConst(tpe, constant) => JSInteger(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
+      case SIntConst(tpe, constant) => JSInteger(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
+      case SLongConst(tpe, constant) => JSInteger(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
+      case SFloatConst(tpe, constant) => JSNumber(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
+      case SDoubleConst(tpe, constant) => JSNumber(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
 
-      case SArray(member, desc, minLength, maxLength) =>
-        JSArray(desc.name, desc.description, Items.WithSchema(reference(member)), minLength, maxLength)
+      case SBoolean(tpe) => JSBoolean(title(schema), format = Some("checkbox"))
+      case SBooleanConst(tpe, constant) => JSBoolean(title(schema), readOnly = true, default = Some(constant))
 
-      case STuple(members, desc) =>
-        JSArray(desc.name, desc.description, Items.WithSchemas(members.map(reference(_))))
+      case SString(tpe) => JSString(title(schema))
+      case SStringConst(tpe, constant) => JSString(title(schema), readOnly = true, default = Some(constant), enum = List(constant))
 
-      case SObject(members, desc) =>
-        val defaultProps = (members.filter(_.required).map(_.name)).toSet
-        val properties =
-          for ((member, index) <- members.zipWithIndex) yield {
-            member.name -> reference(member.schema, Some(member.name)).withPropertyOrder(Some(index + 1))
-          }
+      case SNull(tpe) => JSNull(title(schema))
 
-        JSObject(
-          desc.name, desc.description,
-          properties = properties.toMap,
-          additionalProperties = AdditionalProperties.disallowed,
-          required = defaultProps,
-          defaultProperties = defaultProps
-        )
+      case SArray(tpe, member) => JSArray(title(schema), items = Some(convertOrReference(member)))
 
-      case SDict(members, desc) =>
-        JSObject(
-          desc.name, desc.description,
-          additionalProperties = AdditionalProperties.WithSchema(reference(members))
-        )
+      case STuple(tpe, members) => JSTuple(title(schema), items = members.map(convertOrReference(_)))
 
-      case SOneOf(options, desc) =>
-        val jsSchemas = options.map {
-          _ match {
-            case SchemaOption(schema, Some(typeHint)) =>
-              val title = schema match {
-                case Schema.Reference(target, "") => target().desc.name
-                case Schema.Reference(target, name) => name
-                case other => other.desc.name
+      case SObject(tpe, members) =>
+        if (allowTopLevelReference && useReferences && useReference(schema)) {
+          JSRef(title(schema), ref = referencePaths(schema))
+        }
+        else {
+          JSObject(
+            title(schema),
+            properties = members.zipWithIndex.map { case (SObjectMember(name, schema, required), index) =>
+              name -> {
+                val ret = convertOrReference(schema).withTitle(name).withPropertyOrder(Some(index))
+                val shouldHide = schema.isInstanceOf[AtomicConst[_]] && name.startsWith("$")
+                ret.mapOptions(_.copy(hidden = shouldHide))
               }
-
-              val typeProp = JSString(
-                readOnly = true, default = Some(typeHint), options = JSEditorOptions(hidden = true),
-                enum = JSEnum(List(Pickleable(typeHint)))
-              )
-
-              // Due to an apparent bug in the JsonEditor, if I use something like JSAllOf of a JSRef to the target type
-              // and a JSObject specifying the $type property, the editor doesn't generate the default value of the
-              // combined object correctly when a new object is added to a list.
-              //
-              // Instead, I inline a combined object. TODO: remove all unused top level type definitions from the final schema.
-
-              /*
-              val description = (schema match {
-                case Schema.Reference(target, _) => target().desc
-                case other => other.desc
-              }).description
-              JSAllOf(
-                title = title, description = description,
-                common = Some(JSObject(
-                  properties = Map(
-                    "$type" -> typeProp,
-                  required = Set("$type")
-                )),
-                options = Set(convert(schema))
-              )*/
-
-              val realSchema = schema match {
-                case Schema.Reference(target, _) => target()
-                case other => other
-              }
-              val converted = convert(realSchema)
-              converted match {
-                case obj: JSObject =>
-                  obj.copy(
-                    title = title,
-                    properties = obj.properties.updated("$type", typeProp),
-                    required = obj.required + "$type",
-                    defaultProperties = obj.defaultProperties + "$type"
-                  )
-                case other => other
-              }
-
-            case SchemaOption(schema, None) => convert(schema)
-          }
+            }.toMap,
+            required = members.filter(_.required).map(_.name),
+            defaultProperties = members.filter(_.required).map(_.name)
+          )
         }
 
-        JSOneOf(desc.name, desc.description, options = jsSchemas)
+      case SDict(tpe, members) =>
+        JSObject(
+          title(schema),
+          additionalProperties = AdditionalProperties.WithSchema(convertOrReference(members))
+        )
 
-      case Reference(target, name) =>
+      case SOneOf(tpe, options) =>
+        val alts = options.map(convertOrReference)
+
+        if (options.forall(_.isInstanceOf[SStringConst])) {
+          JSString(
+            title(schema),
+            enum = options.map(_.asInstanceOf[SStringConst].constant),
+            options = JSEditorOptions(
+              enumTitles = alts.map(_.title)
+            )
+          )
+        }
+        else if (options.forall(_.isInstanceOf[SShortConst])) {
+          JSInteger(
+            title(schema),
+            enum = options.map(_.asInstanceOf[SShortConst].constant.toLong),
+            options = JSEditorOptions(
+              enumTitles = alts.map(_.title)
+            )
+          )
+        }
+        else if (options.forall(_.isInstanceOf[SIntConst])) {
+          JSInteger(
+            title(schema),
+            enum = options.map(_.asInstanceOf[SIntConst].constant.toLong),
+            options = JSEditorOptions(
+              enumTitles = alts.map(_.title)
+            )
+          )
+        }
+        else if (options.forall(_.isInstanceOf[SLongConst])) {
+          JSInteger(
+            title(schema),
+            enum = options.map(_.asInstanceOf[SLongConst].constant),
+            options = JSEditorOptions(
+              enumTitles = alts.map(_.title)
+            )
+          )
+        }
+        else if (options.forall(_.isInstanceOf[SFloatConst])) {
+          JSNumber(
+            title(schema),
+            enum = options.map(_.asInstanceOf[SShortConst].constant.toDouble),
+            options = JSEditorOptions(
+              enumTitles = alts.map(_.title)
+            )
+          )
+        }
+        else if (options.forall(_.isInstanceOf[SDoubleConst])) {
+          JSNumber(
+            title(schema),
+            enum = options.map(_.asInstanceOf[SDoubleConst].constant),
+            options = JSEditorOptions(
+              enumTitles = alts.map(_.title)
+            )
+          )
+        }
+
+        else if (allowTopLevelReference && useReferences && useReference(schema)) {
+          JSRef(title(schema), ref = referencePaths(schema))
+        }
+
+        else {
+          JSObject(
+            title(schema),
+            oneOf = alts
+          )
+        }
+
+      case SRef(tpe, target) =>
         val resolved = target()
-        resolved.desc.typeHint match {
-          case Some(hint) => JSRef(s"#/definitions/$hint")
-          case None => convert(resolved)
-        }
-
+        if (useReferences && useReference(resolved)) JSRef(title(resolved), ref = referencePaths(resolved))
+        else convertOrReference(resolved)
     }
   }
 }

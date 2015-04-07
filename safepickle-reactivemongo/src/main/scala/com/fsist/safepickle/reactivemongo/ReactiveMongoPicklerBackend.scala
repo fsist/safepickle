@@ -1,6 +1,6 @@
 package com.fsist.safepickle.reactivemongo
 
-import com.fsist.safepickle.Schema.{SString, Desc}
+import com.fsist.safepickle.Schema.SString
 
 import scala.reflect.runtime.universe._
 import java.util.Date
@@ -27,7 +27,7 @@ object ReactiveMongoPicklers {
       writer.writeString(t.stringify)
     override def unpickle(reader: PickleReader, expectObjectStart: Boolean = true): BSONObjectID =
       BSONObjectID(reader.string)
-    override val schema: Schema = SString(Desc("ObjectId", typeHint = Some("reactivemongo.bson.BSONObjectID")))
+    override val schema: Schema = SString(ttag.tpe)
   }
 }
 

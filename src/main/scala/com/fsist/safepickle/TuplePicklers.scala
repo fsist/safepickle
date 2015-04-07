@@ -25,7 +25,7 @@ trait TuplePicklers {
         Tuple1(t1)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema)))
     }
 
 
@@ -52,7 +52,7 @@ trait TuplePicklers {
         Tuple2(t1, t2)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema)))
     }
 
 
@@ -81,7 +81,7 @@ trait TuplePicklers {
         Tuple3(t1, t2, t3)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema)))
     }
 
 
@@ -112,7 +112,7 @@ trait TuplePicklers {
         Tuple4(t1, t2, t3, t4)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema)))
     }
 
 
@@ -145,7 +145,7 @@ trait TuplePicklers {
         Tuple5(t1, t2, t3, t4, t5)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema)))
     }
 
 
@@ -180,7 +180,7 @@ trait TuplePicklers {
         Tuple6(t1, t2, t3, t4, t5, t6)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema)))
     }
 
 
@@ -217,7 +217,7 @@ trait TuplePicklers {
         Tuple7(t1, t2, t3, t4, t5, t6, t7)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema)))
     }
 
 
@@ -256,7 +256,7 @@ trait TuplePicklers {
         Tuple8(t1, t2, t3, t4, t5, t6, t7, t8)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema)))
     }
 
 
@@ -297,7 +297,7 @@ trait TuplePicklers {
         Tuple9(t1, t2, t3, t4, t5, t6, t7, t8, t9)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema)))
     }
 
 
@@ -340,7 +340,7 @@ trait TuplePicklers {
         Tuple10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema)))
     }
 
 
@@ -385,7 +385,7 @@ trait TuplePicklers {
         Tuple11(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema)))
     }
 
 
@@ -432,7 +432,7 @@ trait TuplePicklers {
         Tuple12(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema)))
     }
 
 
@@ -481,7 +481,7 @@ trait TuplePicklers {
         Tuple13(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema)))
     }
 
 
@@ -532,7 +532,7 @@ trait TuplePicklers {
         Tuple14(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema)))
     }
 
 
@@ -585,7 +585,7 @@ trait TuplePicklers {
         Tuple15(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema)))
     }
 
 
@@ -640,7 +640,7 @@ trait TuplePicklers {
         Tuple16(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema)))
     }
 
 
@@ -697,7 +697,7 @@ trait TuplePicklers {
         Tuple17(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema), Schema.Reference(() => tpickler17.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema), Schema.SRef(() => ttag.tpe, () => tpickler17.schema)))
     }
 
 
@@ -756,7 +756,7 @@ trait TuplePicklers {
         Tuple18(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema), Schema.Reference(() => tpickler17.schema), Schema.Reference(() => tpickler18.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema), Schema.SRef(() => ttag.tpe, () => tpickler17.schema), Schema.SRef(() => ttag.tpe, () => tpickler18.schema)))
     }
 
 
@@ -817,7 +817,7 @@ trait TuplePicklers {
         Tuple19(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema), Schema.Reference(() => tpickler17.schema), Schema.Reference(() => tpickler18.schema), Schema.Reference(() => tpickler19.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema), Schema.SRef(() => ttag.tpe, () => tpickler17.schema), Schema.SRef(() => ttag.tpe, () => tpickler18.schema), Schema.SRef(() => ttag.tpe, () => tpickler19.schema)))
     }
 
 
@@ -880,7 +880,7 @@ trait TuplePicklers {
         Tuple20(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema), Schema.Reference(() => tpickler17.schema), Schema.Reference(() => tpickler18.schema), Schema.Reference(() => tpickler19.schema), Schema.Reference(() => tpickler20.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema), Schema.SRef(() => ttag.tpe, () => tpickler17.schema), Schema.SRef(() => ttag.tpe, () => tpickler18.schema), Schema.SRef(() => ttag.tpe, () => tpickler19.schema), Schema.SRef(() => ttag.tpe, () => tpickler20.schema)))
     }
 
 
@@ -945,7 +945,7 @@ trait TuplePicklers {
         Tuple21(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema), Schema.Reference(() => tpickler17.schema), Schema.Reference(() => tpickler18.schema), Schema.Reference(() => tpickler19.schema), Schema.Reference(() => tpickler20.schema), Schema.Reference(() => tpickler21.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema), Schema.SRef(() => ttag.tpe, () => tpickler17.schema), Schema.SRef(() => ttag.tpe, () => tpickler18.schema), Schema.SRef(() => ttag.tpe, () => tpickler19.schema), Schema.SRef(() => ttag.tpe, () => tpickler20.schema), Schema.SRef(() => ttag.tpe, () => tpickler21.schema)))
     }
 
 
@@ -1012,6 +1012,6 @@ trait TuplePicklers {
         Tuple22(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22)
       }
 
-      override val schema: Schema = Schema.STuple(List(Schema.Reference(() => tpickler1.schema), Schema.Reference(() => tpickler2.schema), Schema.Reference(() => tpickler3.schema), Schema.Reference(() => tpickler4.schema), Schema.Reference(() => tpickler5.schema), Schema.Reference(() => tpickler6.schema), Schema.Reference(() => tpickler7.schema), Schema.Reference(() => tpickler8.schema), Schema.Reference(() => tpickler9.schema), Schema.Reference(() => tpickler10.schema), Schema.Reference(() => tpickler11.schema), Schema.Reference(() => tpickler12.schema), Schema.Reference(() => tpickler13.schema), Schema.Reference(() => tpickler14.schema), Schema.Reference(() => tpickler15.schema), Schema.Reference(() => tpickler16.schema), Schema.Reference(() => tpickler17.schema), Schema.Reference(() => tpickler18.schema), Schema.Reference(() => tpickler19.schema), Schema.Reference(() => tpickler20.schema), Schema.Reference(() => tpickler21.schema), Schema.Reference(() => tpickler22.schema)))
+      override val schema: Schema = Schema.STuple(ttag.tpe, List(Schema.SRef(() => ttag.tpe, () => tpickler1.schema), Schema.SRef(() => ttag.tpe, () => tpickler2.schema), Schema.SRef(() => ttag.tpe, () => tpickler3.schema), Schema.SRef(() => ttag.tpe, () => tpickler4.schema), Schema.SRef(() => ttag.tpe, () => tpickler5.schema), Schema.SRef(() => ttag.tpe, () => tpickler6.schema), Schema.SRef(() => ttag.tpe, () => tpickler7.schema), Schema.SRef(() => ttag.tpe, () => tpickler8.schema), Schema.SRef(() => ttag.tpe, () => tpickler9.schema), Schema.SRef(() => ttag.tpe, () => tpickler10.schema), Schema.SRef(() => ttag.tpe, () => tpickler11.schema), Schema.SRef(() => ttag.tpe, () => tpickler12.schema), Schema.SRef(() => ttag.tpe, () => tpickler13.schema), Schema.SRef(() => ttag.tpe, () => tpickler14.schema), Schema.SRef(() => ttag.tpe, () => tpickler15.schema), Schema.SRef(() => ttag.tpe, () => tpickler16.schema), Schema.SRef(() => ttag.tpe, () => tpickler17.schema), Schema.SRef(() => ttag.tpe, () => tpickler18.schema), Schema.SRef(() => ttag.tpe, () => tpickler19.schema), Schema.SRef(() => ttag.tpe, () => tpickler20.schema), Schema.SRef(() => ttag.tpe, () => tpickler21.schema), Schema.SRef(() => ttag.tpe, () => tpickler22.schema)))
     }
 }

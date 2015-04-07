@@ -68,14 +68,14 @@ object AutogenTest {
     implicit val pickler = Autogen.children[T2, T3]
   }
 
-  case class C7(i: Int) extends T3
-  object C7 {
-    implicit val pickler = Autogen[C7]
-  }
-
   sealed trait T3 extends T2
   object T3 {
     implicit val pickler = Autogen.children[T3, C7]
+  }
+
+  case class C7(i: Int) extends T3
+  object C7 {
+    implicit val pickler = Autogen[C7]
   }
 
   case class C9(i: Int) extends C8(i)
@@ -100,7 +100,7 @@ object AutogenTest {
         C10(reader.int)
       }
       override def toString(): String = "C10 custom pickler"
-      override val schema: Schema = Schema.int
+      override val schema: Schema = Schema.SInt(ttag.tpe)
     }
   }
 

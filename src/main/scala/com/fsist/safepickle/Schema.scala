@@ -1,75 +1,116 @@
 package com.fsist.safepickle
 
-import com.fsist.safepickle.Schema.SOneOf.SchemaOption
-import com.fsist.safepickle.Schema._
-import com.typesafe.scalalogging.LazyLogging
-import scala.collection.mutable
+import scala.reflect.runtime.universe._
 
-sealed trait Schema extends LazyLogging {
-  def desc: Desc
+/** A schema describes the values that the associated pickler can write and read. */
+sealed trait Schema {
+  /** The Scala type corresponding to this schema; normally this is the associated `pickler.ttag.tpe`. */
+  def tpe: Type
 
-  override def toString: String = s"${desc.name} (${getClass.getSimpleName}) #${System.identityHashCode(this)}"
+  /** Copy this Schema, replacing the tpe value. */
+  def withTpe(tpe: Type): Schema
 }
 
 object Schema {
-  case class Desc(name: String = "", description: String = "", typeHint: Option[String] = None)
-
-  object Desc {
-    val none = Desc()
+  sealed trait AtomicConst[T] {
+    def constant: T
   }
 
-  case class SShort(desc: Desc = Desc.none, min: Option[Short] = None, max: Option[Short] = None,
-                    readOnly: Boolean = false, default: Option[Short] = None, hidden: Boolean = false) extends Schema
-  val short = SShort()
-
-  case class SInt(desc: Desc = Desc.none, min: Option[Int] = None, max: Option[Int] = None,
-                  readOnly: Boolean = false, default: Option[Int] = None, hidden: Boolean = false) extends Schema
-  val int = SInt()
-
-  case class SLong(desc: Desc = Desc.none, min: Option[Long] = None, max: Option[Long] = None,
-                   readOnly: Boolean = false, default: Option[Long] = None, hidden: Boolean = false) extends Schema
-  val long = SLong()
-
-  case class SFloat(desc: Desc = Desc.none, min: Option[Float] = None, max: Option[Float] = None,
-                    readOnly: Boolean = false, default: Option[Float] = None, hidden: Boolean = false) extends Schema
-  val float = SFloat()
-
-  case class SDouble(desc: Desc = Desc.none, min: Option[Double] = None, max: Option[Double] = None,
-                     readOnly: Boolean = false, default: Option[Double] = None, hidden: Boolean = false) extends Schema
-  val double = SDouble()
-
-  case class SBoolean(desc: Desc = Desc.none,
-                      readOnly: Boolean = false, default: Option[Boolean] = None, hidden: Boolean = false) extends Schema
-  val boolean = SBoolean()
-
-  case class SNull(desc: Desc = Desc.none) extends Schema
-  val nul = SNull()
-
-  case class SString(desc: Desc = Desc.none,
-                     minLength: Option[Int] = None, maxLength: Option[Int] = None,
-                     pattern: Option[String] = None, enum: List[String] = Nil,
-                     readOnly: Boolean = false, default: Option[String] = None, hidden: Boolean = false) extends Schema
-  val string = SString()
-
-  case class SArray(member: Schema, desc: Desc = Desc.none,
-                    minLength: Option[Int] = None, maxLength: Option[Int] = None) extends Schema
-
-  case class STuple(members: List[Schema], desc: Desc = Desc.none) extends Schema
-
-  case class SObject(members: List[Member], desc: Desc = Desc.none) extends Schema
-
-  case class Member(name: String, schema: Schema, required: Boolean = true)
-
-  case class SDict(members: Schema, desc: Desc = Desc.none) extends Schema
-
-  case class SOneOf(options: Set[SchemaOption], desc: Desc = Desc.none) extends Schema
-
-  object SOneOf {
-    case class SchemaOption(schema: Schema, typeField: Option[String])
+  case class SShort(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class Reference(target: () => Schema, name: String = "") extends Schema {
-    override def desc: Desc = Desc(s"Reference to $name")
-    override def toString: String = s"Reference to $name"
+  case class SShortConst(tpe: Type, constant: Short) extends Schema with AtomicConst[Short] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SInt(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SIntConst(tpe: Type, constant: Int) extends Schema with AtomicConst[Int] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SLong(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SLongConst(tpe: Type, constant: Long) extends Schema with AtomicConst[Long] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SFloat(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SFloatConst(tpe: Type, constant: Float) extends Schema with AtomicConst[Float] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SDouble(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SDoubleConst(tpe: Type, constant: Double) extends Schema with AtomicConst[Double] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SBoolean(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SBooleanConst(tpe: Type, constant: Boolean) extends Schema with AtomicConst[Boolean] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SNull(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SString(tpe: Type) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SStringConst(tpe: Type, constant: String) extends Schema with AtomicConst[String] {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  /** Repeated items with the same schema. */
+  case class SArray(tpe: Type, member: Schema) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  /** A fixed number of items with different schemas. */
+  case class STuple(tpe: Type, members: List[Schema]) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  /** An object with a fixed number of attributes, each having a different schema. */
+  case class SObject(tpe: Type, members: List[SObjectMember]) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SObjectMember(name: String, schema: Schema, required: Boolean = true)
+
+  /** An object with any number of attributes with different names, all sharing the same value schema. */
+  case class SDict(tpe: Type, members: Schema) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  case class SOneOf(tpe: Type, options: List[Schema]) extends Schema {
+    override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
+  }
+
+  /** A reference is equivalent to the schema returned by `target`, but prevents loops in recursive or mutually recursive
+    * schema definitions. */
+  case class SRef(toTpe: () => Type, target: () => Schema) extends Schema {
+    override def tpe: Type = toTpe()
+    override def withTpe(tpe: Type): Schema = copy(toTpe = () => tpe)
+
+    def resolve(): Schema = target() match {
+      case ref: SRef => ref.resolve()
+      case other => other
+    }
   }
 }
