@@ -12,6 +12,8 @@ sealed trait Schema {
 }
 
 object Schema {
+  implicit def fromPickler[T](implicit pickler: Pickler[T]): Schema = pickler.schema
+
   sealed trait AtomicConst[T] {
     def constant: T
   }
