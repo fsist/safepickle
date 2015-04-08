@@ -230,7 +230,7 @@ object JsonSchema {
         }
       }
 
-      override val schema: Schema = SOneOf(ttag.tpe, List(SBoolean(typeOf[Any]), JsonSchema.pickler.schema))
+      override val schema: Schema = SOneOf(ttag.tpe, List(SBoolean(typeOf[Any]), JsonSchema.pickler.schema), Nil)
     }
   }
 
@@ -412,14 +412,14 @@ object JsonSchema {
 
       case STuple(tpe, members) => JSTuple(title(schema), items = members.map(convertOrReference(_)))
 
-      case SObject(tpe, members) =>
+      case SObject(tpe, members, annotations) =>
         if (allowTopLevelReference && useReferences && useReference(schema)) {
           JSRef(title(schema), ref = referencePaths(schema))
         }
         else {
           JSObject(
             title(schema),
-            properties = members.zipWithIndex.map { case (SObjectMember(name, schema, required), index) =>
+            properties = members.zipWithIndex.map { case (SObjectMember(name, schema, required, annotations), index) =>
               name -> {
                 val ret = convertOrReference(schema).withTitle(name).withPropertyOrder(Some(index))
                 val shouldHide = schema.isInstanceOf[AtomicConst[_]] && name.startsWith("$")
@@ -437,7 +437,7 @@ object JsonSchema {
           additionalProperties = AdditionalProperties.WithSchema(convertOrReference(members))
         )
 
-      case SOneOf(tpe, options) =>
+      case SOneOf(tpe, options, annotations) =>
         val alts = options.map(convertOrReference)
 
         if (options.forall(_.isInstanceOf[SStringConst])) {

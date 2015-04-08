@@ -76,29 +76,45 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  /** Repeated items with the same schema. */
+  /** An array whose items have the same schema. */
   case class SArray(tpe: Type, member: Schema) extends Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  /** A fixed number of items with different schemas. */
+  /** An array with a fixed number of items with different schemas. */
   case class STuple(tpe: Type, members: List[Schema]) extends Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  /** An object with a fixed number of attributes, each having a different schema. */
-  case class SObject(tpe: Type, members: List[SObjectMember]) extends Schema {
+  /** An object with a fixed number of attributes, each having a different schema.
+    *
+    * @param annotations reified annotations from the corresponding Scala type.
+    *                    This allows annotations to be used easily to modify generated schemas,
+    *                    without having to use reflection to access them.
+    *                    This is filled by Autogen.apply with annotations on the class.
+    */
+  case class SObject(tpe: Type, members: List[SObjectMember], annotations: List[annotation.Annotation]) extends Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SObjectMember(name: String, schema: Schema, required: Boolean = true)
+  /** @param annotations reified annotations from the corresponding Scala type.
+    *                    This allows annotations to be used easily to modify generated schemas,
+    *                    without having to use reflection to access them.
+    *                    This is filled by Autogen.apply with annotations on the constructor parameter.
+    */
+  case class SObjectMember(name: String, schema: Schema, required: Boolean, annotations: List[annotation.Annotation])
 
   /** An object with any number of attributes with different names, all sharing the same value schema. */
   case class SDict(tpe: Type, members: Schema) extends Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SOneOf(tpe: Type, options: List[Schema]) extends Schema {
+  /** @param annotations reified annotations from the corresponding Scala type.
+    *                    This allows annotations to be used easily to modify generated schemas,
+    *                    without having to use reflection to access them.
+    *                    This is filled by Autogen.children with annotations on the parent type.
+    */
+  case class SOneOf(tpe: Type, options: List[Schema], annotations: List[annotation.Annotation]) extends Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
