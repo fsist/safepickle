@@ -327,3 +327,4 @@ Schemas are useful to automatically generate data for other programs to consume,
  
 I am working on a JSON schema generator, but it is still experimental. I hope to publish it here in the future.
 
+NOTE that currently schemas are not always reliable, due to backend overrides. For instance, the default pickler for `Array[Byte]` has a Schema saying it writes a String, but the BSON backend overrides this behavior to write a `BSONBinary` instead. A future version will allow backends to override schemas, or solve the problem in some other way.
