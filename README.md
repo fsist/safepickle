@@ -21,7 +21,7 @@ Table of Contents
   * [Compatible type changes](#compatible-type-changes)
   * [Versioning](#versioning)
     * [Multiple versioning](#multiple-versioning)
-  # [Schemas](#schemas)  
+  * [Schemas](#schemas)  
 
 # safepickle
 
