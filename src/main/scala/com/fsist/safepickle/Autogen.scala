@@ -120,7 +120,7 @@ class Autogen(val c: Context) {
       else List(tpe)
     }
 
-    val childTypes = collectChildTypes(implicitly[WeakTypeTag[Children]].tpe)
+    val childTypes = collectChildTypes(implicitly[WeakTypeTag[Children]].tpe).reverse
     for (tpe <- childTypes) {
       if (!(tpe <:< tag.tpe)) c.abort(c.enclosingPosition, s"$tpe (passed to Autogen.children) is not a subtype of ${tag.tpe}")
     }
@@ -190,8 +190,8 @@ class Autogen(val c: Context) {
     val picklerTpe = c.universe.appliedType(typeOf[Pickler[_]], List(tpe))
     c.inferImplicitValue(picklerTpe) match {
       case tree if tree.nonEmpty =>
-        // Don't return Some(tree) - that's the actual implicit value, which includes the compiler-generated code for
-        // typeTag creation, which doesn't compile if inlined this way
+        // Don't return Some(tree) - that's the actual implicit value, which includes compiler-generated code that doesn't
+        // actually compile if inlined this way
         Some(q"implicitly[$picklerTpe]")
       case _ => None
     }
@@ -265,6 +265,22 @@ class Autogen(val c: Context) {
     }
   }
 
+  /** Given a class, trait, or method parameter symbol, returns a tree that, when output into the generated code,
+    * produces a List[Annotation]. */
+  private def prepareAnnotations(symbol: Symbol)(implicit debug: Debug): Tree = {
+    q"""List(..${
+      for (ann <- symbol.annotations) yield {
+        // Don't quite understand this, but I have to get at the annotation type in a roundabout way
+        val annType = c.typecheck(ann.tree).tpe
+        val annSymbol = annType.typeSymbol
+        val annArgs = ann.tree.children.tail
+
+        q"new $annSymbol(..$annArgs)"
+      }
+    })
+    """
+  }
+
   private def generateClassPickler[T](clazz: ClassSymbol)(implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     val ctor = clazz.primaryConstructor.asMethod
     if (ctor.typeParams.nonEmpty) c.abort(c.enclosingPosition, s"Cannot generate pickler for generic type $clazz")
@@ -290,9 +306,10 @@ class Autogen(val c: Context) {
       else {
         val selfPickler = TermName("selfPickler")
 
-        case class ParamInfo(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, writeParam: Tree,
-                             argDecl: Tree, argInit: TermName, argInitDecl: Tree, argNameMatchClause: Tree,
-                             getArgValue: Tree, defaultArgValueName: TermName, defaultArgValueDecl: Option[Tree])
+        case class ParamInfo(param: Symbol, name: TermName, tpe: Type, pickledArgName: String, picklerName: TermName,
+                             picklerDecl: Tree, writeParam: Tree, argDecl: Tree, argInit: TermName, argInitDecl: Tree,
+                             argNameMatchClause: Tree, getArgValue: Tree, defaultArgValueName: TermName,
+                             defaultArgValueDecl: Option[Tree])
 
         val defaultValues = paramDefaultValues(clazz, ctor)
         val existingPicklers = Map[EqType, TermName](new EqType(ttype) -> selfPickler)
@@ -311,7 +328,7 @@ class Autogen(val c: Context) {
             q"def $paramPicklerName: Pickler[$tpe] = $selfPickler"
           }
           else {
-            q"val $paramPicklerName = ${picklerOf(tpe, existingPicklers)}"
+            q"def $paramPicklerName = ${picklerOf(tpe, existingPicklers)}"
           }
 
           val defaultArgValueName = TermName(name + "$default")
@@ -383,8 +400,8 @@ class Autogen(val c: Context) {
             q"""if ($argInit) $name else throw new UnpicklingException("No value found for " + $paramFullName)"""
           }
 
-          ParamInfo(name, tpe, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit, argInitDecl,
-            argNameMatchClause, getArgValue, defaultArgValueName, defaultArgValueDecl)
+          ParamInfo(param, name, tpe, pickledArgName, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit,
+            argInitDecl, argNameMatchClause, getArgValue, defaultArgValueName, defaultArgValueDecl)
         }
 
         val implicitSubPicklers = q"..${paramInfos.map(_.picklerDecl)}"
@@ -394,6 +411,15 @@ class Autogen(val c: Context) {
         val argNameMatchClauses = q"..${paramInfos.map(_.argNameMatchClause)}"
         val getArgValues = q"..${paramInfos.map(_.getArgValue)}"
         val defaultArgValues = q"..${paramInfos.map(_.defaultArgValueDecl).filter(_.isDefined).map(_.get)}"
+        def schemaMembers = q"${
+          for (info <- paramInfos) yield {
+            val name = info.pickledArgName
+            val schema = q"Schema.SRef(() => ${info.picklerName}.ttag.tpe, () => ${info.picklerName}.schema)"
+            val required = info.defaultArgValueDecl.isEmpty
+            val annotations = prepareAnnotations(info.param)
+            q"Schema.SObjectMember($name, $schema, $required, $annotations)"
+          }
+        }"
 
         val readAttributes =
           q"""while (reader.tokenType != TokenType.ObjectEnd) {
@@ -452,6 +478,12 @@ class Autogen(val c: Context) {
             }
 
             override def toString(): String = "Autogenerated pickler for " + $clazzName
+
+            override val schema: Schema = Schema.SObject(
+              ttag.tpe,
+              $schemaMembers,
+              ${prepareAnnotations(clazz)}
+            )
           }
          }"""
 
@@ -532,11 +564,10 @@ class Autogen(val c: Context) {
   private def generatePicklerWithChildren[T](parentSym: ClassSymbol, children: Option[List[ClassSymbol]] = None)
                                             (implicit ttag: WeakTypeTag[T], debug: Debug): Expr[Pickler[T]] = {
     val ttype = ttag.tpe
-
     val traitName = parentSym.name.decodedName.toString
 
     case class Subtype(name: TermName, tpe: Type, picklerName: TermName, picklerDecl: Tree, picklerMatchClause: Tree,
-                       unpicklerMatchClause: Tree)
+                       unpicklerMatchClause: Tree, typeHint: Option[String])
 
     val subtypes = for (subtype <- children.getOrElse(collectDescendantClasses(parentSym))) yield {
       val subclass = subtype.asClass
@@ -566,16 +597,16 @@ class Autogen(val c: Context) {
 
       val picklerMatchClause = if (writtenAsDollarValue) {
         cq"""value: $tpe =>
-                 writer.writeObjectStart()
+                 if (emitObjectStart) writer.writeObjectStart()
                  writer.writeAttributeName("$$type")
                  writer.writeString(${name.toString})
                  writer.writeAttributeName($dollarValue)
-                 writer.write[$tpe](value, false)($paramPicklerName)
+                 writer.write[$tpe](value, true)($paramPicklerName)
           """
       }
       else if (writtenAsObject) {
         cq"""value: $tpe =>
-                 writer.writeObjectStart()
+                 if (emitObjectStart) writer.writeObjectStart()
                  writer.writeAttributeName("$$type")
                  writer.writeString(${name.toString})
                  writer.write[$tpe](value, false)($paramPicklerName)
@@ -601,7 +632,9 @@ class Autogen(val c: Context) {
         cq"${name.toString} => reader.read[$tpe](false)($paramPicklerName)"
       }
 
-      Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause)
+      val typeHint = if (writtenAsObject || writtenAsDollarValue) Some(name.toString) else None
+
+      Subtype(name, tpe, paramPicklerName, paramPicklerDecl, picklerMatchClause, unpicklerMatchClause, typeHint)
     }
 
     for (subtype <- subtypes;
@@ -623,11 +656,29 @@ class Autogen(val c: Context) {
     val picklerMatchClauses = q"..${subtypes.map(_.picklerMatchClause)}"
     val unpicklerMatchClauses = q"..${subtypes.map(_.unpicklerMatchClause)}"
 
+    val schemas = q"${
+      subtypes.toList.map { sub =>
+        sub.typeHint match {
+          case Some(hint) =>
+            q"""{
+                val target = ${sub.picklerName}.schema
+                val newMember = SObjectMember("$$type", SStringConst(typeOf[String], $hint), true, Nil)
+                addMemberToSchema(target, newMember)
+              }
+            """
+
+          case None =>
+            q"SStringConst(${sub.picklerName}.ttag.tpe, ${sub.name.toString})"
+        }
+      }
+    }"
+
     val tokenType = "$type"
 
     val ret = q"""{
           import scala.reflect.runtime.universe._
           import com.fsist.safepickle._
+          import Schema._
 
           ..$implicitSubPicklers // Outside the class to get the implicits from where the macro was invoked
 
@@ -672,6 +723,15 @@ class Autogen(val c: Context) {
                 case other => throw new IllegalStateException("Error unpickling " + $traitName + ": unexpected next token type $$other")
               }
             }
+
+            private def addMemberToSchema(schema: Schema, member: SObjectMember): Schema = schema match {
+              case ref: SRef => addMemberToSchema(ref.resolve, member)
+              case obj: SObject => obj.copy(members = member :: obj.members)
+              case oneOf: SOneOf => oneOf.copy(options = oneOf.options.map(addMemberToSchema(_, member)))
+              case other => throw new IllegalArgumentException("Cannot add declaration of $$version member to target schema: $$other")
+            }
+
+            override val schema: Schema = SOneOf(ttag.tpe, $schemas, ${prepareAnnotations(parentSym)})
 
             override def toString(): String = "Autogenerated pickler for " + $traitName
           }
@@ -739,6 +799,7 @@ class Autogen(val c: Context) {
     val ret = q""" {
           import scala.reflect.runtime.universe._
           import com.fsist.safepickle._
+          import Schema._
 
           new Pickler[$ttype] {
             override val ttag: TypeTag[$ttype] = typeTag[$ttype]
@@ -779,6 +840,19 @@ class Autogen(val c: Context) {
                 case ..$picklerCases
                 case other => throw new UnpicklingException("Error unpickling " + $clazzName + s": unsupported schema version $$version (highest supported version is " + $currentVersion)
               }
+            }
+
+            override val schema: Schema = {
+              val target = $newPicklerName.schema match {
+                case obj: SObject => obj
+                case ref: SRef => ref.resolve match {
+                  case obj: SObject => obj
+                  case other => throw new IllegalArgumentException("Expected schema of " + $clazzName + s" to be an SObject or an SRef to an SObject, but got: $$other")
+                }
+                case other => throw new IllegalArgumentException("Expected schema of " + $clazzName + s" to be an SObject or an SRef to an SObject, but got: $$other")
+              }
+              val newMember = SObjectMember("$$version", SIntConst(typeOf[Int], $currentVersion), true, Nil)
+              target.copy(members = newMember :: target.members)
             }
 
             override def toString(): String = "Autogenerated versioned pickler for " + $clazzName + " version " + $currentVersion
@@ -872,5 +946,6 @@ class SingletonPickler[T](name: String, value: T)(implicit val ttag: scala.refle
     val read = reader.string
     if (read == name) value else throw new UnpicklingException(s"Expected to read $name but found $read")
   }
+  override val schema: Schema = Schema.SStringConst(ttag.tpe, name)
 }
 

@@ -21,6 +21,7 @@ Table of Contents
   * [Compatible type changes](#compatible-type-changes)
   * [Versioning](#versioning)
     * [Multiple versioning](#multiple-versioning)
+  # [Schemas](#schemas)  
 
 # safepickle
 
@@ -315,3 +316,15 @@ object Foo {
 `Autogen.versioned` will notice that the type `FooV1` implements `OldVersion[FooV2]` and not `OldVersion[Foo]`. It will walk down the chain of `OldVersion` implementations, until it finds an `OldVersion[Foo]`. 
 
 The version numbers will be assigned automatically: the oldest type (that is, the second parameter of `Autogen.versioned`) is always at version 1, the next one at version 2, and so on. In this example, `Foo` will be assigned version 4.
+
+# Schemas
+
+The `Schema` type describes the structure of the pickled data written and read by a pickler. For instance, a `Schema.SString` describes a string.
+
+Every `Pickler` has a `.schema` member populated by `Autogen`. For picklers you write manually, you must provide the schema yourself. 
+
+Schemas are useful to automatically generate data for other programs to consume, such as Json schemas or SQL table definitions.
+ 
+I am working on a JSON schema generator, but it is still experimental. I hope to publish it here in the future.
+
+NOTE that currently schemas are not always reliable, due to backend overrides. For instance, the default pickler for `Array[Byte]` has a Schema saying it writes a String, but the BSON backend overrides this behavior to write a `BSONBinary` instead. A future version will allow backends to override schemas, or solve the problem in some other way.
