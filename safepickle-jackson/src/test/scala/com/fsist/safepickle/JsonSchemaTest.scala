@@ -95,7 +95,7 @@ class JsonSchemaTest extends FunSuite {
           "b" -> JSBoolean("b", format = Some("checkbox"), propertyOrder = Some(2))
         ),
         required = List("i", "s"),
-        defaultProperties = List("i", "s")
+        defaultProperties = Some(List("i", "s"))
       )
     )
   }
@@ -113,12 +113,12 @@ class JsonSchemaTest extends FunSuite {
               "b" -> JSBoolean("b", format = Some("checkbox"), propertyOrder = Some(2))
             ),
             required = List("i", "s"),
-            defaultProperties = List("i", "s"),
+            defaultProperties = Some(List("i", "s")),
             propertyOrder = Some(0)
           )
         ),
         required = List("c1"),
-        defaultProperties = List("c1")
+        defaultProperties = Some(List("c1"))
       )
     )
   }
@@ -139,7 +139,7 @@ class JsonSchemaTest extends FunSuite {
               )
             ),
             required = List("opt"),
-            defaultProperties = List("opt")
+            defaultProperties = Some(List("opt"))
           )
         )
       )
@@ -166,7 +166,7 @@ class JsonSchemaTest extends FunSuite {
               )
             ),
             required = List("$type", "i"),
-            defaultProperties = List("$type", "i")
+            defaultProperties = Some(List("$type", "i"))
           ),
           "com.fsist.safepickle.JsonSchemaTest.T.C2" -> JSObject(
             title = "C2",
@@ -181,7 +181,7 @@ class JsonSchemaTest extends FunSuite {
               )
             ),
             required = List("$type", "c1s"),
-            defaultProperties = List("$type", "c1s")
+            defaultProperties = Some(List("$type", "c1s"))
           ),
           "com.fsist.safepickle.JsonSchemaTest.T" -> JSObject(
             "T",
@@ -222,7 +222,7 @@ class JsonSchemaTest extends FunSuite {
           "s" -> JSString("s", propertyOrder = Some(1))
         ),
         required = List("$version", "s"),
-        defaultProperties = List("$version", "s")
+        defaultProperties = Some(List("$version", "s"))
       )
     )
   }

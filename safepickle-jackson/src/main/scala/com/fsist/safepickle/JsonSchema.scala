@@ -170,12 +170,17 @@ object JsonSchema {
     override def mapOptions(func: (JSEditorOptions) => JSEditorOptions): JsonSchema = copy(options = func(options))
   }
 
+  /** @param defaultProperties the properties that the editor will display by default when a new object is created,
+    *                          which happens when an item is added to a list or when a new option is selected in oneOf.
+    *                          This is an Option because sometimes we want to write an explicit empty list, and sometimes
+    *                          to omit the attribute.
+    */
   case class JSObject(title: String = "", description: String = "",
                       definitions: Map[String, JsonSchema] = Map.empty,
                       properties: Map[PropertyName, JsonSchema] = Map.empty,
                       additionalProperties: AdditionalProperties = AdditionalProperties.disallowed,
                       required: List[PropertyName] = Nil,
-                      @WriteDefault defaultProperties: List[PropertyName] = Nil,
+                      defaultProperties: Option[List[PropertyName]] = None,
                       minProperties: Option[Int] = None, maxProperties: Option[Int] = None,
                       patternProperties: Map[String, JsonSchema] = Map.empty,
                       enum: List[Pickleable[_]] = Nil,
@@ -422,7 +427,7 @@ object JsonSchema {
               }
             }.toMap,
             required = members.filter(_.required).map(_.name),
-            defaultProperties = members.filter(_.required).map(_.name)
+            defaultProperties = Some(members.filter(_.required).map(_.name))
           )
         }
 
