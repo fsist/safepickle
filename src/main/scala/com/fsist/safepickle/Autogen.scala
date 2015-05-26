@@ -471,7 +471,7 @@ class Autogen(val c: Context) {
 
                 case TokenType.ObjectEnd if ! expectObjectStart => // Empty object
 
-                case other => throw new IllegalStateException("Unexpected next token type $$other")
+                case other => throw new IllegalStateException(s"Unexpected next token type $$other")
               }
 
               new $clazz(..$getArgValues)
@@ -720,7 +720,7 @@ class Autogen(val c: Context) {
                     case other => throw new UnpicklingException("Error unpickling " + $traitName + s": unexpected (explicit) descendant type tag $$other")
                   }
 
-                case other => throw new IllegalStateException("Error unpickling " + $traitName + ": unexpected next token type $$other")
+                case other => throw new IllegalStateException("Error unpickling " + $traitName + s": unexpected next token type $$other")
               }
             }
 
