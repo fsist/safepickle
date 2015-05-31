@@ -309,7 +309,7 @@ class Autogen(val c: Context) {
         case class ParamInfo(param: Symbol, name: TermName, tpe: Type, pickledArgName: String, picklerName: TermName,
                              picklerDecl: Tree, writeParam: Tree, argDecl: Tree, argInit: TermName, argInitDecl: Tree,
                              argNameMatchClause: Tree, getArgValue: Tree, defaultArgValueName: TermName,
-                             defaultArgValueDecl: Option[Tree])
+                             defaultArgValueDecl: Option[Tree], isOption: Boolean)
 
         val defaultValues = paramDefaultValues(clazz, ctor)
         val existingPicklers = Map[EqType, TermName](new EqType(ttype) -> selfPickler)
@@ -401,7 +401,7 @@ class Autogen(val c: Context) {
           }
 
           ParamInfo(param, name, tpe, pickledArgName, paramPicklerName, paramPicklerDecl, writeParam, argDecl, argInit,
-            argInitDecl, argNameMatchClause, getArgValue, defaultArgValueName, defaultArgValueDecl)
+            argInitDecl, argNameMatchClause, getArgValue, defaultArgValueName, defaultArgValueDecl, isOption)
         }
 
         val implicitSubPicklers = q"..${paramInfos.map(_.picklerDecl)}"
@@ -417,10 +417,12 @@ class Autogen(val c: Context) {
             val schema = q"Schema.SRef(() => ${info.picklerName}.ttag.tpe, () => ${info.picklerName}.schema)"
             val required = info.defaultArgValueDecl.isEmpty
             val annotations = prepareAnnotations(info.param)
-            val default = info.defaultArgValueDecl match {
-              case Some(_) => q"Some(${info.defaultArgValueName})"
-              case None => q"None"
-            }
+
+            val default =
+              if (info.defaultArgValueDecl.isEmpty) q"None"
+              else if (! info.isOption) q"Some(${info.defaultArgValueName})"
+              else q"${info.defaultArgValueName}"
+
             q"Schema.SObjectMember($name, $schema, $required, $annotations, $default)"
           }
         }"
@@ -578,7 +580,7 @@ class Autogen(val c: Context) {
       val name = subclass.name.decodedName.toTermName
       val tpe = subclass.toType
 
-      val paramPicklerName = TermName(c.freshName(s"$name$$pickler"))
+      val paramPicklerName = TermName(c.freshName(s"$name$$ pickler"))
       val paramPicklerDecl = q"val $paramPicklerName = ${picklerOf(tpe, Map.empty)}"
 
       // A value is be written in one of three ways:
