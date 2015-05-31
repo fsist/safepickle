@@ -417,7 +417,11 @@ class Autogen(val c: Context) {
             val schema = q"Schema.SRef(() => ${info.picklerName}.ttag.tpe, () => ${info.picklerName}.schema)"
             val required = info.defaultArgValueDecl.isEmpty
             val annotations = prepareAnnotations(info.param)
-            q"Schema.SObjectMember($name, $schema, $required, $annotations)"
+            val default = info.defaultArgValueDecl match {
+              case Some(_) => q"Some(${info.defaultArgValueName})"
+              case None => q"None"
+            }
+            q"Schema.SObjectMember($name, $schema, $required, $annotations, $default)"
           }
         }"
 
@@ -662,7 +666,7 @@ class Autogen(val c: Context) {
           case Some(hint) =>
             q"""{
                 val target = ${sub.picklerName}.schema
-                val newMember = SObjectMember("$$type", SStringConst(typeOf[String], $hint), true, Nil)
+                val newMember = SObjectMember("$$type", SStringConst(typeOf[String], $hint), true, Nil, Some($hint))
                 addMemberToSchema(target, newMember)
               }
             """
@@ -851,7 +855,7 @@ class Autogen(val c: Context) {
                 }
                 case other => throw new IllegalArgumentException("Expected schema of " + $clazzName + s" to be an SObject or an SRef to an SObject, but got: $$other")
               }
-              val newMember = SObjectMember("$$version", SIntConst(typeOf[Int], $currentVersion), true, Nil)
+              val newMember = SObjectMember("$$version", SIntConst(typeOf[Int], $currentVersion), true, Nil, Some(1))
               target.copy(members = newMember :: target.members)
             }
 

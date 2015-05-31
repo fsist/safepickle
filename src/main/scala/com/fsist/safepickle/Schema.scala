@@ -103,8 +103,10 @@ object Schema {
     *                    This allows annotations to be used easily to modify generated schemas,
     *                    without having to use reflection to access them.
     *                    This is filled by Autogen.apply with annotations on the constructor parameter.
+    * @param default     The value used when unpickling if this object member is missing.
     */
-  case class SObjectMember(name: String, schema: Schema, required: Boolean, annotations: List[annotation.Annotation])
+  case class SObjectMember(name: String, schema: Schema, required: Boolean, annotations: List[annotation.Annotation],
+                           default: Option[Any])
 
   /** An object with any number of attributes with different names, all sharing the same value schema. */
   case class SDict(tpe: Type, members: Schema) extends Schema {
