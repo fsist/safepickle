@@ -4,7 +4,7 @@ task wrapper(type: Wrapper) {
 
 allprojects {
   group = 'com.fsist'
-  version = '1.0.3'
+  version = '1.0.4'
 
   apply plugin: 'scala'
   apply plugin: 'maven'

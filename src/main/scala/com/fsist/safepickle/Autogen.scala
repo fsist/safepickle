@@ -580,7 +580,7 @@ class Autogen(val c: Context) {
       val name = subclass.name.decodedName.toTermName
       val tpe = subclass.toType
 
-      val paramPicklerName = TermName(c.freshName(s"$name$$ pickler"))
+      val paramPicklerName = TermName(c.freshName(s"$name$$pickler"))
       val paramPicklerDecl = q"val $paramPicklerName = ${picklerOf(tpe, Map.empty)}"
 
       // A value is be written in one of three ways:
