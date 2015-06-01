@@ -16,13 +16,14 @@ object Schema {
 
   sealed trait AtomicConst[T] {
     def constant: T
+    def label: Option[String]
   }
 
   case class SShort(tpe: Type) extends Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SShortConst(tpe: Type, constant: Short) extends Schema with AtomicConst[Short] {
+  case class SShortConst(tpe: Type, constant: Short, label: Option[String] = None) extends Schema with AtomicConst[Short] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
@@ -30,7 +31,7 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SIntConst(tpe: Type, constant: Int) extends Schema with AtomicConst[Int] {
+  case class SIntConst(tpe: Type, constant: Int, label: Option[String] = None) extends Schema with AtomicConst[Int] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
@@ -38,7 +39,7 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SLongConst(tpe: Type, constant: Long) extends Schema with AtomicConst[Long] {
+  case class SLongConst(tpe: Type, constant: Long, label: Option[String] = None) extends Schema with AtomicConst[Long] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
@@ -46,7 +47,7 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SFloatConst(tpe: Type, constant: Float) extends Schema with AtomicConst[Float] {
+  case class SFloatConst(tpe: Type, constant: Float, label: Option[String] = None) extends Schema with AtomicConst[Float] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
@@ -54,7 +55,7 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SDoubleConst(tpe: Type, constant: Double) extends Schema with AtomicConst[Double] {
+  case class SDoubleConst(tpe: Type, constant: Double, label: Option[String] = None) extends Schema with AtomicConst[Double] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
@@ -62,7 +63,7 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SBooleanConst(tpe: Type, constant: Boolean) extends Schema with AtomicConst[Boolean] {
+  case class SBooleanConst(tpe: Type, constant: Boolean, label: Option[String] = None) extends Schema with AtomicConst[Boolean] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
@@ -74,7 +75,7 @@ object Schema {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
-  case class SStringConst(tpe: Type, constant: String) extends Schema with AtomicConst[String] {
+  case class SStringConst(tpe: Type, constant: String, label: Option[String] = None) extends Schema with AtomicConst[String] {
     override def withTpe(tpe: Type): Schema = copy(tpe = tpe)
   }
 
