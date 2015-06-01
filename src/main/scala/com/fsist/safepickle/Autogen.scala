@@ -857,7 +857,7 @@ class Autogen(val c: Context) {
                 }
                 case other => throw new IllegalArgumentException("Expected schema of " + $clazzName + s" to be an SObject or an SRef to an SObject, but got: $$other")
               }
-              val newMember = SObjectMember("$$version", SIntConst(typeOf[Int], $currentVersion), true, Nil, Some(1))
+              val newMember = SObjectMember("$$version", SInt(typeOf[Int]), true, Nil, Some(1))
               target.copy(members = newMember :: target.members)
             }
 
