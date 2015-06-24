@@ -1,5 +1,6 @@
 package com.fsist.safepickle
 
+import com.fsist.safepickle.Schema.{SInt, SObject, SObjectMember}
 import org.scalatest.FunSuite
 
 object AutogenVersionedTest {
@@ -60,6 +61,18 @@ class AutogenVersionedTest extends FunSuite with WrapperTester {
         "s" -> StringWrapper("4")
       )),
       New(4)
+    )
+  }
+
+  test("Versioned schema") {
+    import Scope1._
+    import scala.reflect.runtime.universe.typeOf
+
+    def versionMember(schema: Schema): SObjectMember =
+      schema.asInstanceOf[SObject].members.find(_.name == "$version").get
+
+    assert(versionMember(New.pickler.schema) ==
+      SObjectMember("$version", SInt(typeOf[Int]), true, Nil, Some(2))
     )
   }
 
