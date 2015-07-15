@@ -33,6 +33,17 @@ object AutogenVersionedTest {
       implicit val pickler : Pickler[New] = Autogen.versioned[New, V1]
     }
   }
+
+  object Scope3 {
+    case class Old(s: String = "") extends OldVersion[New] {
+      override def toNewVersion: New = New(s)
+    }
+
+    case class New(s: String)
+    object New {
+      implicit val pickler : Pickler[New] = Autogen.versionedDebug[New, Old]
+    }
+  }
 }
 
 class AutogenVersionedTest extends FunSuite with WrapperTester {
@@ -119,6 +130,16 @@ class AutogenVersionedTest extends FunSuite with WrapperTester {
         "s" -> StringWrapper("4")
       )),
       New(4)
+    )
+  }
+
+  test("Remove default value, leaving empty object") {
+    import Scope3._
+
+    testReading[New](
+      ObjectWrapper(Map(
+      )),
+      New("")
     )
   }
 }

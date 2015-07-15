@@ -827,20 +827,27 @@ class Autogen(val c: Context) {
                 reader.nextInObject()
               }
 
-              reader.assertTokenType(TokenType.AttributeName)
-              val version =
-                if (reader.attributeName != $tokenVersion) {
-                  // No version tag, assume this is the first version
+              val version = {
+                if (reader.tokenType == TokenType.ObjectEnd) {
+                  // No attributes, assume this is the first version
                   1
                 }
                 else {
-                  // Found version tag
-                  reader.nextInObject()
+                  reader.assertTokenType(TokenType.AttributeName)
+                  if (reader.attributeName != $tokenVersion) {
+                    // No version tag, assume this is the first version
+                    1
+                  }
+                  else {
+                    // Found version tag
+                    reader.nextInObject()
 
-                  val version = reader.int
-                  reader.nextInObject()
-                  version
+                    val version = reader.int
+                    reader.nextInObject()
+                    version
+                  }
                 }
+              }
 
               version match {
                 case ..$picklerCases
